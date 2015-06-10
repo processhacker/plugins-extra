@@ -41,12 +41,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "DbgView plugin for Process Hacker"
-            VALUE "FileVersion", "1.0.0.0"
+            VALUE "FileVersion", "1.0"
             VALUE "InternalName", "DbgViewPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "DbgViewPlugin.dll"
             VALUE "ProductName", "DbgView plugin for Process Hacker"
-            VALUE "ProductVersion", "1.0.0.0"
+            VALUE "ProductVersion", "1.0"
         END
     END
     BLOCK "VarFileInfo"
