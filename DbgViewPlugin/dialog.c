@@ -248,7 +248,7 @@ static VOID ShowDropdownMenu(
     selectedItem = PhShowEMenu(
         menu,
         Context->DialogHandle,
-        PH_EMENU_SHOW_NONOTIFY | PH_EMENU_SHOW_LEFTRIGHT,
+        PH_EMENU_SHOW_LEFTRIGHT,
         PH_ALIGN_LEFT | PH_ALIGN_TOP,
         rect.left,
         rect.bottom

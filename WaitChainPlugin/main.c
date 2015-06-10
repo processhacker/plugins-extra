@@ -264,8 +264,7 @@ static INT_PTR CALLBACK WaitChainDlgProc(
             case ID_WCTSHOWCONTEXTMENU:
                 {
                     POINT point;
-                    HMENU menu;
-                    HMENU subMenu;
+                    PPH_EMENU menu;
                     PWCT_ROOT_NODE selectedNode;
 
                     point.x = (SHORT)LOWORD(lParam);
@@ -273,32 +272,23 @@ static INT_PTR CALLBACK WaitChainDlgProc(
 
                     if (selectedNode = WeGetSelectedWindowNode(&context->TreeContext))
                     {
-                        menu = LoadMenu(PluginInstance->DllBase, MAKEINTRESOURCE(IDR_MAIN_MENU));
-                        subMenu = GetSubMenu(menu, 0);
-                        SetMenuDefaultItem(subMenu, ID_MENU_PROPERTIES, FALSE);
+                        menu = PhCreateEMenu();
+                        PhLoadResourceEMenuItem(menu, PluginInstance->DllBase, MAKEINTRESOURCE(IDR_MAIN_MENU), 0);
+                        PhSetFlagsEMenuItem(menu, ID_MENU_PROPERTIES, PH_EMENU_DEFAULT, PH_EMENU_DEFAULT);
 
                         if (selectedNode->ThreadId > 0)
                         {
-                            PhEnableMenuItem(subMenu, ID_MENU_GOTOTHREAD, TRUE);
-                            PhEnableMenuItem(subMenu, ID_MENU_GOTOPROCESS, TRUE);
+                            PhSetFlagsEMenuItem(menu, ID_MENU_GOTOTHREAD, PH_EMENU_DISABLED, 0);
+                            PhSetFlagsEMenuItem(menu, ID_MENU_GOTOPROCESS, PH_EMENU_DISABLED, 0);
                         }
                         else
                         {
-                            PhEnableMenuItem(subMenu, ID_MENU_GOTOTHREAD, FALSE);
-                            PhEnableMenuItem(subMenu, ID_MENU_GOTOPROCESS, FALSE);
+                            PhSetFlagsEMenuItem(menu, ID_MENU_GOTOTHREAD, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
+                            PhSetFlagsEMenuItem(menu, ID_MENU_GOTOPROCESS, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
                         }
-
-                        TrackPopupMenu(
-                            subMenu,
-                            TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
-                            point.x,
-                            point.y,
-                            0,
-                            hwndDlg,
-                            NULL
-                            );
-
-                        DestroyMenu(menu);
+                       
+                        PhShowEMenu(menu, hwndDlg, PH_EMENU_SHOW_SEND_COMMAND | PH_EMENU_SHOW_LEFTRIGHT, PH_ALIGN_LEFT | PH_ALIGN_TOP, point.x, point.y);                       
+                        PhDestroyEMenu(menu);
                     }
                 }
                 break;
@@ -352,7 +342,7 @@ static INT_PTR CALLBACK WaitChainDlgProc(
                     PPH_STRING text;
 
                     text = PhGetTreeNewText(context->TreeNewHandle, 0);
-                    PhSetClipboardStringEx(hwndDlg, text->Buffer, text->Length);
+                    PhSetClipboardString(hwndDlg, &text->sr);
                     PhDereferenceObject(text);
                 }
                 break;
