@@ -82,7 +82,7 @@ LOGICAL DllMain(
             PPH_PLUGIN_INFORMATION info;
             PH_SETTING_CREATE settings[] =
             {
-                { IntegerSettingType, SETTING_NAME_ENABLE_MONITORING, L"0" },
+                { IntegerSettingType, SETTING_NAME_ENABLE_MONITORING, L"1" },
                 { IntegerSettingType, SETTING_NAME_ENABLE_FAHRENHEIT, L"0" }
             };
 
