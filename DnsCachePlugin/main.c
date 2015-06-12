@@ -33,7 +33,7 @@ static HWND ListViewWndHandle;
 static PH_LAYOUT_MANAGER LayoutManager;
 static PPH_PLUGIN PluginInstance;
 static PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
-static PH_CALLBACK_REGISTRATION MainWindowShowingCallbackRegistration;
+static PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
 static PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
 
 static VOID EnumDnsCacheTable(
@@ -347,12 +347,17 @@ static INT_PTR CALLBACK DnsCacheDlgProc(
     return FALSE;
 }
 
-static VOID NTAPI MainWindowShowingCallback(
+static VOID NTAPI MainMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
 {
-    PhPluginAddMenuItem(PluginInstance, PH_MENU_ITEM_LOCATION_TOOLS, L"$", DNSCACHE_MENUITEM, L"DNS Resolver Cache", NULL);
+    PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
+
+    if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
+        return;
+
+    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, DNSCACHE_MENUITEM, L"DNS Resolver Cache", NULL), -1);
 }
 
 static VOID NTAPI MenuItemCallback(
@@ -406,10 +411,10 @@ LOGICAL DllMain(
             info->HasOptions = FALSE;
 
             PhRegisterCallback(
-                PhGetGeneralCallback(GeneralCallbackMainWindowShowing),
-                MainWindowShowingCallback,
+                PhGetGeneralCallback(GeneralCallbackMainMenuInitializing),
+                MainMenuInitializingCallback,
                 NULL,
-                &MainWindowShowingCallbackRegistration
+                &MainMenuInitializingCallbackRegistration
                 );
             PhRegisterCallback(
                 PhGetPluginCallback(PluginInstance, PluginCallbackMenuItem),
