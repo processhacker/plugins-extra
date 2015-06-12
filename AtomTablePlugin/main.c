@@ -33,7 +33,7 @@
 #define SETTING_NAME_LISTVIEW_COLUMNS (PLUGIN_NAME L".ListViewColumns")
 
 static PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
-static PH_CALLBACK_REGISTRATION MainWindowShowingCallbackRegistration;
+static PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
 static PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
 static HWND ListViewWndHandle;
 static PH_LAYOUT_MANAGER LayoutManager;
@@ -362,12 +362,17 @@ static INT_PTR CALLBACK MainWindowDlgProc(
     return FALSE;
 }
 
-static VOID NTAPI MainWindowShowingCallback(
+static VOID NTAPI MainMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
 {
-    PhPluginAddMenuItem(PluginInstance, PH_MENU_ITEM_LOCATION_TOOLS, L"$", ATOM_TABLE_MENUITEM, L"Global Atom Table", NULL);
+    PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
+
+    if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
+        return;
+
+    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ATOM_TABLE_MENUITEM, L"Global Atom Table", NULL), -1);
 }
 
 static VOID NTAPI MenuItemCallback(
@@ -421,10 +426,10 @@ LOGICAL DllMain(
             info->HasOptions = FALSE;
 
             PhRegisterCallback(
-                PhGetGeneralCallback(GeneralCallbackMainWindowShowing),
-                MainWindowShowingCallback,
+                PhGetGeneralCallback(GeneralCallbackMainMenuInitializing),
+                MainMenuInitializingCallback,
                 NULL,
-                &MainWindowShowingCallbackRegistration
+                &MainMenuInitializingCallbackRegistration
                 );
             PhRegisterCallback(
                 PhGetPluginCallback(PluginInstance, PluginCallbackMenuItem),
