@@ -309,7 +309,7 @@ static BOOLEAN DiskDriveSectionCallback(
         return TRUE;
     case SysInfoDestroy:
         {
-            PhMoveReference(&context->DiskLength, NULL);
+            PhClearReference(&context->DiskLength);
 
             PhDeleteCircularBuffer_ULONG64(&context->ReadBuffer);
             PhDeleteCircularBuffer_ULONG64(&context->WriteBuffer);

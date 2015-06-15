@@ -28,9 +28,9 @@ static VOID DbgFreeLogEntry(
     _Inout_ PDEBUG_LOG_ENTRY Entry
     )
 {
-    PhMoveReference(&Entry->FilePath, NULL);
-    PhMoveReference(&Entry->ProcessName, NULL);
-    PhMoveReference(&Entry->Message, NULL);
+    PhClearReference(&Entry->FilePath);
+    PhClearReference(&Entry->ProcessName);
+    PhClearReference(&Entry->Message);
 
     PhFree(Entry);
 }
