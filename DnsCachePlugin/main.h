@@ -36,7 +36,6 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
-#include <colmgr.h>
 #include "resource.h"
 
 #include <windns.h>

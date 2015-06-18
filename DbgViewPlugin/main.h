@@ -39,7 +39,6 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
-#include <colmgr.h>
 
 #include <windowsx.h>
 #include <Sddl.h>
