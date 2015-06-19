@@ -291,7 +291,7 @@ static INT_PTR CALLBACK OptionsDlgProc(
 
                             __leave;
                         }
-                        else if (wcslen(counterPathBuffer) == 0)
+                        else if (PhCountStringZ(counterPathBuffer) == 0)
                         {
                             // This gets called when pressing the X on the BrowseCounters dialog.
                             __leave;

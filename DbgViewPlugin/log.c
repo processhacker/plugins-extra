@@ -96,8 +96,8 @@ static VOID DbgFormatObjectName(
 
         memcpy(buffer, L"\\Sessions\\", 10 * sizeof(WCHAR));
         _ultow(NtCurrentPeb()->SessionId, buffer + 10, 10);
-        length = wcslen(buffer);
-        originalNameLength = wcslen(OriginalName);
+        length = PhCountStringZ(buffer);
+        originalNameLength = PhCountStringZ(OriginalName);
         memcpy(buffer + length, OriginalName, (originalNameLength + 1) * sizeof(WCHAR));
         length += originalNameLength;
 

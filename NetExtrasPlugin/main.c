@@ -115,8 +115,8 @@ static VOID NetworkItemDeleteCallback(
     //PPH_NETWORK_ITEM networkItem = Object;
     PNETWORK_EXTENSION extension = Extension;
 
-    PhSwapReference(&extension->LocalServiceName, NULL);
-    PhSwapReference(&extension->RemoteServiceName, NULL);
+    PhClearReference(&extension->LocalServiceName);
+    PhClearReference(&extension->RemoteServiceName);
 }
 
 static VOID TreeNewMessageCallback(
