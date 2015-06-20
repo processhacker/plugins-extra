@@ -91,7 +91,7 @@ static PPH_STRING DbgGetStringForSelectedLogEntries(
 
         PhLargeIntegerToLocalSystemTime(&systemTime, &entry->Time);
         temp = PhFormatDateTime(&systemTime);
-        PhAppendStringBuilder(&stringBuilder, temp);
+        PhAppendStringBuilder(&stringBuilder, &temp->sr);
         PhDereferenceObject(temp);
         PhAppendStringBuilder2(&stringBuilder, L": ");
 
@@ -101,7 +101,7 @@ static PPH_STRING DbgGetStringForSelectedLogEntries(
             HandleToUlong(entry->ProcessId),
             entry->Message->Buffer
             );
-        PhAppendStringBuilder(&stringBuilder, temp);
+        PhAppendStringBuilder(&stringBuilder, &temp->sr);
         PhDereferenceObject(temp);
         PhAppendStringBuilder2(&stringBuilder, L"\r\n");
 
