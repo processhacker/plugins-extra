@@ -35,25 +35,25 @@ VOID UpdateNetworkNode(
         {
             if (!Extension->LocalValid)
             {
-                PH_STRING_BUILDER stringBuilder;
+                //PH_STRING_BUILDER stringBuilder;
 
-                PhInitializeStringBuilder(&stringBuilder, 24);
+                //PhInitializeStringBuilder(&stringBuilder, 24);
 
                 for (ULONG x = 0; x < _countof(ResolvedPortsTable); x++)
                 {
                     if (Node->NetworkItem->LocalEndpoint.Port == ResolvedPortsTable[x].Port)
                     {
-                        PhAppendFormatStringBuilder(&stringBuilder, L"%s,", ResolvedPortsTable[x].Name);
+                        //PhAppendFormatStringBuilder(&stringBuilder, L"%s,", ResolvedPortsTable[x].Name);
 
-                        //PhSwapReference(&Extension->LocalServiceName, PhCreateString(ResolvedPortsTable[x].Name));
+                        PhSwapReference(&Extension->LocalServiceName, PhCreateString(ResolvedPortsTable[x].Name));
                         break;
                     }
                 }
 
-                if (stringBuilder.String->Length != 0)
-                    PhRemoveEndStringBuilder(&stringBuilder, 1);
+                //if (stringBuilder.String->Length != 0)
+                //    PhRemoveEndStringBuilder(&stringBuilder, 1);
 
-                PhSwapReference(&Extension->LocalServiceName, PhFinalStringBuilderString(&stringBuilder));
+                //PhSwapReference(&Extension->LocalServiceName, PhFinalStringBuilderString(&stringBuilder));
 
                 Extension->LocalValid = TRUE;
             }
@@ -63,25 +63,25 @@ VOID UpdateNetworkNode(
         {
             if (!Extension->RemoteValid)
             {
-                PH_STRING_BUILDER stringBuilder;
+                //PH_STRING_BUILDER stringBuilder;
 
-                PhInitializeStringBuilder(&stringBuilder, 24);
+                //PhInitializeStringBuilder(&stringBuilder, 24);
 
                 for (ULONG x = 0; x < _countof(ResolvedPortsTable); x++)
                 {
                     if (Node->NetworkItem->RemoteEndpoint.Port == ResolvedPortsTable[x].Port)
                     {
-                        PhAppendFormatStringBuilder(&stringBuilder, L"%s,", ResolvedPortsTable[x].Name);
+                        //PhAppendFormatStringBuilder(&stringBuilder, L"%s,", ResolvedPortsTable[x].Name);
 
-                        //PhSwapReference(&Extension->RemoteServiceName, PhCreateString(ResolvedPortsTable[x].Name));
+                        PhSwapReference(&Extension->RemoteServiceName, PhCreateString(ResolvedPortsTable[x].Name));
                         break;
                     }
                 }
 
-                if (stringBuilder.String->Length != 0)
-                    PhRemoveEndStringBuilder(&stringBuilder, 1);
+                //if (stringBuilder.String->Length != 0)
+                //    PhRemoveEndStringBuilder(&stringBuilder, 1);
 
-                PhSwapReference(&Extension->RemoteServiceName, PhFinalStringBuilderString(&stringBuilder));
+                //PhSwapReference(&Extension->RemoteServiceName, PhFinalStringBuilderString(&stringBuilder));
 
                 Extension->RemoteValid = TRUE;
             }
