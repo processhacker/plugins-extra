@@ -57,16 +57,7 @@ PFW_EVENT_ITEM EtCreateFirewallEntryItem(
     static ULONG itemCount = 0;
     PFW_EVENT_ITEM diskItem;
 
-    if (!NT_SUCCESS(PhCreateObject(
-        &diskItem,
-        sizeof(FW_EVENT_ITEM),
-        0,
-        FwObjectType
-        )))
-    {
-        return NULL;
-    }
-
+    diskItem = PhCreateObject(sizeof(FW_EVENT_ITEM), FwObjectType);
     memset(diskItem, 0, sizeof(FW_EVENT_ITEM));
 
     diskItem->Index = itemCount;
@@ -638,12 +629,7 @@ BOOLEAN StartFwMonitor(
  
     FwNodeList = PhCreateList(1);
 
-    PhCreateObjectType(
-        &FwObjectType,
-        L"FwObject",
-        0,
-        FwObjectTypeDeleteProcedure
-        );
+    FwObjectType = PhCreateObjectType(L"FwObject", 0, FwObjectTypeDeleteProcedure);
 
     // Create a non-dynamic BFE session
     if (FwpmEngineOpen(
