@@ -22,6 +22,7 @@
 
 #include "fwmon.h"
 #include "fwtabp.h"
+#include "..\..\plugins\include\toolstatusintf.h"
 
 static HWND FwTreeNewHandle = NULL;
 static ULONG FwTreeNewSortColumn = 0;
@@ -37,6 +38,17 @@ static PH_CALLBACK_REGISTRATION FwItemRemovedRegistration;
 static PH_CALLBACK_REGISTRATION FwItemsUpdatedRegistration;
 static BOOLEAN FwNeedsRedraw = FALSE;
 
+static PH_TN_FILTER_SUPPORT FilterSupport;
+static PTOOLSTATUS_INTERFACE ToolStatusInterface;
+static PH_CALLBACK_REGISTRATION SearchChangedRegistration;
+
+VOID NTAPI EtpToolStatusActivateContent(
+    _In_ BOOLEAN Select
+    );
+
+HWND NTAPI EtpToolStatusGetTreeNewHandle(
+    VOID
+    );
 INT_PTR CALLBACK FwTabErrorDialogProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
@@ -44,30 +56,30 @@ INT_PTR CALLBACK FwTabErrorDialogProc(
     _In_ LPARAM lParam
     );
 
-#define SORT_FUNCTION(Column) FwTreeNewCompare##Column
-#define BEGIN_SORT_FUNCTION(Column) static int __cdecl FwTreeNewCompare##Column( \
-    _In_ const void *_elem1, \
-    _In_ const void *_elem2 \
-    ) \
-{ \
-    PFW_EVENT_NODE node1 = *(PFW_EVENT_NODE*)_elem1; \
-    PFW_EVENT_NODE node2 = *(PFW_EVENT_NODE*)_elem2; \
-    PFW_EVENT_ITEM fwItem1 = node1->EventItem; \
-    PFW_EVENT_ITEM fwItem2 = node2->EventItem; \
-    int sortResult = 0;
-
-#define END_SORT_FUNCTION \
-    if (sortResult == 0) \
-    sortResult = uintcmp(fwItem1->Index, fwItem2->Index); \
-    \
-    return PhModifySort(sortResult, FwTreeNewSortOrder); \
-}
-
-BEGIN_SORT_FUNCTION(Time)
-{
-    sortResult = uint64cmp(fwItem1->AddedTime.QuadPart, fwItem2->AddedTime.QuadPart);
-}
-END_SORT_FUNCTION
+//#define SORT_FUNCTION(Column) FwTreeNewCompare##Column
+//#define BEGIN_SORT_FUNCTION(Column) static int __cdecl FwTreeNewCompare##Column( \
+//    _In_ const void *_elem1, \
+//    _In_ const void *_elem2 \
+//    ) \
+//{ \
+//    PFW_EVENT_NODE node1 = *(PFW_EVENT_NODE*)_elem1; \
+//    PFW_EVENT_NODE node2 = *(PFW_EVENT_NODE*)_elem2; \
+//    PFW_EVENT_ITEM fwItem1 = node1->EventItem; \
+//    PFW_EVENT_ITEM fwItem2 = node2->EventItem; \
+//    int sortResult = 0;
+//
+//#define END_SORT_FUNCTION \
+//    if (sortResult == 0) \
+//    sortResult = uintcmp(fwItem1->Index, fwItem2->Index); \
+//    \
+//    return PhModifySort(sortResult, FwTreeNewSortOrder); \
+//}
+//
+//BEGIN_SORT_FUNCTION(Time)
+//{
+//    sortResult = uint64cmp(fwItem1->AddedTime.QuadPart, fwItem2->AddedTime.QuadPart);
+//}
+//END_SORT_FUNCTION
 
 VOID InitializeFwTab(
     VOID
@@ -75,7 +87,15 @@ VOID InitializeFwTab(
 {
     PH_ADDITIONAL_TAB_PAGE tabPage;
     PPH_ADDITIONAL_TAB_PAGE addedTabPage;
-    //PPH_PLUGIN toolStatusPlugin;
+    PPH_PLUGIN toolStatusPlugin;
+
+    if (toolStatusPlugin = PhFindPlugin(TOOLSTATUS_PLUGIN_NAME))
+    {
+        ToolStatusInterface = PhGetPluginInformation(toolStatusPlugin)->Interface;
+
+        if (ToolStatusInterface->Version < TOOLSTATUS_INTERFACE_VERSION)
+            ToolStatusInterface = NULL;
+    }
 
     memset(&tabPage, 0, sizeof(PH_ADDITIONAL_TAB_PAGE));
     tabPage.Text = L"Firewall";
@@ -85,6 +105,16 @@ VOID InitializeFwTab(
     tabPage.SaveContentCallback = FwTabSaveContentCallback;
     tabPage.FontChangedCallback = FwTabFontChangedCallback;
     addedTabPage = ProcessHacker_AddTabPage(PhMainWndHandle, &tabPage);
+
+    if (ToolStatusInterface)
+    {
+        PTOOLSTATUS_TAB_INFO tabInfo;
+
+        tabInfo = ToolStatusInterface->RegisterTabInfo(addedTabPage->Index);
+        tabInfo->BannerText = L"Search Firewall";
+        tabInfo->ActivateContent = FwToolStatusActivateContent;
+        tabInfo->GetTreeNewHandle = FwToolStatusGetTreeNewHandle;
+    }
 }
 
 HWND NTAPI FwTabCreateFunction(
@@ -217,9 +247,17 @@ VOID InitializeFwTreeList(
     PhAddTreeNewColumn(hwnd, FWTNC_RULEDESCRIPTION, TRUE, L"Description", 180, PH_ALIGN_LEFT, 12, 0);     
 
     TreeNew_SetRedraw(hwnd, TRUE);
-    TreeNew_SetSort(hwnd, FWTNC_TIME, DescendingSortOrder);
+    //TreeNew_SetSort(hwnd, FWTNC_TIME, DescendingSortOrder);
 
     LoadSettingsFwTreeList();
+ 
+    PhInitializeTreeNewFilterSupport(&FilterSupport, hwnd, FwNodeList);
+
+    if (ToolStatusInterface)
+    {
+        PhRegisterCallback(ToolStatusInterface->SearchChangedEvent, FwSearchChangedHandler, NULL, &SearchChangedRegistration);
+        PhAddTreeNewFilter(&FilterSupport, FwSearchFilterCallback, NULL);
+    }
 }
 
 VOID LoadSettingsFwTreeList(
@@ -276,6 +314,9 @@ PFW_EVENT_NODE AddFwNode(
     PhAcquireQueuedLockExclusive(&FwLock);
     PhAddItemList(FwNodeList, FwNode);
     PhReleaseQueuedLockExclusive(&FwLock);
+        
+    if (FilterSupport.NodeList)
+        FwNode->Node.Visible = PhApplyTreeNewFiltersToNode(&FilterSupport, &FwNode->Node);
 
     TreeNew_NodesStructured(FwTreeNewHandle);
 
@@ -358,21 +399,21 @@ BOOLEAN NTAPI FwTreeNewCallback(
 
             if (!getChildren->Node)
             {
-                static PVOID sortFunctions[] =
-                {
-                    SORT_FUNCTION(Time)
-                };
-                int (__cdecl *sortFunction)(const void *, const void *);
+                //static PVOID sortFunctions[] =
+                //{
+                //    SORT_FUNCTION(Time)
+                //};
+                //int (__cdecl *sortFunction)(const void *, const void *);
 
-                if (FwTreeNewSortColumn < FWTNC_MAXIMUM)
-                    sortFunction = sortFunctions[FwTreeNewSortColumn];
-                else
-                    sortFunction = NULL;
+                //if (FwTreeNewSortColumn < FWTNC_MAXIMUM)
+                //    sortFunction = sortFunctions[FwTreeNewSortColumn];
+                //else
+                //    sortFunction = NULL;
 
-                if (sortFunction)
-                {
-                    qsort(FwNodeList->Items, FwNodeList->Count, sizeof(PVOID), sortFunction);
-                }
+                //if (sortFunction)
+                //{
+                //    qsort(FwNodeList->Items, FwNodeList->Count, sizeof(PVOID), sortFunction);
+                //}
 
                 getChildren->Children = (PPH_TREENEW_NODE *)FwNodeList->Items;
                 getChildren->NumberOfChildren = FwNodeList->Count;
@@ -823,6 +864,60 @@ static VOID NTAPI OnFwItemsUpdated(
     }
 
     InvalidateRect(FwTreeNewHandle, NULL, FALSE);
+}
+
+VOID NTAPI FwSearchChangedHandler(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    if (!FwEnabled)
+        return;
+
+    PhApplyTreeNewFilters(&FilterSupport);
+}
+
+BOOLEAN NTAPI FwSearchFilterCallback(
+    _In_ PPH_TREENEW_NODE Node,
+    _In_opt_ PVOID Context
+    )
+{
+    PFW_EVENT_NODE fwNode = (PFW_EVENT_NODE)Node;
+    PTOOLSTATUS_WORD_MATCH wordMatch = ToolStatusInterface->WordMatch;
+
+    if (PhIsNullOrEmptyString(ToolStatusInterface->GetSearchboxText()))
+        return TRUE;
+
+    if (wordMatch(&fwNode->EventItem->ProcessNameString))
+        return TRUE;
+
+    if (wordMatch(&fwNode->EventItem->LocalAddressString->sr))
+        return TRUE;
+
+    if (wordMatch(&fwNode->EventItem->RemoteAddressString->sr))
+        return TRUE;
+
+    return FALSE;
+}
+
+VOID NTAPI FwToolStatusActivateContent(
+    _In_ BOOLEAN Select
+    )
+{
+    SetFocus(FwTreeNewHandle);
+
+    if (Select)
+    {
+        if (TreeNew_GetFlatNodeCount(FwTreeNewHandle) > 0)
+            SelectAndEnsureVisibleFwNode((PFW_EVENT_NODE)TreeNew_GetFlatNode(FwTreeNewHandle, 0));
+    }
+}
+
+HWND NTAPI FwToolStatusGetTreeNewHandle(
+    VOID
+    )
+{
+    return FwTreeNewHandle;
 }
 
 INT_PTR CALLBACK FwTabErrorDialogProc(

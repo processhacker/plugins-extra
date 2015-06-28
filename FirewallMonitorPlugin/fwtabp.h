@@ -135,4 +135,22 @@ VOID NTAPI OnFwItemsUpdated(
     _In_ PVOID Parameter
     );
 
+BOOLEAN NTAPI FwSearchFilterCallback(
+    _In_ PPH_TREENEW_NODE Node,
+    _In_opt_ PVOID Context
+    );
+
+VOID NTAPI FwSearchChangedHandler(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    );
+
+VOID NTAPI FwToolStatusActivateContent(
+    _In_ BOOLEAN Select
+    );
+
+HWND NTAPI FwToolStatusGetTreeNewHandle(
+    VOID
+    );
+
 #endif
