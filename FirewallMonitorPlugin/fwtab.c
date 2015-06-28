@@ -520,7 +520,7 @@ BOOLEAN NTAPI FwTreeNewCallback(
             PPH_TREENEW_MOUSE_EVENT mouseEvent = (PPH_TREENEW_MOUSE_EVENT)Parameter1;
             node = (PFW_EVENT_NODE)mouseEvent->Node;
 
-            PhCreateThread(0, ShowFwRuleProperties, node);
+            //PhCreateThread(0, ShowFwRuleProperties, node);
         }
         return TRUE;
     case TreeNewContextMenu:
@@ -646,7 +646,7 @@ VOID HandleFwCommand(
     case ID_FW_PROPERTIES:
         {
             PFW_EVENT_NODE fwItem = GetSelectedFwItem();
-            PhCreateThread(0, ShowFwRuleProperties, fwItem);
+            //PhCreateThread(0, ShowFwRuleProperties, fwItem);
         }
         break;
     }
