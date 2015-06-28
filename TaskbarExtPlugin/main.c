@@ -214,8 +214,8 @@ static VOID NTAPI ShowOptionsCallback(
 }
 
 static VOID NTAPI MainWindowShowingCallback(
-    __in_opt PVOID Parameter,
-    __in_opt PVOID Context
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
     )
 {
     if (WindowsVersion < WINDOWS_7)
@@ -225,9 +225,9 @@ static VOID NTAPI MainWindowShowingCallback(
 }
 
 LOGICAL DllMain(
-    __in HINSTANCE Instance,
-    __in ULONG Reason,
-    __reserved PVOID Reserved
+    _In_ HINSTANCE Instance,
+    _In_ ULONG Reason,
+    _Reserved_ PVOID Reserved
     )
 {
     switch (Reason)

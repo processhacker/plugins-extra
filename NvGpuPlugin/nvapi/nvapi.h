@@ -5070,7 +5070,7 @@ typedef struct _NV_TIMING_INPUT
 //!
 //! \ingroup dispcontrol
 ///////////////////////////////////////////////////////////////////////////////
-NVAPI_INTERFACE NvAPI_DISP_GetTiming( _In_ NvU32 displayId,_In_ NV_TIMING_INPUT *timingInput, __out NV_TIMING *pTiming); 
+NVAPI_INTERFACE NvAPI_DISP_GetTiming( _In_ NvU32 displayId,_In_ NV_TIMING_INPUT *timingInput, _Out_ NV_TIMING *pTiming); 
 
 
 
@@ -6093,7 +6093,7 @@ NVAPI_INTERFACE NvAPI_Mosaic_GetCurrentTopo(NV_MOSAIC_TOPO_BRIEF *pTopoBrief, NV
 //!
 //! \ingroup gsyncapi
 ///////////////////////////////////////////////////////////////////////////////
-NVAPI_INTERFACE NvAPI_GSync_EnumSyncDevices(__out NvGSyncDeviceHandle nvGSyncHandles[NVAPI_MAX_GSYNC_DEVICES], __out NvU32 *gsyncCount);
+NVAPI_INTERFACE NvAPI_GSync_EnumSyncDevices(_Out_ NvGSyncDeviceHandle nvGSyncHandles[NVAPI_MAX_GSYNC_DEVICES], _Out_ NvU32 *gsyncCount);
 
 
 
@@ -8213,7 +8213,7 @@ typedef NVAPI_STEREO_CAPS_V1    NVAPI_STEREO_CAPS;
 //!
 //! \ingroup stereoapi
 ///////////////////////////////////////////////////////////////////////////////
-NVAPI_INTERFACE NvAPI_Stereo_GetStereoSupport(_In_ NvMonitorHandle hMonitor, __out NVAPI_STEREO_CAPS *pCaps);
+NVAPI_INTERFACE NvAPI_Stereo_GetStereoSupport(_In_ NvMonitorHandle hMonitor, _Out_ NVAPI_STEREO_CAPS *pCaps);
 
 
 //! \ingroup stereoapi
