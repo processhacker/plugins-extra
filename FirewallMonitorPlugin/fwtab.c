@@ -56,30 +56,30 @@ INT_PTR CALLBACK FwTabErrorDialogProc(
     _In_ LPARAM lParam
     );
 
-//#define SORT_FUNCTION(Column) FwTreeNewCompare##Column
-//#define BEGIN_SORT_FUNCTION(Column) static int __cdecl FwTreeNewCompare##Column( \
-//    _In_ const void *_elem1, \
-//    _In_ const void *_elem2 \
-//    ) \
-//{ \
-//    PFW_EVENT_NODE node1 = *(PFW_EVENT_NODE*)_elem1; \
-//    PFW_EVENT_NODE node2 = *(PFW_EVENT_NODE*)_elem2; \
-//    PFW_EVENT_ITEM fwItem1 = node1->EventItem; \
-//    PFW_EVENT_ITEM fwItem2 = node2->EventItem; \
-//    int sortResult = 0;
-//
-//#define END_SORT_FUNCTION \
-//    if (sortResult == 0) \
-//    sortResult = uintcmp(fwItem1->Index, fwItem2->Index); \
-//    \
-//    return PhModifySort(sortResult, FwTreeNewSortOrder); \
-//}
-//
-//BEGIN_SORT_FUNCTION(Time)
-//{
-//    sortResult = uint64cmp(fwItem1->AddedTime.QuadPart, fwItem2->AddedTime.QuadPart);
-//}
-//END_SORT_FUNCTION
+#define SORT_FUNCTION(Column) FwTreeNewCompare##Column
+#define BEGIN_SORT_FUNCTION(Column) static int __cdecl FwTreeNewCompare##Column( \
+    _In_ const void *_elem1, \
+    _In_ const void *_elem2 \
+    ) \
+{ \
+    PFW_EVENT_NODE node1 = *(PFW_EVENT_NODE*)_elem1; \
+    PFW_EVENT_NODE node2 = *(PFW_EVENT_NODE*)_elem2; \
+    PFW_EVENT_ITEM fwItem1 = node1->EventItem; \
+    PFW_EVENT_ITEM fwItem2 = node2->EventItem; \
+    int sortResult = 0;
+
+#define END_SORT_FUNCTION \
+    if (sortResult == 0) \
+    sortResult = uintcmp(fwItem1->Index, fwItem2->Index); \
+    \
+    return PhModifySort(sortResult, FwTreeNewSortOrder); \
+}
+
+BEGIN_SORT_FUNCTION(Time)
+{
+    sortResult = uint64cmp(fwItem1->AddedTime.QuadPart, fwItem2->AddedTime.QuadPart);
+}
+END_SORT_FUNCTION
 
 VOID InitializeFwTab(
     VOID
@@ -247,7 +247,7 @@ VOID InitializeFwTreeList(
     PhAddTreeNewColumn(hwnd, FWTNC_RULEDESCRIPTION, TRUE, L"Description", 180, PH_ALIGN_LEFT, 12, 0);     
 
     TreeNew_SetRedraw(hwnd, TRUE);
-    //TreeNew_SetSort(hwnd, FWTNC_TIME, DescendingSortOrder);
+    TreeNew_SetSort(hwnd, FWTNC_TIME, DescendingSortOrder);
 
     LoadSettingsFwTreeList();
  
@@ -399,21 +399,21 @@ BOOLEAN NTAPI FwTreeNewCallback(
 
             if (!getChildren->Node)
             {
-                //static PVOID sortFunctions[] =
-                //{
-                //    SORT_FUNCTION(Time)
-                //};
-                //int (__cdecl *sortFunction)(const void *, const void *);
+                static PVOID sortFunctions[] =
+                {
+                    SORT_FUNCTION(Time)
+                };
+                int (__cdecl *sortFunction)(const void *, const void *);
 
-                //if (FwTreeNewSortColumn < FWTNC_MAXIMUM)
-                //    sortFunction = sortFunctions[FwTreeNewSortColumn];
-                //else
-                //    sortFunction = NULL;
+                if (FwTreeNewSortColumn < FWTNC_MAXIMUM)
+                    sortFunction = sortFunctions[FwTreeNewSortColumn];
+                else
+                    sortFunction = NULL;
 
-                //if (sortFunction)
-                //{
-                //    qsort(FwNodeList->Items, FwNodeList->Count, sizeof(PVOID), sortFunction);
-                //}
+                if (sortFunction)
+                {
+                    qsort(FwNodeList->Items, FwNodeList->Count, sizeof(PVOID), sortFunction);
+                }
 
                 getChildren->Children = (PPH_TREENEW_NODE *)FwNodeList->Items;
                 getChildren->NumberOfChildren = FwNodeList->Count;

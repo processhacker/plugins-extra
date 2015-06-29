@@ -14,9 +14,9 @@
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "Ws2_32.lib")
 
-#define SETTING_PREFIX L"dmex.FwTabPlugin"
-#define SETTING_NAME_FW_TREE_LIST_COLUMNS (SETTING_PREFIX L".FwTreeListColumns")
-#define SETTING_NAME_FW_TREE_LIST_SORT (SETTING_PREFIX L".FwTreeListSort")
+#define PLUGIN_NAME L"dmex.FirewallMonitor"
+#define SETTING_NAME_FW_TREE_LIST_COLUMNS (PLUGIN_NAME L".TreeListColumns")
+#define SETTING_NAME_FW_TREE_LIST_SORT (PLUGIN_NAME L".TreeListSort")
 
 extern PPH_PLUGIN PluginInstance;
 extern BOOLEAN FwEnabled;

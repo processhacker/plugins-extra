@@ -72,13 +72,13 @@ LOGICAL DllMain(
     case DLL_PROCESS_ATTACH:
         {
             PPH_PLUGIN_INFORMATION info;
-            PH_SETTING_CREATE settings[] =
+            static PH_SETTING_CREATE settings[] =
             {
                 { StringSettingType, SETTING_NAME_FW_TREE_LIST_COLUMNS, L"" },
                 { IntegerPairSettingType, SETTING_NAME_FW_TREE_LIST_SORT, L"0,2" }
             };
 
-            PluginInstance = PhRegisterPlugin(SETTING_PREFIX, Instance, &info);
+            PluginInstance = PhRegisterPlugin(PLUGIN_NAME, Instance, &info);
 
             if (!PluginInstance)
                 return FALSE;
