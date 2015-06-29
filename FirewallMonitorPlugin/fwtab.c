@@ -141,8 +141,6 @@ HWND NTAPI FwTabCreateFunction(
             NULL,
             NULL
             );
-
-        InitializeFwTreeList(hwnd);
     }
     else
     {
@@ -153,6 +151,8 @@ HWND NTAPI FwTabCreateFunction(
             FwTabErrorDialogProc
             );
     }
+
+    InitializeFwTreeList(hwnd);
 
     PhRegisterCallback(
         &FwItemAddedEvent,
@@ -242,7 +242,7 @@ VOID InitializeFwTreeList(
     PhAddTreeNewColumnEx(hwnd, FWTNC_REMOTEPORT, TRUE, L"Remote Port", 50, PH_ALIGN_LEFT, MAXINT, DT_LEFT, TRUE);
     PhAddTreeNewColumn(hwnd, FWTNC_USER, FALSE, L"User", 120, PH_ALIGN_LEFT, MAXINT, DT_PATH_ELLIPSIS);
     PhAddTreeNewColumnEx(hwnd, FWTNC_TIME, TRUE, L"Time", 30, PH_ALIGN_LEFT, MAXINT, 0, TRUE);
-    
+    // Hidden columns
     PhAddTreeNewColumn(hwnd, FWTNC_RULENAME, TRUE, L"Rule", 200, PH_ALIGN_LEFT, MAXINT, 0);
     PhAddTreeNewColumn(hwnd, FWTNC_RULEDESCRIPTION, TRUE, L"Description", 180, PH_ALIGN_LEFT, 12, 0);     
 

@@ -297,8 +297,7 @@ static VOID CALLBACK DropEventCallback(
         fwEventItem->RemotePortString = PhFormatString(L"%d", FwEvent->header.remotePort);
     }
  
-    // To/From IP Address
-    if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_IP_VERSION_SET) != 0) // The ipVersion member is set.
+    if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_IP_VERSION_SET) != 0)
     {
         if (FwEvent->header.ipVersion == FWP_IP_VERSION_V4)
         {
@@ -306,7 +305,7 @@ static VOID CALLBACK DropEventCallback(
             {
                 //IN_ADDR ipv4Address = { 0 };
                 //PWSTR ipv4StringTerminator = 0;
-                //WCHAR ipv4AddressString[INET_ADDRSTRLEN] = { '\0' };
+                //WCHAR ipv4AddressString[INET_ADDRSTRLEN] = L"";
                 //
                 //ULONG localAddrV4 = _byteswap_ulong(FwEvent->header.localAddrV4);
                 //
@@ -328,7 +327,7 @@ static VOID CALLBACK DropEventCallback(
             {           
                 //IN_ADDR ipv4Address = { 0 };
                 //PWSTR ipv4StringTerminator = 0;
-                //WCHAR ipv4AddressString[INET_ADDRSTRLEN] = { '\0' };
+                //WCHAR ipv4AddressString[INET_ADDRSTRLEN] = L"";
                 //
                 //ULONG remoteAddrV4 = _byteswap_ulong(FwEvent->header.remoteAddrV4);
                 //
@@ -402,7 +401,6 @@ static VOID CALLBACK DropEventCallback(
         }
     }
 
-    // Process filepath
     if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_APP_ID_SET) != 0)
     {
         PPH_STRING FileName;
@@ -443,21 +441,11 @@ static VOID CALLBACK DropEventCallback(
         PhInitializeStringRef(&fwEventItem->ProcessNameString, L"unknown");
     }
 
-    // Username
     if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_USER_ID_SET) != 0)
     {
-        SID_NAME_USE accountType = SidTypeUnknown;
-        ULONG accountNameLength = MAX_PATH;
-        ULONG domainNameLength = MAX_PATH;
-        WCHAR AcctName[MAX_PATH] = L"";
-        WCHAR DomainName[MAX_PATH] = L"";
-
-        if (IsValidSid(FwEvent->header.userId))
+        if (RtlValidSid(FwEvent->header.userId))
         {
-            if (LookupAccountSid(NULL, FwEvent->header.userId, AcctName, &accountNameLength, DomainName, &domainNameLength, &accountType))
-            {
-                fwEventItem->UserNameString = PhFormatString(L"%s\\%s", DomainName, AcctName);
-            }
+            fwEventItem->UserNameString = PhGetSidFullName(FwEvent->header.userId, TRUE, NULL);
         }
     }
 
@@ -476,7 +464,7 @@ static VOID CALLBACK DropEventCallback(
         // Indicates an existing connection was reauthorized.
     }
 
-    if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_REAUTH_REASON_SET) != 0)
+    if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_PACKAGE_ID_SET) != 0)
     {
         // The packageSid member is set.
     }
@@ -579,7 +567,7 @@ static VOID CALLBACK DropEventCallback(
         break;
     case IPPROTO_NONE:
     default:
-        PhInitializeStringRef(&fwEventItem->ProtocalString, PhFormatString(L"Unknown %d", FwEvent->header.ipProtocol)->Buffer);
+        PhInitializeStringRef(&fwEventItem->ProtocalString, L"Unknown");
         break;
     }
 
@@ -599,6 +587,9 @@ static VOID NTAPI ProcessesUpdatedCallback(
     static LARGE_INTEGER systemTime;
 
     PhQuerySystemTime(&systemTime);
+
+    if (!FwNodeList)
+        return;
 
     for (ULONG i = 0; i < FwNodeList->Count; i++)
     {
@@ -627,18 +618,13 @@ BOOLEAN StartFwMonitor(
     session.displayData.name  = L"PhFirewallMonitoringSession";
     session.displayData.description = L"Non-Dynamic session for Process Hacker";
  
-    FwNodeList = PhCreateList(1);
-
+   
+    FwNodeList = PhCreateList(100);
     FwObjectType = PhCreateObjectType(L"FwObject", 0, FwObjectTypeDeleteProcedure);
 
+
     // Create a non-dynamic BFE session
-    if (FwpmEngineOpen(
-        NULL,
-        RPC_C_AUTHN_WINNT,
-        NULL,
-        &session,
-        &FwEngineHandle
-        ) != ERROR_SUCCESS)
+    if (FwpmEngineOpen(NULL, RPC_C_AUTHN_WINNT, NULL, &session, &FwEngineHandle) != ERROR_SUCCESS)
     {
         return FALSE;
     }
@@ -647,11 +633,7 @@ BOOLEAN StartFwMonitor(
     value.uint32 = 1;
 
     // Enable collection of NetEvents
-    if (FwpmEngineSetOption(
-        FwEngineHandle,
-        FWPM_ENGINE_COLLECT_NET_EVENTS,
-        &value
-        ) != ERROR_SUCCESS)
+    if (FwpmEngineSetOption(FwEngineHandle, FWPM_ENGINE_COLLECT_NET_EVENTS, &value) != ERROR_SUCCESS)
     {
         return FALSE;
     }
@@ -659,20 +641,12 @@ BOOLEAN StartFwMonitor(
     value.type = FWP_UINT32;
     value.uint32 = FWPM_NET_EVENT_KEYWORD_CAPABILITY_DROP | FWPM_NET_EVENT_KEYWORD_CAPABILITY_ALLOW | FWPM_NET_EVENT_KEYWORD_CLASSIFY_ALLOW;
 
-    if (FwpmEngineSetOption(
-        FwEngineHandle,
-        FWPM_ENGINE_NET_EVENT_MATCH_ANY_KEYWORDS,
-        &value
-        ) != ERROR_SUCCESS)
+    if (FwpmEngineSetOption(FwEngineHandle, FWPM_ENGINE_NET_EVENT_MATCH_ANY_KEYWORDS, &value) != ERROR_SUCCESS)
     {
         return FALSE;
     }
 
-    if (FwpmEngineSetOption(
-        FwEngineHandle,
-        FWPM_ENGINE_MONITOR_IPSEC_CONNECTIONS,
-        &value
-        ) != ERROR_SUCCESS)
+    if (FwpmEngineSetOption(FwEngineHandle, FWPM_ENGINE_MONITOR_IPSEC_CONNECTIONS, &value) != ERROR_SUCCESS)
     {
         return FALSE;
     }
@@ -681,13 +655,7 @@ BOOLEAN StartFwMonitor(
     subscription.enumTemplate = &templ; // get events for all conditions
 
     // Subscribe to the events
-    if (FwpmNetEventSubscribe(
-        FwEngineHandle,
-        &subscription,
-        DropEventCallback,
-        NULL,
-        &FwEventHandle
-        ) != ERROR_SUCCESS)
+    if (FwpmNetEventSubscribe(FwEngineHandle, &subscription, DropEventCallback, NULL, &FwEventHandle) != ERROR_SUCCESS)
     {
         StopFwMonitor();
         return FALSE;

@@ -33,7 +33,7 @@ static VOID NTAPI LoadCallback(
     _In_opt_ PVOID Context
     )
 {
-
+    FwEnabled = StartFwMonitor();
 }
 
 static VOID NTAPI UnloadCallback(
@@ -57,7 +57,6 @@ static VOID NTAPI MainWindowShowingCallback(
     _In_opt_ PVOID Context
     )
 {
-    FwEnabled = StartFwMonitor();
     InitializeFwTab();
 }
 
@@ -72,7 +71,7 @@ LOGICAL DllMain(
     case DLL_PROCESS_ATTACH:
         {
             PPH_PLUGIN_INFORMATION info;
-            static PH_SETTING_CREATE settings[] =
+            PH_SETTING_CREATE settings[] =
             {
                 { StringSettingType, SETTING_NAME_FW_TREE_LIST_COLUMNS, L"" },
                 { IntegerPairSettingType, SETTING_NAME_FW_TREE_LIST_SORT, L"0,2" }
@@ -106,7 +105,6 @@ LOGICAL DllMain(
                 NULL,
                 &PluginShowOptionsCallbackRegistration
                 );
-
             PhRegisterCallback(
                 PhGetGeneralCallback(GeneralCallbackMainWindowShowing),
                 MainWindowShowingCallback,
