@@ -132,8 +132,8 @@ static VOID CALLBACK DropEventCallback(
                 PhInitializeStringRef(&fwEventItem->DirectionString, L"Forward");
                 break;
             default:
-                //PhInitializeStringRef(&fwEventItem->DirectionString, L"Unknown");
-                return;
+                PhInitializeStringRef(&fwEventItem->DirectionString, L"Unknown");
+                break;
             }
         }
         break;

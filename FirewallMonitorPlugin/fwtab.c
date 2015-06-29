@@ -572,9 +572,6 @@ BOOLEAN NTAPI FwTreeNewCallback(
         }
         return TRUE;
     case TreeNewDestroying:
-        {
-            SaveSettingsFwTreeList();
-        }
         return TRUE;
     }
 
