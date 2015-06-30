@@ -27,6 +27,7 @@ typedef struct _FW_EVENT_ITEM
     UINT16 LocalPort;
     UINT16 RemotePort;
     ULONG Index;
+    PPH_STRING IndexString;
 
     LARGE_INTEGER AddedTime;
 
@@ -50,23 +51,21 @@ typedef struct _FW_EVENT_ITEM
     PPH_STRING FwRuleLayerDescriptionString;
 } FW_EVENT_ITEM, *PFW_EVENT_ITEM;
 
-typedef enum _FWTC_COLUMN
-{
-    FWTNC_TIME,
-    FWTNC_ACTION,
-    FWTNC_RULENAME,
-    FWTNC_RULEDESCRIPTION,
-    FWTNC_PROCESSBASENAME,
-    FWTNC_PROCESSFILENAME,
-    FWTNC_USER,
-    FWTNC_LOCALADDRESS,
-    FWTNC_LOCALPORT,
-    FWTNC_REMOTEADDRESS,
-    FWTNC_REMOTEPORT,
-    FWTNC_PROTOCOL,
-    FWTNC_DIRECTION,
-    FWTNC_MAXIMUM
-} FWTC_COLUMN;
+#define FWTNC_TIME 0
+#define FWTNC_ACTION 1
+#define FWTNC_RULENAME 2
+#define FWTNC_RULEDESCRIPTION 3
+#define FWTNC_PROCESSBASENAME 4
+#define FWTNC_PROCESSFILENAME 5
+#define FWTNC_USER 6
+#define FWTNC_LOCALADDRESS 7
+#define FWTNC_LOCALPORT 8
+#define FWTNC_REMOTEADDRESS 9
+#define FWTNC_REMOTEPORT 10
+#define FWTNC_PROTOCOL 11
+#define FWTNC_DIRECTION 12
+#define FWTNC_INDEX 13
+#define FWTNC_MAXIMUM 14
 
 typedef struct _FW_EVENT_NODE
 {
@@ -76,6 +75,7 @@ typedef struct _FW_EVENT_NODE
 
     PFW_EVENT_ITEM EventItem;
 } FW_EVENT_NODE, *PFW_EVENT_NODE;
+
 
 // monitor
 extern PH_CALLBACK FwItemAddedEvent;
@@ -92,5 +92,14 @@ VOID SaveSettingsFwTreeList(VOID);
 NTSTATUS NTAPI ShowFwRuleProperties(
     _In_ PVOID ThreadParameter
     );
+
+
+typedef ULONG (WINAPI* _FwpmNetEventSubscribe1)(
+   _In_ HANDLE engineHandle,
+   _In_ const FWPM_NET_EVENT_SUBSCRIPTION0* subscription,
+   _In_ FWPM_NET_EVENT_CALLBACK1 callback,
+   _In_opt_ void* context,
+   _Out_ HANDLE* eventsHandle
+   );
 
 #endif

@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Firewall Monitor
  *
- * Copyright (C) 2014 dmex
+ * Copyright (C) 2015 dmex
  *
  * This file is part of Process Hacker.
  *

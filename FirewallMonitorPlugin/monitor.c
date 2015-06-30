@@ -1,24 +1,24 @@
 /*
-* Process Hacker Firewall Monitor -
-*   firewall monitor
-*
-* Copyright (C) 2012 dmex
-*
-* This file is part of Process Hacker.
-*
-* Process Hacker is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* Process Hacker is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with Process Hacker.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Process Hacker Extra Plugins -
+ *   Firewall Monitor
+ *
+ * Copyright (C) 2015 dmex
+ *
+ * This file is part of Process Hacker.
+ *
+ * Process Hacker is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Process Hacker is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Process Hacker.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "fwmon.h"
 
@@ -32,22 +32,18 @@ PH_CALLBACK_DECLARE(FwItemRemovedEvent);
 PH_CALLBACK_DECLARE(FwItemsUpdatedEvent);
 
 static PH_CALLBACK_REGISTRATION ProcessesUpdatedCallbackRegistration;
-static PPH_OBJECT_TYPE FwObjectType;
+static PPH_OBJECT_TYPE FwObjectType = NULL;
 static HANDLE FwEngineHandle = NULL;
 static HANDLE FwEventHandle = NULL;
 static HANDLE FwEnumHandle = NULL;
+static _FwpmNetEventSubscribe1 FwpmNetEventSubscribe1_I = NULL;
 
 static VOID NTAPI FwObjectTypeDeleteProcedure(
     _In_ PVOID Object,
     _In_ ULONG Flags
     )
 {
-    PFW_EVENT_ITEM fwEventItem = (PFW_EVENT_ITEM)Object;
-
-    if (fwEventItem)
-    {
-        PhDereferenceObject(fwEventItem);
-    }
+    PhClearReference(&Object);
 }
 
 PFW_EVENT_ITEM EtCreateFirewallEntryItem(
@@ -61,11 +57,11 @@ PFW_EVENT_ITEM EtCreateFirewallEntryItem(
     memset(diskItem, 0, sizeof(FW_EVENT_ITEM));
 
     diskItem->Index = itemCount;
+    diskItem->IndexString = PhFormatString(L"%lu", itemCount);
     itemCount++;
 
     return diskItem;
 }
-
 
 static VOID CALLBACK DropEventCallback(
     _Inout_ PVOID FwContext,
@@ -74,106 +70,98 @@ static VOID CALLBACK DropEventCallback(
 {
     PFW_EVENT_ITEM fwEventItem = EtCreateFirewallEntryItem();
 
-
     switch (FwEvent->type)
     {
     case FWPM_NET_EVENT_TYPE_CLASSIFY_DROP:
-        ;
         {
-            FWPM_FILTER* fwRuleItem = NULL;
-            FWPM_LAYER* fwLayerRuleItem = NULL;
+            FWPM_FILTER* fwFilterItem = NULL;
+            FWPM_LAYER* fwLayerItem = NULL;
             FWPM_NET_EVENT_CLASSIFY_DROP* fwDropEvent = FwEvent->classifyDrop;
 
             PhInitializeStringRef(&fwEventItem->FwRuleActionString, L"DROP");
 
-            if (FwpmFilterGetById(FwEngineHandle, fwDropEvent->filterId, &fwRuleItem) == ERROR_SUCCESS)
+            if (FwpmFilterGetById(FwEngineHandle, fwDropEvent->filterId, &fwFilterItem) == ERROR_SUCCESS)
             {
-                fwEventItem->FwRuleNameString = PhCreateString(fwRuleItem->displayData.name);
-                fwEventItem->FwRuleDescriptionString = PhCreateString(fwRuleItem->displayData.description);
-
-                FwpmFreeMemory(&fwRuleItem);
-            }
-            else
-            {
-                return;
-            }
-
-            if (FwpmLayerGetById(FwEngineHandle, fwDropEvent->layerId, &fwLayerRuleItem) == ERROR_SUCCESS)
-            {
-                for (UINT32 i = 0; i < fwLayerRuleItem->numFields; i++)
+                fwEventItem->FwRuleNameString = PhCreateString(fwFilterItem->displayData.name);
+                fwEventItem->FwRuleDescriptionString = PhCreateString(fwFilterItem->displayData.description);
+                                
+                if ((fwFilterItem->action.type & FWP_ACTION_BLOCK) != 0)
                 {
-                    FWPM_FIELD fwRuleField = fwLayerRuleItem->field[i];
 
-                    switch (fwRuleField.type)
-                    {
-                    case FWPM_FIELD_RAW_DATA:
-                    case FWPM_FIELD_IP_ADDRESS:
-                    case FWPM_FIELD_FLAGS:
-                    case FWPM_FIELD_TYPE_MAX:
-                        break;
-                    default:
-                        break;
-                    }
                 }
 
-                fwEventItem->FwRuleLayerNameString = PhCreateString(fwLayerRuleItem->displayData.name);
+                FwpmFreeMemory(&fwFilterItem);
+            }
+
+            if (FwpmLayerGetById(FwEngineHandle, fwDropEvent->layerId, &fwLayerItem) == ERROR_SUCCESS)
+            {
+                for (UINT32 i = 0; i < fwLayerItem->numFields; i++)
+                {
+                    FWPM_FIELD fwRuleField = fwLayerItem->field[i];
+
+                    // http://msdn.microsoft.com/en-us/library/windows/desktop/aa363996.aspx
+
+                    if (memcmp(fwRuleField.fieldKey, &FWPM_CONDITION_ALE_APP_ID, sizeof(GUID)) == 0)
+                    {
+                        //The fully qualified device path of the application, as returned by the FwpmGetAppIdFromFileName0 function.
+                        // (For example, "\device0\hardiskvolume1\Program Files\Application.exe".)
+                        // Data type : FWP_BYTE_BLOB_TYPE
+
+                        //fwDropEvent->
+                    }
+                    else if (IsEqualGUID(fwRuleField.fieldKey, &FWPM_CONDITION_ALE_ORIGINAL_APP_ID))
+                    {
+                        // The fully qualified device path of the application, such as "\device0\hardiskvolume1\Program Files\Application.exe".
+                        // When a connection has been redirected, this will be the identifier of the originating app, 
+                        //  otherwise this will be the same as FWPM_CONDITION_ALE_APP_ID.
+                    }
+                    else if (IsEqualGUID(fwRuleField.fieldKey, &FWPM_CONDITION_ALE_USER_ID))
+                    {
+                        //The identification of the local user.
+                        //Data type : FWP_SECURITY_DESCRIPTOR_TYPE
+                    }
+                    else if (IsEqualGUID(fwRuleField.fieldKey, &FWPM_CONDITION_IP_LOCAL_ADDRESS))
+                    {
+
+                    }
+                    else if (IsEqualGUID(fwRuleField.fieldKey, &FWPM_CONDITION_IP_LOCAL_ADDRESS_TYPE))
+                    {
+                        //The local IP address type.
+                        //Possible values : Any of the following NL_ADDRESS_TYPE enumeration values.
+                        //NlatUnspecified
+                        //NlatUnicast
+                        //NlatAnycast
+                        //NlatMulticast
+                        //NlatBroadcast
+                        //Data type : FWP_UINT8
+
+                    }
+                    else if (IsEqualGUID(fwRuleField.fieldKey, &FWPM_CONDITION_IP_LOCAL_PORT))
+                    {
+                        //The local transport protocol port number.
+                        //Data type : FWP_UINT16
+                        
+                    }
+                    //else
+                    //{
+                    //    PhInitializeStringRef(&fwEventItem->FwRuleModeString, L"UNKNOWN");
+                    //}
+                }
+
+                fwEventItem->FwRuleLayerNameString = PhCreateString(fwLayerItem->displayData.name);
                 //fwEventItem->FwRuleLayerDescriptionString = PhCreateString(fwLayerRuleItem->displayData.description);
+
+                FwpmFreeMemory(&fwLayerItem);
             }
-
-            switch (fwDropEvent->msFwpDirection)
-            {
-            case FWP_DIRECTION_IN:
-                PhInitializeStringRef(&fwEventItem->DirectionString, L"In");
-                break;
-            case FWP_DIRECTION_OUT:
-                PhInitializeStringRef(&fwEventItem->DirectionString, L"Out");
-                break;
-            case FWP_DIRECTION_FORWARD:
-                PhInitializeStringRef(&fwEventItem->DirectionString, L"Forward");
-                break;
-            default:
-                PhInitializeStringRef(&fwEventItem->DirectionString, L"Unknown");
-                break;
-            }
-        }
-        break;
-    case FWPM_NET_EVENT_TYPE_CLASSIFY_ALLOW:
-        ;
-        {
-            FWPM_FILTER* fwRuleFilter = NULL;
-            FWPM_LAYER* fwRuleLayer = NULL;
-            FWPM_NET_EVENT_CLASSIFY_ALLOW* fwAllowEvent = FwEvent->classifyAllow;
-
-            PhInitializeStringRef(&fwEventItem->FwRuleActionString, L"ALLOW");
-
-            if (FwpmFilterGetById(FwEngineHandle, fwAllowEvent->filterId, &fwRuleFilter) == ERROR_SUCCESS)
-            {
-                //if (fwRuleFilter)
-                {
-                    fwEventItem->FwRuleNameString = PhCreateString(fwRuleFilter->displayData.name);
-                    fwEventItem->FwRuleDescriptionString = PhCreateString(fwRuleFilter->displayData.description);
-
-
-                    if ((fwRuleFilter->action.type & FWP_ACTION_BLOCK) != 0)
-                    {
-
-                    }
-
-                    FwpmFreeMemory(&fwRuleFilter);
-                }
-            }
-            else
-            {
-                return;
-            }
-
-            if (fwAllowEvent->isLoopback)
+            
+    
+            if (fwDropEvent->isLoopback)
             {
                 PhInitializeStringRef(&fwEventItem->DirectionString, L"Loopback");
             }
             else
             {
-                switch (fwAllowEvent->msFwpDirection)
+                switch (fwDropEvent->msFwpDirection)
                 {
                 case FWP_DIRECTION_IN:
                 case FWP_DIRECTION_INBOUND:
@@ -183,16 +171,42 @@ static VOID CALLBACK DropEventCallback(
                 case FWP_DIRECTION_OUTBOUND:
                     PhInitializeStringRef(&fwEventItem->DirectionString, L"Out");
                     break;
+                case FWP_DIRECTION_FORWARD:
+                    PhInitializeStringRef(&fwEventItem->DirectionString, L"Forward");
+                    break;
                 default:
-                    return;
+                    PhInitializeStringRef(&fwEventItem->DirectionString, L"Unknown");
+                    break;
                 }
             }
+        }
+        break;
+    case FWPM_NET_EVENT_TYPE_CLASSIFY_ALLOW:
+        {
+            FWPM_FILTER* fwFilterItem = NULL;
+            FWPM_LAYER* fwLayerItem = NULL;
+            FWPM_NET_EVENT_CLASSIFY_ALLOW* fwAllowEvent = FwEvent->classifyAllow;
 
-            if (FwpmLayerGetById(FwEngineHandle, fwAllowEvent->layerId, &fwRuleLayer) == ERROR_SUCCESS)
+            PhInitializeStringRef(&fwEventItem->FwRuleActionString, L"ALLOW");
+
+            if (FwpmFilterGetById(FwEngineHandle, fwAllowEvent->filterId, &fwFilterItem) == ERROR_SUCCESS)
             {
-                for (UINT32 i = 0; i < fwRuleLayer->numFields; i++)
+                fwEventItem->FwRuleNameString = PhCreateString(fwFilterItem->displayData.name);
+                fwEventItem->FwRuleDescriptionString = PhCreateString(fwFilterItem->displayData.description);
+
+                if ((fwFilterItem->action.type & FWP_ACTION_BLOCK) != 0)
                 {
-                    FWPM_FIELD fwRuleField = fwRuleLayer->field[i];
+
+                }
+
+                FwpmFreeMemory(&fwFilterItem);
+            }
+
+            if (FwpmLayerGetById(FwEngineHandle, fwAllowEvent->layerId, &fwLayerItem) == ERROR_SUCCESS)
+            {
+                for (UINT32 i = 0; i < fwLayerItem->numFields; i++)
+                {
+                    FWPM_FIELD fwRuleField = fwLayerItem->field[i];
 
                     // http://msdn.microsoft.com/en-us/library/windows/desktop/aa363996.aspx
 
@@ -243,8 +257,35 @@ static VOID CALLBACK DropEventCallback(
                     //}
                 }
 
-                fwEventItem->FwRuleLayerNameString = PhCreateString(fwRuleLayer->displayData.name);
+                fwEventItem->FwRuleLayerNameString = PhCreateString(fwLayerItem->displayData.name);
                 //fwEventItem->FwRuleLayerDescriptionString = PhCreateString(fwLayerRuleItem->displayData.description);
+
+                FwpmFreeMemory(&fwLayerItem);
+            }
+            
+            if (fwAllowEvent->isLoopback)
+            {
+                PhInitializeStringRef(&fwEventItem->DirectionString, L"Loopback");
+            }
+            else
+            {
+                switch (fwAllowEvent->msFwpDirection)
+                {
+                case FWP_DIRECTION_IN:
+                case FWP_DIRECTION_INBOUND:
+                    PhInitializeStringRef(&fwEventItem->DirectionString, L"In");
+                    break;
+                case FWP_DIRECTION_OUT:
+                case FWP_DIRECTION_OUTBOUND:
+                    PhInitializeStringRef(&fwEventItem->DirectionString, L"Out");
+                    break;
+                case FWP_DIRECTION_FORWARD:
+                    PhInitializeStringRef(&fwEventItem->DirectionString, L"Forward");
+                    break;
+                default:
+                    PhInitializeStringRef(&fwEventItem->DirectionString, L"Unknown");
+                    break;
+                }
             }
         }
         break;
@@ -288,13 +329,13 @@ static VOID CALLBACK DropEventCallback(
     if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_LOCAL_PORT_SET) != 0)
     {
         fwEventItem->LocalPort = FwEvent->header.localPort;
-        fwEventItem->LocalPortString = PhFormatString(L"%d", FwEvent->header.localPort);
+        fwEventItem->LocalPortString = PhFormatString(L"%u", FwEvent->header.localPort);
     }
 
     if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_REMOTE_PORT_SET) != 0)
     {
         fwEventItem->RemotePort = FwEvent->header.remotePort;
-        fwEventItem->RemotePortString = PhFormatString(L"%d", FwEvent->header.remotePort);
+        fwEventItem->RemotePortString = PhFormatString(L"%u", FwEvent->header.remotePort);
     }
  
     if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_IP_VERSION_SET) != 0)
@@ -424,7 +465,7 @@ static VOID CALLBACK DropEventCallback(
            
             fwEventItem->Icon = PhGetFileShellIcon(PhGetString(resolvedName), L".exe", FALSE);
 
-            //PhDereferenceObject(fileNameString);
+            PhDereferenceObject(fileNameString);
             PhDereferenceObject(resolvedName);
         }
         else
@@ -573,11 +614,17 @@ static VOID CALLBACK DropEventCallback(
 
     PhQuerySystemTime(&fwEventItem->AddedTime);
 
-    // Raise the disk item added event
-    PhInvokeCallback(&FwItemAddedEvent, fwEventItem);
-    PhInvokeCallback(&FwItemsUpdatedEvent, NULL);
-}
+    {
+        SYSTEMTIME systemTime;
+        PPH_STRING dateTime;
 
+        PhLargeIntegerToLocalSystemTime(&systemTime, &fwEventItem->AddedTime);
+        dateTime = PhFormatDateTime(&systemTime);
+        fwEventItem->TimeString = dateTime;
+    }
+
+    PhInvokeCallback(&FwItemAddedEvent, fwEventItem);
+}
 
 static VOID NTAPI ProcessesUpdatedCallback(
     _In_opt_ PVOID Parameter,
@@ -587,9 +634,6 @@ static VOID NTAPI ProcessesUpdatedCallback(
     static LARGE_INTEGER systemTime;
 
     PhQuerySystemTime(&systemTime);
-
-    if (!FwNodeList)
-        return;
 
     for (ULONG i = 0; i < FwNodeList->Count; i++)
     {
@@ -612,19 +656,27 @@ BOOLEAN StartFwMonitor(
     FWP_VALUE value = { FWP_EMPTY };
     FWPM_SESSION session = { 0 };
     FWPM_NET_EVENT_SUBSCRIPTION subscription = { 0 };
-    FWPM_NET_EVENT_ENUM_TEMPLATE templ = { 0 };
+    FWPM_NET_EVENT_ENUM_TEMPLATE eventTemplate = { 0 };
 
     session.flags = 0;
     session.displayData.name  = L"PhFirewallMonitoringSession";
     session.displayData.description = L"Non-Dynamic session for Process Hacker";
  
+
+    FwpmNetEventSubscribe1_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe1");
    
     FwNodeList = PhCreateList(100);
     FwObjectType = PhCreateObjectType(L"FwObject", 0, FwObjectTypeDeleteProcedure);
 
 
     // Create a non-dynamic BFE session
-    if (FwpmEngineOpen(NULL, RPC_C_AUTHN_WINNT, NULL, &session, &FwEngineHandle) != ERROR_SUCCESS)
+    if (FwpmEngineOpen(
+        NULL, 
+        RPC_C_AUTHN_WINNT, 
+        NULL, 
+        &session, 
+        &FwEngineHandle
+        ) != ERROR_SUCCESS)
     {
         return FALSE;
     }
@@ -633,32 +685,67 @@ BOOLEAN StartFwMonitor(
     value.uint32 = 1;
 
     // Enable collection of NetEvents
-    if (FwpmEngineSetOption(FwEngineHandle, FWPM_ENGINE_COLLECT_NET_EVENTS, &value) != ERROR_SUCCESS)
+    if (FwpmEngineSetOption(
+        FwEngineHandle, 
+        FWPM_ENGINE_COLLECT_NET_EVENTS, 
+        &value
+        ) != ERROR_SUCCESS)
     {
         return FALSE;
     }
-        
+
     value.type = FWP_UINT32;
     value.uint32 = FWPM_NET_EVENT_KEYWORD_CAPABILITY_DROP | FWPM_NET_EVENT_KEYWORD_CAPABILITY_ALLOW | FWPM_NET_EVENT_KEYWORD_CLASSIFY_ALLOW;
 
-    if (FwpmEngineSetOption(FwEngineHandle, FWPM_ENGINE_NET_EVENT_MATCH_ANY_KEYWORDS, &value) != ERROR_SUCCESS)
+    if (FwpmEngineSetOption(
+        FwEngineHandle,
+        FWPM_ENGINE_NET_EVENT_MATCH_ANY_KEYWORDS,
+        &value
+        ) != ERROR_SUCCESS)
     {
         return FALSE;
     }
 
-    if (FwpmEngineSetOption(FwEngineHandle, FWPM_ENGINE_MONITOR_IPSEC_CONNECTIONS, &value) != ERROR_SUCCESS)
+    if (FwpmEngineSetOption(
+        FwEngineHandle, 
+        FWPM_ENGINE_MONITOR_IPSEC_CONNECTIONS, 
+        &value
+        ) != ERROR_SUCCESS)
     {
         return FALSE;
     }
   
     subscription.sessionKey = session.sessionKey;
-    subscription.enumTemplate = &templ; // get events for all conditions
+    subscription.enumTemplate = &eventTemplate; // get events for all conditions
 
     // Subscribe to the events
-    if (FwpmNetEventSubscribe(FwEngineHandle, &subscription, DropEventCallback, NULL, &FwEventHandle) != ERROR_SUCCESS)
+    if (FwpmNetEventSubscribe1_I)
     {
-        StopFwMonitor();
-        return FALSE;
+        if (FwpmNetEventSubscribe1_I(
+            FwEngineHandle,
+            &subscription,
+            DropEventCallback,
+            NULL,
+            &FwEventHandle
+            ) != ERROR_SUCCESS)
+        {
+            StopFwMonitor();
+            return FALSE;
+        }
+    }
+    else
+    {
+        if (FwpmNetEventSubscribe0(
+            FwEngineHandle,
+            &subscription,
+            (FWPM_NET_EVENT_CALLBACK0)DropEventCallback, // TODO: Use correct function.
+            NULL,
+            &FwEventHandle
+            ) != ERROR_SUCCESS)
+        {
+            StopFwMonitor();
+            return FALSE;
+        }
     }
 
     PhRegisterCallback(

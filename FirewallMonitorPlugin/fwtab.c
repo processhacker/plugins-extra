@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Firewall Monitor
  *
- * Copyright (C) 2014 dmex
+ * Copyright (C) 2015 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -24,6 +24,7 @@
 #include "fwtabp.h"
 #include "..\..\plugins\include\toolstatusintf.h"
 
+static BOOLEAN FwTreeNewCreated = FALSE;
 static HWND FwTreeNewHandle = NULL;
 static ULONG FwTreeNewSortColumn = 0;
 static PH_SORT_ORDER FwTreeNewSortOrder;
@@ -56,30 +57,7 @@ INT_PTR CALLBACK FwTabErrorDialogProc(
     _In_ LPARAM lParam
     );
 
-#define SORT_FUNCTION(Column) FwTreeNewCompare##Column
-#define BEGIN_SORT_FUNCTION(Column) static int __cdecl FwTreeNewCompare##Column( \
-    _In_ const void *_elem1, \
-    _In_ const void *_elem2 \
-    ) \
-{ \
-    PFW_EVENT_NODE node1 = *(PFW_EVENT_NODE*)_elem1; \
-    PFW_EVENT_NODE node2 = *(PFW_EVENT_NODE*)_elem2; \
-    PFW_EVENT_ITEM fwItem1 = node1->EventItem; \
-    PFW_EVENT_ITEM fwItem2 = node2->EventItem; \
-    int sortResult = 0;
 
-#define END_SORT_FUNCTION \
-    if (sortResult == 0) \
-    sortResult = uintcmp(fwItem1->Index, fwItem2->Index); \
-    \
-    return PhModifySort(sortResult, FwTreeNewSortOrder); \
-}
-
-BEGIN_SORT_FUNCTION(Time)
-{
-    sortResult = uint64cmp(fwItem1->AddedTime.QuadPart, fwItem2->AddedTime.QuadPart);
-}
-END_SORT_FUNCTION
 
 VOID InitializeFwTab(
     VOID
@@ -151,6 +129,8 @@ HWND NTAPI FwTabCreateFunction(
             FwTabErrorDialogProc
             );
     }
+
+    FwTreeNewCreated = TRUE;
 
     InitializeFwTreeList(hwnd);
 
@@ -230,7 +210,6 @@ VOID InitializeFwTreeList(
     TreeNew_SetCallback(hwnd, FwTreeNewCallback, NULL);
     TreeNew_SetRedraw(hwnd, FALSE);
 
-    // Default columns
     PhAddTreeNewColumn(hwnd, FWTNC_PROCESSBASENAME, TRUE, L"Name", 100, PH_ALIGN_LEFT, MAXINT, DT_PATH_ELLIPSIS);
     PhAddTreeNewColumn(hwnd, FWTNC_PROCESSFILENAME, FALSE, L"File Path", 80, PH_ALIGN_LEFT, MAXINT, DT_PATH_ELLIPSIS);    
     PhAddTreeNewColumn(hwnd, FWTNC_DIRECTION, TRUE, L"Direction", 40, PH_ALIGN_LEFT, MAXINT, 0);
@@ -242,12 +221,12 @@ VOID InitializeFwTreeList(
     PhAddTreeNewColumnEx(hwnd, FWTNC_REMOTEPORT, TRUE, L"Remote Port", 50, PH_ALIGN_LEFT, MAXINT, DT_LEFT, TRUE);
     PhAddTreeNewColumn(hwnd, FWTNC_USER, FALSE, L"User", 120, PH_ALIGN_LEFT, MAXINT, DT_PATH_ELLIPSIS);
     PhAddTreeNewColumnEx(hwnd, FWTNC_TIME, TRUE, L"Time", 30, PH_ALIGN_LEFT, MAXINT, 0, TRUE);
-    // Hidden columns
     PhAddTreeNewColumn(hwnd, FWTNC_RULENAME, TRUE, L"Rule", 200, PH_ALIGN_LEFT, MAXINT, 0);
-    PhAddTreeNewColumn(hwnd, FWTNC_RULEDESCRIPTION, TRUE, L"Description", 180, PH_ALIGN_LEFT, 12, 0);     
+    PhAddTreeNewColumn(hwnd, FWTNC_RULEDESCRIPTION, TRUE, L"Description", 180, PH_ALIGN_LEFT, 12, 0);
+    PhAddTreeNewColumn(hwnd, FWTNC_INDEX, TRUE, L"Index", 180, PH_ALIGN_LEFT, 12, 0);    
 
     TreeNew_SetRedraw(hwnd, TRUE);
-    TreeNew_SetSort(hwnd, FWTNC_TIME, DescendingSortOrder);
+    TreeNew_SetSort(hwnd, FWTNC_INDEX, DescendingSortOrder);
 
     LoadSettingsFwTreeList();
  
@@ -272,7 +251,7 @@ VOID LoadSettingsFwTreeList(
     PhDereferenceObject(settings);
 
     sortSettings = PhGetIntegerPairSetting(SETTING_NAME_FW_TREE_LIST_SORT);
-    TreeNew_SetSort(FwTreeNewHandle, (ULONG)sortSettings.X, (PH_SORT_ORDER)sortSettings.Y);
+    //TreeNew_SetSort(FwTreeNewHandle, (ULONG)sortSettings.X, (PH_SORT_ORDER)sortSettings.Y);
 }
 
 VOID SaveSettingsFwTreeList(
@@ -283,6 +262,9 @@ VOID SaveSettingsFwTreeList(
     PH_INTEGER_PAIR sortSettings;
     ULONG sortColumn;
     PH_SORT_ORDER sortOrder;
+        
+    if (!FwTreeNewCreated)  
+        return;
 
     settings = PhCmSaveSettings(FwTreeNewHandle);
     PhSetStringSetting2(SETTING_NAME_FW_TREE_LIST_COLUMNS, &settings->sr);
@@ -291,7 +273,7 @@ VOID SaveSettingsFwTreeList(
     TreeNew_GetSort(FwTreeNewHandle, &sortColumn, &sortOrder);
     sortSettings.X = sortColumn;
     sortSettings.Y = sortOrder;
-    PhSetIntegerPairSetting(SETTING_NAME_FW_TREE_LIST_SORT, sortSettings);
+    //PhSetIntegerPairSetting(SETTING_NAME_FW_TREE_LIST_SORT, sortSettings);
 }
 
 PFW_EVENT_NODE AddFwNode(
@@ -365,6 +347,9 @@ VOID RemoveFwNode(
     if (FwNode->EventItem->FwRuleLayerDescriptionString)
         PhDereferenceObject(FwNode->EventItem->FwRuleLayerDescriptionString);
 
+    if (FwNode->EventItem->IndexString)
+        PhDereferenceObject(FwNode->EventItem->IndexString);
+
     PhDereferenceObject(FwNode->EventItem);
     PhFree(FwNode);
 
@@ -380,6 +365,111 @@ VOID UpdateFwNode(
     PhInvalidateTreeNewNode(&FwNode->Node, TN_CACHE_ICON);
     TreeNew_NodesStructured(FwTreeNewHandle);
 }
+
+
+
+#define SORT_FUNCTION(Column) FwTreeNewCompare##Column
+#define BEGIN_SORT_FUNCTION(Column) static int __cdecl FwTreeNewCompare##Column( \
+    _In_ const void *_elem1, \
+    _In_ const void *_elem2 \
+    ) \
+{ \
+    PFW_EVENT_NODE node1 = *(PFW_EVENT_NODE*)_elem1; \
+    PFW_EVENT_NODE node2 = *(PFW_EVENT_NODE*)_elem2; \
+    PFW_EVENT_ITEM fwItem1 = node1->EventItem; \
+    PFW_EVENT_ITEM fwItem2 = node2->EventItem; \
+    int sortResult = 0;
+
+#define END_SORT_FUNCTION \
+    if (sortResult == 0) \
+        sortResult = uintcmp(fwItem1->Index, fwItem2->Index); \
+    \
+    return PhModifySort(sortResult, FwTreeNewSortOrder); \
+}
+
+BEGIN_SORT_FUNCTION(Name)
+{
+    sortResult = PhCompareStringWithNull(fwItem1->ProcessBaseString, fwItem2->ProcessBaseString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(FilePath)
+{
+    sortResult = PhCompareStringRef(&fwItem1->ProcessNameString, &fwItem2->ProcessNameString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(Direction)
+{
+    sortResult = PhCompareStringRef(&fwItem1->DirectionString, &fwItem2->DirectionString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(Action)
+{
+    sortResult = PhCompareStringRef(&fwItem1->FwRuleActionString, &fwItem2->FwRuleActionString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(Protocol)
+{
+    sortResult = PhCompareStringRef(&fwItem1->ProtocalString, &fwItem2->ProtocalString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(LocalAddress)
+{
+    sortResult = PhCompareStringWithNull(fwItem1->LocalAddressString, fwItem2->LocalAddressString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(LocalPort)
+{
+    sortResult = PhCompareStringWithNull(fwItem1->LocalPortString, fwItem2->LocalPortString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(RemoteAddress)
+{
+    sortResult = PhCompareStringWithNull(fwItem1->RemoteAddressString, fwItem2->RemoteAddressString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(RemotePort)
+{
+    sortResult = PhCompareStringWithNull(fwItem1->RemotePortString, fwItem2->RemotePortString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(User)
+{
+    sortResult = PhCompareStringWithNull(fwItem1->UserNameString, fwItem2->UserNameString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(Time)
+{
+    sortResult = uint64cmp(fwItem1->AddedTime.QuadPart, fwItem2->AddedTime.QuadPart);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(Rule)
+{
+    sortResult = PhCompareStringWithNull(fwItem1->FwRuleNameString, fwItem2->FwRuleNameString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(Description)
+{
+    sortResult = PhCompareStringWithNull(fwItem1->FwRuleDescriptionString, fwItem2->FwRuleDescriptionString, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(Index)
+{
+    sortResult = uintcmp(fwItem1->Index, fwItem2->Index);
+}
+END_SORT_FUNCTION
 
 BOOLEAN NTAPI FwTreeNewCallback(
     _In_ HWND hwnd,
@@ -401,7 +491,20 @@ BOOLEAN NTAPI FwTreeNewCallback(
             {
                 static PVOID sortFunctions[] =
                 {
-                    SORT_FUNCTION(Time)
+                    SORT_FUNCTION(Name),
+                    SORT_FUNCTION(FilePath),
+                    SORT_FUNCTION(Direction),
+                    SORT_FUNCTION(Action),
+                    SORT_FUNCTION(Protocol),
+                    SORT_FUNCTION(LocalAddress),
+                    SORT_FUNCTION(LocalPort),
+                    SORT_FUNCTION(RemoteAddress),
+                    SORT_FUNCTION(RemotePort),
+                    SORT_FUNCTION(User),
+                    SORT_FUNCTION(Time),
+                    SORT_FUNCTION(Rule),
+                    SORT_FUNCTION(Description),
+                    SORT_FUNCTION(Index)
                 };
                 int (__cdecl *sortFunction)(const void *, const void *);
 
@@ -475,6 +578,9 @@ BOOLEAN NTAPI FwTreeNewCallback(
                 break;
             case FWTNC_DIRECTION:
                 getCellText->Text = node->EventItem->DirectionString;
+                break;
+            case FWTNC_INDEX:
+                getCellText->Text = PhGetStringRef(node->EventItem->IndexString);
                 break;
             default:
                 return FALSE;
