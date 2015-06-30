@@ -658,16 +658,16 @@ BOOLEAN StartFwMonitor(
     FWPM_NET_EVENT_SUBSCRIPTION subscription = { 0 };
     FWPM_NET_EVENT_ENUM_TEMPLATE eventTemplate = { 0 };
 
-    session.flags = 0;
-    session.displayData.name  = L"PhFirewallMonitoringSession";
-    session.displayData.description = L"Non-Dynamic session for Process Hacker";
- 
-
+    
     FwpmNetEventSubscribe1_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe1");
    
     FwNodeList = PhCreateList(100);
     FwObjectType = PhCreateObjectType(L"FwObject", 0, FwObjectTypeDeleteProcedure);
 
+
+    session.flags = 0;
+    session.displayData.name  = L"PhFirewallMonitoringSession";
+    session.displayData.description = L"Non-Dynamic session for Process Hacker";
 
     // Create a non-dynamic BFE session
     if (FwpmEngineOpen(
@@ -693,30 +693,38 @@ BOOLEAN StartFwMonitor(
     {
         return FALSE;
     }
-
-    value.type = FWP_UINT32;
-    value.uint32 = FWPM_NET_EVENT_KEYWORD_CAPABILITY_DROP | FWPM_NET_EVENT_KEYWORD_CAPABILITY_ALLOW | FWPM_NET_EVENT_KEYWORD_CLASSIFY_ALLOW;
-
-    if (FwpmEngineSetOption(
-        FwEngineHandle,
-        FWPM_ENGINE_NET_EVENT_MATCH_ANY_KEYWORDS,
-        &value
-        ) != ERROR_SUCCESS)
+       
+    if (WindowsVersion > WINDOWS_7)
     {
-        return FALSE;
-    }
+        value.type = FWP_UINT32;
+        value.uint32 = FWPM_NET_EVENT_KEYWORD_CAPABILITY_DROP | FWPM_NET_EVENT_KEYWORD_CAPABILITY_ALLOW | FWPM_NET_EVENT_KEYWORD_CLASSIFY_ALLOW; // FWPM_NET_EVENT_KEYWORD_INBOUND_MCAST | FWPM_NET_EVENT_KEYWORD_INBOUND_BCAST
 
-    if (FwpmEngineSetOption(
-        FwEngineHandle, 
-        FWPM_ENGINE_MONITOR_IPSEC_CONNECTIONS, 
-        &value
-        ) != ERROR_SUCCESS)
-    {
-        return FALSE;
+        if (FwpmEngineSetOption(
+            FwEngineHandle,
+            FWPM_ENGINE_NET_EVENT_MATCH_ANY_KEYWORDS,
+            &value
+            ) != ERROR_SUCCESS)
+        {
+            return FALSE;
+        }
+
+        value.type = FWP_UINT32;
+        value.uint32 = 1;
+
+        if (FwpmEngineSetOption(
+            FwEngineHandle,
+            FWPM_ENGINE_MONITOR_IPSEC_CONNECTIONS,
+            &value
+            ) != ERROR_SUCCESS)
+        {
+            return FALSE;
+        }
     }
   
+    eventTemplate.numFilterConditions = 0; // get events for all conditions
+
     subscription.sessionKey = session.sessionKey;
-    subscription.enumTemplate = &eventTemplate; // get events for all conditions
+    subscription.enumTemplate = &eventTemplate;
 
     // Subscribe to the events
     if (FwpmNetEventSubscribe1_I)
@@ -729,7 +737,6 @@ BOOLEAN StartFwMonitor(
             &FwEventHandle
             ) != ERROR_SUCCESS)
         {
-            StopFwMonitor();
             return FALSE;
         }
     }
@@ -743,7 +750,6 @@ BOOLEAN StartFwMonitor(
             &FwEventHandle
             ) != ERROR_SUCCESS)
         {
-            StopFwMonitor();
             return FALSE;
         }
     }
@@ -774,7 +780,7 @@ VOID StopFwMonitor(
         //value.type = FWP_UINT32;
         //value.uint32 = 0;
 
-        // TODO return to previous state - other applications may require this enabled.
+        // TODO: return to previous state if other applications require event collection enabled??
         // Disable collection of NetEvents
         //FwpmEngineSetOption(FwEngineHandle, FWPM_ENGINE_COLLECT_NET_EVENTS, &value);
 
