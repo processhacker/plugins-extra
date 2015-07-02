@@ -152,8 +152,7 @@ static VOID CALLBACK DropEventCallback(
                 //fwEventItem->FwRuleLayerDescriptionString = PhCreateString(fwLayerRuleItem->displayData.description);
 
                 FwpmFreeMemory(&fwLayerItem);
-            }
-            
+            }       
     
             if (fwDropEvent->isLoopback)
             {
@@ -452,12 +451,8 @@ static VOID CALLBACK DropEventCallback(
 
         if (resolvedName)
         {
-            PPH_STRING fileNameString = NULL;
-
-            fileNameString = PhGetFileName(resolvedName);
+            fwEventItem->ProcessNameString = PhGetFileName(resolvedName);
             fwEventItem->ProcessBaseString = PhGetBaseName(resolvedName);
-
-            PhInitializeStringRef(&fwEventItem->ProcessNameString, fileNameString->Buffer);
 
             //FWP_BYTE_BLOB* fwpApplicationByteBlob = NULL;
             //if (FwpmGetAppIdFromFileName(fileNameString->Buffer, &fwpApplicationByteBlob) == ERROR_SUCCESS)
@@ -465,13 +460,12 @@ static VOID CALLBACK DropEventCallback(
            
             fwEventItem->Icon = PhGetFileShellIcon(PhGetString(resolvedName), L".exe", FALSE);
 
-            PhDereferenceObject(fileNameString);
             PhDereferenceObject(resolvedName);
         }
         else
         {
             fwEventItem->ProcessBaseString = PhCreateString(L"unknown");
-            PhInitializeStringRef(&fwEventItem->ProcessNameString, L"unknown");
+            fwEventItem->ProcessNameString = PhCreateString(L"unknown");
         }
 
         PhDereferenceObject(FileName);
@@ -479,7 +473,7 @@ static VOID CALLBACK DropEventCallback(
     else
     {
         fwEventItem->ProcessBaseString = PhCreateString(L"unknown");
-        PhInitializeStringRef(&fwEventItem->ProcessNameString, L"unknown");
+        fwEventItem->ProcessNameString = PhCreateString(L"unknown");
     }
 
     if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_USER_ID_SET) != 0)

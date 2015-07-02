@@ -328,6 +328,8 @@ VOID RemoveFwNode(
         PhDereferenceObject(FwNode->EventItem->TimeString);
     if (FwNode->EventItem->UserNameString)
         PhDereferenceObject(FwNode->EventItem->UserNameString);
+    if (FwNode->EventItem->ProcessNameString)
+        PhDereferenceObject(FwNode->EventItem->ProcessNameString);
     if (FwNode->EventItem->ProcessBaseString)
         PhDereferenceObject(FwNode->EventItem->ProcessBaseString);
     if (FwNode->EventItem->LocalPortString)
@@ -395,7 +397,7 @@ END_SORT_FUNCTION
 
 BEGIN_SORT_FUNCTION(FilePath)
 {
-    sortResult = PhCompareStringRef(&fwItem1->ProcessNameString, &fwItem2->ProcessNameString, TRUE);
+    sortResult = PhCompareStringWithNull(fwItem1->ProcessNameString, fwItem2->ProcessNameString, TRUE);
 }
 END_SORT_FUNCTION
 
@@ -556,7 +558,7 @@ BOOLEAN NTAPI FwTreeNewCallback(
                 getCellText->Text = PhGetStringRef(node->EventItem->ProcessBaseString);
                 break;
             case FWTNC_PROCESSFILENAME:
-                getCellText->Text = node->EventItem->ProcessNameString;
+                getCellText->Text = PhGetStringRef(node->EventItem->ProcessNameString);
                 break;
             case FWTNC_USER:
                 getCellText->Text = PhGetStringRef(node->EventItem->UserNameString);
@@ -991,7 +993,7 @@ BOOLEAN NTAPI FwSearchFilterCallback(
     if (PhIsNullOrEmptyString(ToolStatusInterface->GetSearchboxText()))
         return TRUE;
 
-    if (wordMatch(&fwNode->EventItem->ProcessNameString))
+    if (wordMatch(&fwNode->EventItem->ProcessNameString->sr))
         return TRUE;
 
     if (wordMatch(&fwNode->EventItem->LocalAddressString->sr))

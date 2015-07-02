@@ -34,7 +34,7 @@ typedef struct _FW_EVENT_ITEM
     PPH_STRING TimeString;
     PPH_STRING UserNameString;
     PH_STRINGREF ProtocalString;
-    PH_STRINGREF ProcessNameString;
+    PPH_STRING ProcessNameString;
     PPH_STRING ProcessBaseString;
     PH_STRINGREF DirectionString;
 
