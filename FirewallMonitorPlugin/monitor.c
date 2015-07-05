@@ -68,8 +68,13 @@ static VOID CALLBACK DropEventCallback(
     _In_ const FWPM_NET_EVENT* FwEvent
     )
 {
-    PFW_EVENT_ITEM fwEventItem = EtCreateFirewallEntryItem();
+    PFW_EVENT_ITEM fwEventItem = EtCreateFirewallEntryItem();  
+    SYSTEMTIME systemTime;
 
+    PhQuerySystemTime(&fwEventItem->AddedTime);
+    PhLargeIntegerToLocalSystemTime(&systemTime, &fwEventItem->AddedTime);
+    fwEventItem->TimeString = PhFormatDateTime(&systemTime);
+    
     switch (FwEvent->type)
     {
     case FWPM_NET_EVENT_TYPE_CLASSIFY_DROP:
@@ -82,9 +87,16 @@ static VOID CALLBACK DropEventCallback(
 
             if (FwpmFilterGetById(FwEngineHandle, fwDropEvent->filterId, &fwFilterItem) == ERROR_SUCCESS)
             {
-                fwEventItem->FwRuleNameString = PhCreateString(fwFilterItem->displayData.name);
-                fwEventItem->FwRuleDescriptionString = PhCreateString(fwFilterItem->displayData.description);
-                                
+                if (fwFilterItem->displayData.name)
+                {
+                    fwEventItem->FwRuleNameString = PhCreateString(fwFilterItem->displayData.name);
+                }
+
+                if (fwFilterItem->displayData.description)
+                {
+                    fwEventItem->FwRuleDescriptionString = PhCreateString(fwFilterItem->displayData.description);
+                }
+
                 if ((fwFilterItem->action.type & FWP_ACTION_BLOCK) != 0)
                 {
 
@@ -94,7 +106,14 @@ static VOID CALLBACK DropEventCallback(
             }
 
             if (FwpmLayerGetById(FwEngineHandle, fwDropEvent->layerId, &fwLayerItem) == ERROR_SUCCESS)
-            {
+            {           
+                if (fwLayerItem->displayData.name)
+                {
+                    fwEventItem->FwRuleLayerNameString = PhCreateString(fwLayerItem->displayData.name);
+                }
+
+                //fwEventItem->FwRuleLayerDescriptionString = PhCreateString(fwLayerRuleItem->displayData.description);
+
                 for (UINT32 i = 0; i < fwLayerItem->numFields; i++)
                 {
                     FWPM_FIELD fwRuleField = fwLayerItem->field[i];
@@ -148,9 +167,6 @@ static VOID CALLBACK DropEventCallback(
                     //}
                 }
 
-                fwEventItem->FwRuleLayerNameString = PhCreateString(fwLayerItem->displayData.name);
-                //fwEventItem->FwRuleLayerDescriptionString = PhCreateString(fwLayerRuleItem->displayData.description);
-
                 FwpmFreeMemory(&fwLayerItem);
             }       
     
@@ -174,7 +190,7 @@ static VOID CALLBACK DropEventCallback(
                     PhInitializeStringRef(&fwEventItem->DirectionString, L"Forward");
                     break;
                 default:
-                    PhInitializeStringRef(&fwEventItem->DirectionString, L"Unknown");
+                    PhInitializeStringRef(&fwEventItem->DirectionString, L"");
                     break;
                 }
             }
@@ -190,8 +206,15 @@ static VOID CALLBACK DropEventCallback(
 
             if (FwpmFilterGetById(FwEngineHandle, fwAllowEvent->filterId, &fwFilterItem) == ERROR_SUCCESS)
             {
-                fwEventItem->FwRuleNameString = PhCreateString(fwFilterItem->displayData.name);
-                fwEventItem->FwRuleDescriptionString = PhCreateString(fwFilterItem->displayData.description);
+                if (fwFilterItem->displayData.name)
+                {
+                    fwEventItem->FwRuleNameString = PhCreateString(fwFilterItem->displayData.name);
+                }
+
+                if (fwFilterItem->displayData.description)
+                {
+                    fwEventItem->FwRuleDescriptionString = PhCreateString(fwFilterItem->displayData.description);
+                }
 
                 if ((fwFilterItem->action.type & FWP_ACTION_BLOCK) != 0)
                 {
@@ -282,7 +305,7 @@ static VOID CALLBACK DropEventCallback(
                     PhInitializeStringRef(&fwEventItem->DirectionString, L"Forward");
                     break;
                 default:
-                    PhInitializeStringRef(&fwEventItem->DirectionString, L"Unknown");
+                    PhInitializeStringRef(&fwEventItem->DirectionString, L"");
                     break;
                 }
             }
@@ -443,11 +466,15 @@ static VOID CALLBACK DropEventCallback(
 
     if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_APP_ID_SET) != 0)
     {
-        PPH_STRING FileName;
-        PPH_STRING resolvedName;
+        PPH_STRING fileName = NULL;
+        PPH_STRING resolvedName = NULL;
 
-        FileName = PhCreateStringEx((PWSTR)FwEvent->header.appId.data, (SIZE_T)FwEvent->header.appId.size);
-        resolvedName = PhResolveDevicePrefix(FileName);
+        if (FwEvent->header.appId.data && FwEvent->header.appId.size > 0)
+        {
+            fileName = PhCreateStringEx((PWSTR)FwEvent->header.appId.data, (SIZE_T)FwEvent->header.appId.size);
+            resolvedName = PhResolveDevicePrefix(fileName);
+            PhDereferenceObject(fileName);
+        }
 
         if (resolvedName)
         {
@@ -462,18 +489,6 @@ static VOID CALLBACK DropEventCallback(
 
             PhDereferenceObject(resolvedName);
         }
-        else
-        {
-            fwEventItem->ProcessBaseString = PhCreateString(L"unknown");
-            fwEventItem->ProcessNameString = PhCreateString(L"unknown");
-        }
-
-        PhDereferenceObject(FileName);
-    }
-    else
-    {
-        fwEventItem->ProcessBaseString = PhCreateString(L"unknown");
-        fwEventItem->ProcessNameString = PhCreateString(L"unknown");
     }
 
     if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_USER_ID_SET) != 0)
@@ -604,17 +619,6 @@ static VOID CALLBACK DropEventCallback(
     default:
         PhInitializeStringRef(&fwEventItem->ProtocalString, L"Unknown");
         break;
-    }
-
-    PhQuerySystemTime(&fwEventItem->AddedTime);
-
-    {
-        SYSTEMTIME systemTime;
-        PPH_STRING dateTime;
-
-        PhLargeIntegerToLocalSystemTime(&systemTime, &fwEventItem->AddedTime);
-        dateTime = PhFormatDateTime(&systemTime);
-        fwEventItem->TimeString = dateTime;
     }
 
     PhInvokeCallback(&FwItemAddedEvent, fwEventItem);

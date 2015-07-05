@@ -318,11 +318,9 @@ VOID RemoveFwNode(
         PhRemoveItemList(FwNodeList, index);
     
     PhReleaseQueuedLockExclusive(&FwLock);
-
+        
     if (FwNode->TooltipText)
         PhDereferenceObject(FwNode->TooltipText);
-
-    DestroyIcon(FwNode->EventItem->Icon);
 
     if (FwNode->EventItem->TimeString)
         PhDereferenceObject(FwNode->EventItem->TimeString);
@@ -351,6 +349,9 @@ VOID RemoveFwNode(
 
     if (FwNode->EventItem->IndexString)
         PhDereferenceObject(FwNode->EventItem->IndexString);
+
+    if (FwNode->EventItem->Icon)
+        DestroyIcon(FwNode->EventItem->Icon);
 
     PhDereferenceObject(FwNode->EventItem);
     PhFree(FwNode);
