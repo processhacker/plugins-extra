@@ -234,7 +234,7 @@ static BOOLEAN PerfCounterSectionCallback(
             PhInitializeCircularBuffer_ULONG(&context->HistoryBuffer, PhGetIntegerSetting(L"SampleCount"));
 
             // Create the query handle.
-            if ((counterStatus = PdhOpenQuery(NULL, (ULONG_PTR)NULL, &context->PerfQueryHandle)) != ERROR_SUCCESS)
+            if ((counterStatus = PdhOpenQuery(NULL, 0, &context->PerfQueryHandle)) != ERROR_SUCCESS)
             {
                 PhShowError(NULL, L"PdhOpenQuery failed with status 0x%x.", counterStatus);
             }
