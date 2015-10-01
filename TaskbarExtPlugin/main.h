@@ -75,4 +75,4 @@ HICON PhUpdateIconCpuUsage(
     _In_ PH_PLUGIN_SYSTEM_STATISTICS Statistics
     );
 
-#endif _MAIN_H_
+#endif _TB_EXT_H_

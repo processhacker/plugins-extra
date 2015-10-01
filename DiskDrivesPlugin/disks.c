@@ -78,7 +78,7 @@ VOID EnumerateDiskDrives(
                 SPDRP_FRIENDLYNAME,
                 NULL,
                 (PBYTE)diskFriendlyName,
-                _countof(diskFriendlyName),
+                ARRAYSIZE(diskFriendlyName),
                 NULL
                 );
 

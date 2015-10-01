@@ -95,7 +95,7 @@ static INT_PTR CALLBACK OptionsDlgProc(
 
             graphTypeHandle = GetDlgItem(hwndDlg, IDC_GRAPH_TYPE);
 
-            PhAddComboBoxStrings(graphTypeHandle, GraphTypeStrings, _countof(GraphTypeStrings));
+            PhAddComboBoxStrings(graphTypeHandle, GraphTypeStrings, ARRAYSIZE(GraphTypeStrings));
             PhSelectComboBoxString(graphTypeHandle, GraphTypeGetTypeString(PhGetIntegerSetting(SETTING_NAME_TASKBAR_ICON_TYPE)), FALSE);
         }
         break;

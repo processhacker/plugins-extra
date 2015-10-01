@@ -157,7 +157,7 @@ static PPH_STRING PhGetSelectedListViewItemText(
         item.iItem = index;
         item.iSubItem = 0;
         item.pszText = textBuffer;
-        item.cchTextMax = _countof(textBuffer);
+        item.cchTextMax = ARRAYSIZE(textBuffer);
 
         if (ListView_GetItem(hWnd, &item))
             return PhCreateString(textBuffer);
@@ -423,7 +423,7 @@ LOGICAL DllMain(
                 &PluginMenuItemCallbackRegistration
                 );
 
-            PhAddSettings(settings, _countof(settings));
+            PhAddSettings(settings, ARRAYSIZE(settings));
         }
         break;
     }

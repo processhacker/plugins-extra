@@ -122,25 +122,25 @@ static LRESULT CALLBACK MainWndSubclassProc(
             ButtonsArray[0].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
             ButtonsArray[0].iId = PHAPP_ID_VIEW_SYSTEMINFORMATION;
             ButtonsArray[0].iBitmap = 0;
-            wcscpy_s(ButtonsArray[0].szTip, _countof(ButtonsArray[0].szTip), L"System Information");
+            wcscpy_s(ButtonsArray[0].szTip, ARRAYSIZE(ButtonsArray[0].szTip), L"System Information");
 
             ButtonsArray[1].dwMask = THB_FLAGS | THB_BITMAP | THB_TOOLTIP;
             ButtonsArray[1].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
             ButtonsArray[1].iId = PHAPP_ID_HACKER_FINDHANDLESORDLLS;
             ButtonsArray[1].iBitmap = 1;
-            wcscpy_s(ButtonsArray[1].szTip, _countof(ButtonsArray[1].szTip), L"Find Handles or DLLs");
+            wcscpy_s(ButtonsArray[1].szTip, ARRAYSIZE(ButtonsArray[1].szTip), L"Find Handles or DLLs");
 
             ButtonsArray[2].dwMask = THB_FLAGS | THB_BITMAP | THB_TOOLTIP;
             ButtonsArray[2].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
             ButtonsArray[2].iId = PHAPP_ID_HELP_LOG;
             ButtonsArray[2].iBitmap = 2;
-            wcscpy_s(ButtonsArray[2].szTip, _countof(ButtonsArray[2].szTip), L"Application Log");
+            wcscpy_s(ButtonsArray[2].szTip, ARRAYSIZE(ButtonsArray[2].szTip), L"Application Log");
 
             ButtonsArray[3].dwMask = THB_FLAGS | THB_BITMAP | THB_TOOLTIP;
             ButtonsArray[3].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
             ButtonsArray[3].iId = PHAPP_ID_TOOLS_INSPECTEXECUTABLEFILE;
             ButtonsArray[3].iBitmap = 3;
-            wcscpy_s(ButtonsArray[3].szTip, _countof(ButtonsArray[3].szTip), L"Inspect Executable File");
+            wcscpy_s(ButtonsArray[3].szTip, ARRAYSIZE(ButtonsArray[3].szTip), L"Inspect Executable File");
 
             TaskbarButtonsCreated = TRUE;
         }
@@ -150,7 +150,7 @@ static LRESULT CALLBACK MainWndSubclassProc(
             // Set the ThumbBar image list
             ITaskbarList3_ThumbBarSetImageList(TaskbarListClass, PhMainWndHandle, ButtonsImageList);
             // Set the ThumbBar buttons array
-            ITaskbarList3_ThumbBarAddButtons(TaskbarListClass, PhMainWndHandle, _countof(ButtonsArray), ButtonsArray);
+            ITaskbarList3_ThumbBarAddButtons(TaskbarListClass, PhMainWndHandle, ARRAYSIZE(ButtonsArray), ButtonsArray);
 
             if (TaskbarIconType != TASKBAR_ICON_NONE)
             {
@@ -275,7 +275,7 @@ LOGICAL DllMain(
                 &MainWindowShowingCallbackRegistration
                 );
 
-            PhAddSettings(settings, _countof(settings));
+            PhAddSettings(settings, ARRAYSIZE(settings));
         }
         break;
     }

@@ -39,7 +39,7 @@ VOID UpdateNetworkNode(
 
                 //PhInitializeStringBuilder(&stringBuilder, 24);
 
-                for (ULONG x = 0; x < _countof(ResolvedPortsTable); x++)
+                for (ULONG x = 0; x < ARRAYSIZE(ResolvedPortsTable); x++)
                 {
                     if (Node->NetworkItem->LocalEndpoint.Port == ResolvedPortsTable[x].Port)
                     {
@@ -67,7 +67,7 @@ VOID UpdateNetworkNode(
 
                 //PhInitializeStringBuilder(&stringBuilder, 24);
 
-                for (ULONG x = 0; x < _countof(ResolvedPortsTable); x++)
+                for (ULONG x = 0; x < ARRAYSIZE(ResolvedPortsTable); x++)
                 {
                     if (Node->NetworkItem->RemoteEndpoint.Port == ResolvedPortsTable[x].Port)
                     {

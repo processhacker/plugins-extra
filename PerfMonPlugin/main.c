@@ -125,7 +125,7 @@ LOGICAL DllMain(
                 &SystemInformationInitializingCallbackRegistration
                 );
 
-            PhAddSettings(settings, _countof(settings));
+            PhAddSettings(settings, ARRAYSIZE(settings));
         }
         break;
     }

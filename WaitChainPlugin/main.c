@@ -505,7 +505,7 @@ LOGICAL DllMain(
                     { IntegerPairSettingType, SETTING_NAME_WINDOW_SIZE, L"690,540" }
                 };
 
-                PhAddSettings(settings, _countof(settings));
+                PhAddSettings(settings, ARRAYSIZE(settings));
             }
         }
         break;
