@@ -316,8 +316,6 @@ typedef enum _NvAPI_Status
 //!
 //! \ingroup driverapi
 ///////////////////////////////////////////////////////////////////////////////
-//NVAPI_INTERFACE NvAPI_SYS_GetDriverAndBranchVersion(NvU32* pDriverVersion, NvAPI_ShortString szBuildBranchString);
-
 typedef NvAPI_Status (__cdecl *_NvAPI_SYS_GetDriverAndBranchVersion)(_Out_ NvU32* pDriverVersion, _Out_ NvAPI_ShortString szBuildBranchString);
 _NvAPI_SYS_GetDriverAndBranchVersion NvAPI_SYS_GetDriverAndBranchVersion;
 
@@ -352,11 +350,11 @@ typedef NV_DISPLAY_DRIVER_MEMORY_INFO_V2 NV_DISPLAY_DRIVER_MEMORY_INFO;
 
 //! \ingroup driverapi
 //! Macro for constructing the version field of NV_DISPLAY_DRIVER_MEMORY_INFO_V1
-#define NV_DISPLAY_DRIVER_MEMORY_INFO_VER_1  MAKE_NVAPI_VERSION(NV_DISPLAY_DRIVER_MEMORY_INFO_V1,1)
+#define NV_DISPLAY_DRIVER_MEMORY_INFO_VER_1  MAKE_NVAPI_VERSION(NV_DISPLAY_DRIVER_MEMORY_INFO_V1, 1)
 
 //! \ingroup driverapi
 //! Macro for constructing the version field of NV_DISPLAY_DRIVER_MEMORY_INFO_V2
-#define NV_DISPLAY_DRIVER_MEMORY_INFO_VER_2  MAKE_NVAPI_VERSION(NV_DISPLAY_DRIVER_MEMORY_INFO_V2,2)
+#define NV_DISPLAY_DRIVER_MEMORY_INFO_VER_2  MAKE_NVAPI_VERSION(NV_DISPLAY_DRIVER_MEMORY_INFO_V2, 2)
 
 //! \ingroup driverapi
 #define NV_DISPLAY_DRIVER_MEMORY_INFO_VER    NV_DISPLAY_DRIVER_MEMORY_INFO_VER_2

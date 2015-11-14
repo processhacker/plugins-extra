@@ -136,6 +136,35 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,7,98,10
 END
 
+IDD_GPU_DETAILS DIALOGEX 0, 0, 265, 245
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Close",IDCANCEL,208,224,50,14
+    EDITTEXT        IDC_EDIT1,31,7,155,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT2,31,26,60,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT3,31,43,155,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT4,133,26,53,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT5,31,59,74,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT6,31,77,74,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT7,31,95,74,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT8,112,59,74,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT9,112,77,74,12,ES_AUTOHSCROLL | ES_READONLY
+    CONTROL         "",IDC_NVIMAGE,"Static",SS_BITMAP,197,7,15,13
+    EDITTEXT        IDC_EDIT10,111,95,74,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT11,31,129,179,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT12,31,148,179,12,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "Reset",IDC_RESET,7,224,50,14
+    RTEXT           "Name",IDC_STATIC,7,9,20,8
+    RTEXT           "GPU",IDC_STATIC,7,28,20,8
+    RTEXT           "Revision",IDC_STATIC,101,28,28,8
+    RTEXT           "BIOS",IDC_STATIC,7,46,20,8
+    RTEXT           "ID",IDC_STATIC,7,61,20,8
+    EDITTEXT        IDC_EDIT13,31,112,74,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT14,111,112,74,12,ES_AUTOHSCROLL | ES_READONLY
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -161,9 +190,35 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 51
     END
+
+    IDD_GPU_DETAILS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 258
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 238
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_GPU_DETAILS AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// PNG
+//
+
+IDB_NV_LOGO_PNG         PNG                     "resources\\NVLogo_2D.png"
 #endif    // English (Australia) resources
 /////////////////////////////////////////////////////////////////////////////
 

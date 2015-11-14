@@ -31,8 +31,12 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
+#include <verify.h>
+#include <windowsx.h>
 
 #include "resource.h"
+
+#define MSG_UPDATE (WM_APP + 1)
 
 extern BOOLEAN NvApiInitialized;
 extern PPH_PLUGIN PluginInstance;
@@ -56,7 +60,23 @@ BOOLEAN DestroyNvApi(VOID);
 PPH_STRING NvGpuQueryDriverVersion(VOID);
 PPH_STRING NvGpuQueryVbiosVersionString(VOID);
 PPH_STRING NvGpuQueryName(VOID);
+PPH_STRING NvGpuQueryShortName(VOID);
+PPH_STRING NvGpuQueryRevision(VOID);
+PPH_STRING NvGpuQueryRamType(VOID);
+PPH_STRING NvGpuQueryFoundry(VOID);
+PPH_STRING NvGpuQueryDeviceId(VOID);
+PPH_STRING NvGpuQueryRopsCount(VOID);
+PPH_STRING NvGpuQueryShaderCount(VOID);
+PPH_STRING NvGpuQueryPciInfo(VOID);
+PPH_STRING NvGpuQueryBusWidth(VOID);
+PPH_STRING NvGpuQueryPcbValue(VOID);
+
+PPH_STRING NvGpuQueryDriverSettings(VOID);
+
 PPH_STRING NvGpuQueryFanSpeed(VOID);
+
+BOOLEAN NvGpuRestartDisplayDriver(VOID);
+BOOLEAN NvGpuDriverIsWHQL(VOID);
 
 VOID NvGpuUpdateValues(VOID);
 
@@ -64,6 +84,7 @@ typedef struct _PH_NVGPU_SYSINFO_CONTEXT
 {
     PPH_STRING GpuName;
     HWND WindowHandle;
+    HWND DetailsHandle;
     PPH_SYSINFO_SECTION Section;
     PH_LAYOUT_MANAGER LayoutManager;
 
@@ -97,8 +118,19 @@ VOID NvGpuSysInfoInitializing(
     _In_ PPH_PLUGIN_SYSINFO_POINTERS Pointers
     );
 
+HBITMAP LoadImageFromResources(
+    _In_ UINT Width,
+    _In_ UINT Height,
+    _In_ PCWSTR Name
+    );
+
 VOID ShowOptionsDialog(
     _In_ HWND ParentHandle
+    );
+
+VOID ShowDetailsDialog(
+    _In_ HWND ParentHandle,
+    _In_ PVOID Context
     );
 
 #endif _NVGPU_H_

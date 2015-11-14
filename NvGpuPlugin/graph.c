@@ -22,8 +22,8 @@
 
 #include "main.h"
 
-#define MSG_UPDATE (WM_APP + 1)
-#define MSG_UPDATE_PANEL (WM_APP + 2)
+static RECT NormalGraphTextMargin = { 5, 5, 5, 5 };
+static RECT NormalGraphTextPadding = { 3, 3, 3, 3 };
 
 static VOID NTAPI ProcessesUpdatedHandler(
     _In_opt_ PVOID Parameter,
@@ -36,8 +36,11 @@ static VOID NTAPI ProcessesUpdatedHandler(
     {
         PostMessage(context->WindowHandle, MSG_UPDATE, 0, 0);
     }
-    //if (context->PanelWindowHandle)
-    //    PostMessage(context->PanelWindowHandle, MSG_UPDATE_PANEL, 0, 0);
+
+    if (context->DetailsHandle)
+    {
+        PostMessage(context->DetailsHandle, MSG_UPDATE, 0, 0);
+    }
 }
 
 static INT_PTR CALLBACK NvGpuPanelDialogProc(
@@ -47,6 +50,42 @@ static INT_PTR CALLBACK NvGpuPanelDialogProc(
     _In_ LPARAM lParam
     )
 {
+    PPH_NVGPU_SYSINFO_CONTEXT context = NULL;
+
+    if (uMsg == WM_INITDIALOG)
+    {
+        context = (PPH_NVGPU_SYSINFO_CONTEXT)lParam;
+        SetProp(hwndDlg, L"Context", (HANDLE)context);
+    }
+    else
+    {
+        context = (PPH_NVGPU_SYSINFO_CONTEXT)GetProp(hwndDlg, L"Context");
+
+        if (uMsg == WM_NCDESTROY)
+        {
+            RemoveProp(hwndDlg, L"Context");
+        }
+    }
+
+    if (context == NULL)
+        return FALSE;
+
+    switch (uMsg)
+    {
+    case WM_COMMAND:
+        {
+            switch (GET_WM_COMMAND_ID(wParam, lParam))
+            {
+            case IDC_DETAILS:
+                {
+                    ShowDetailsDialog(GetParent(hwndDlg), context);
+                }
+                break;
+            }
+        }
+        break;
+    }
+
     return FALSE;
 }
 
@@ -251,12 +290,24 @@ static VOID NvGpuNotifyUsageGraph(
 
             drawInfo->Flags = PH_GRAPH_USE_GRID;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
+            PhGraphStateGetDrawInfo(&Context->GpuGraphState, getDrawInfo, Context->GpuUtilizationHistory.Count);
 
-            PhGraphStateGetDrawInfo(
-                &Context->GpuGraphState,
-                getDrawInfo,
-                Context->GpuUtilizationHistory.Count
-                );
+            if (PhGetIntegerSetting(L"GraphShowText"))
+            {
+                HDC hdc = Graph_GetBufferedContext(Context->GpuGraphHandle);
+
+                PhMoveReference(&Context->GpuGraphState.Text,
+                    PhFormatString(L"%.0f%%", GpuCurrentGpuUsage * 100)
+                    );
+
+                SelectObject(hdc, PhApplicationFont);
+                PhSetGraphText(hdc, drawInfo, &Context->GpuGraphState.Text->sr,
+                    &NormalGraphTextMargin, &NormalGraphTextPadding, PH_ALIGN_TOP | PH_ALIGN_LEFT);
+            }
+            else
+            {
+                drawInfo->Text.Buffer = NULL;
+            }
 
             if (!Context->GpuGraphState.Valid)
             {
@@ -306,6 +357,26 @@ static VOID NvGpuNotifyMemoryGraph(
             drawInfo->Flags = PH_GRAPH_USE_GRID;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorPhysical"), 0);
             PhGraphStateGetDrawInfo(&Context->MemGraphState, getDrawInfo, Context->GpuMemoryHistory.Count);
+
+            if (PhGetIntegerSetting(L"GraphShowText"))
+            {
+                HDC hdc = Graph_GetBufferedContext(Context->MemGraphHandle);
+
+                PhMoveReference(&Context->MemGraphState.Text, PhFormatString(
+                    L"%s / %s (%.2f%%)", 
+                    PhaFormatSize(UInt32x32To64(GpuCurrentMemUsage, 1024), -1)->Buffer,
+                    PhaFormatSize(UInt32x32To64(GpuMemoryLimit, 1024), -1)->Buffer,
+                    (FLOAT)GpuCurrentMemUsage / GpuMemoryLimit * 100
+                    ));
+
+                SelectObject(hdc, PhApplicationFont);
+                PhSetGraphText(hdc, drawInfo, &Context->MemGraphState.Text->sr,
+                    &NormalGraphTextMargin, &NormalGraphTextPadding, PH_ALIGN_TOP | PH_ALIGN_LEFT);
+            }
+            else
+            {
+                drawInfo->Text.Buffer = NULL;
+            }
 
             if (!Context->MemGraphState.Valid)
             {
@@ -370,12 +441,25 @@ static VOID NvGpuNotifySharedGraph(
 
             drawInfo->Flags = PH_GRAPH_USE_GRID;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
+            PhGraphStateGetDrawInfo(&Context->SharedGraphState, getDrawInfo, Context->GpuBoardHistory.Count);
 
-            PhGraphStateGetDrawInfo(
-                &Context->SharedGraphState,
-                getDrawInfo,
-                Context->GpuBoardHistory.Count
-                );
+            if (PhGetIntegerSetting(L"GraphShowText"))
+            {
+                HDC hdc = Graph_GetBufferedContext(Context->SharedGraphHandle);
+
+                PhMoveReference(&Context->SharedGraphState.Text, PhFormatString(
+                    L"%.0f%%",
+                    (FLOAT)GpuCurrentCoreUsage * 100
+                    ));
+
+                SelectObject(hdc, PhApplicationFont);
+                PhSetGraphText(hdc, drawInfo, &Context->SharedGraphState.Text->sr,
+                    &NormalGraphTextMargin, &NormalGraphTextPadding, PH_ALIGN_TOP | PH_ALIGN_LEFT);
+            }
+            else
+            {
+                drawInfo->Text.Buffer = NULL;
+            }
 
             if (!Context->SharedGraphState.Valid)
             {
@@ -424,12 +508,25 @@ static VOID NvGpuNotifyBusGraph(
 
             drawInfo->Flags = PH_GRAPH_USE_GRID;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
+            PhGraphStateGetDrawInfo(&Context->BusGraphState, getDrawInfo, Context->GpuBusHistory.Count);
 
-            PhGraphStateGetDrawInfo(
-                &Context->BusGraphState,
-                getDrawInfo,
-                Context->GpuBusHistory.Count
-                );
+            if (PhGetIntegerSetting(L"GraphShowText"))
+            {
+                HDC hdc = Graph_GetBufferedContext(Context->BusGraphHandle);
+
+                PhMoveReference(&Context->BusGraphState.Text, PhFormatString(
+                    L"%.0f%%",
+                    (FLOAT)GpuCurrentBusUsage * 100
+                    ));
+
+                SelectObject(hdc, PhApplicationFont);
+                PhSetGraphText(hdc, drawInfo, &Context->BusGraphState.Text->sr,
+                    &NormalGraphTextMargin, &NormalGraphTextPadding, PH_ALIGN_TOP | PH_ALIGN_LEFT);
+            }
+            else
+            {
+                drawInfo->Text.Buffer = NULL;
+            }
 
             if (!Context->BusGraphState.Valid)
             {
@@ -518,8 +615,7 @@ static VOID NvGpuUpdatePanel(
     }
 
     //SetDlgItemText(Context->GpuPanel, IDC_TEMP_VALUE, PhaFormatString(L"%s\u00b0C", PhaFormatUInt64(GpuCurrentBoardTemp, TRUE)->Buffer)->Buffer);
-
-    SetDlgItemText(Context->GpuPanel, IDC_VOLTAGE, PhaFormatString(L"%lumV", GpuCurrentVoltage)->Buffer);
+    SetDlgItemText(Context->GpuPanel, IDC_VOLTAGE, PhaFormatString(L"%lu mV", GpuCurrentVoltage)->Buffer);
 }
 
 static INT_PTR CALLBACK NvGpuDialogProc(
@@ -599,7 +695,7 @@ static INT_PTR CALLBACK NvGpuDialogProc(
             SendMessage(GetDlgItem(hwndDlg, IDC_GPUNAME), WM_SETFONT, (WPARAM)context->Section->Parameters->MediumFont, FALSE);
             SetDlgItemText(hwndDlg, IDC_GPUNAME, context->GpuName->Buffer);
 
-            context->GpuPanel = CreateDialog(PluginInstance->DllBase, MAKEINTRESOURCE(IDD_GPU_PANEL), hwndDlg, NvGpuPanelDialogProc);
+            context->GpuPanel = CreateDialogParam(PluginInstance->DllBase, MAKEINTRESOURCE(IDD_GPU_PANEL), hwndDlg, NvGpuPanelDialogProc, (LPARAM)context);
             ShowWindow(context->GpuPanel, SW_SHOW);
             PhAddLayoutItemEx(&context->LayoutManager, context->GpuPanel, NULL, PH_ANCHOR_LEFT | PH_ANCHOR_RIGHT | PH_ANCHOR_BOTTOM, panelItem->Margin);
 

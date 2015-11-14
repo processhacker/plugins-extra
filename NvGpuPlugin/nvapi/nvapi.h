@@ -999,10 +999,10 @@ typedef struct _NV_DISPLAY_DRIVER_VERSION
 
 //! \ingroup driverapi
 __nvapi_deprecated_function("Do not use this function - it is deprecated in release 290. Instead, use NvAPI_SYS_GetDriverAndBranchVersion.")
-NVAPI_INTERFACE NvAPI_GetDisplayDriverVersion(NvDisplayHandle hNvDisplay, NV_DISPLAY_DRIVER_VERSION *pVersion);
+typedef NvAPI_Status (__cdecl *_NvAPI_GetDisplayDriverVersion)(NvDisplayHandle hNvDisplay, NV_DISPLAY_DRIVER_VERSION *pVersion);
+_NvAPI_GetDisplayDriverVersion NvAPI_GetDisplayDriverVersion;
 
-
-
+//NVAPI_INTERFACE NvAPI_GetDisplayDriverVersion(NvDisplayHandle hNvDisplay, NV_DISPLAY_DRIVER_VERSION *pVersion);
 
 
 
@@ -1391,7 +1391,10 @@ NVAPI_INTERFACE NvAPI_GetPhysicalGPUsFromLogicalGPU(NvLogicalGpuHandle hLogicalG
 //!
 //! \ingroup gpu
 ///////////////////////////////////////////////////////////////////////////////
-NVAPI_INTERFACE NvAPI_GPU_GetGpuCoreCount(NvPhysicalGpuHandle hPhysicalGpu,NvU32 *pCount);
+//NVAPI_INTERFACE NvAPI_GPU_GetGpuCoreCount(NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pCount);
+
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetGpuCoreCount)(_In_ NvPhysicalGpuHandle hPhysicalGpu, _Out_ NvU32* pCount);
+_NvAPI_GPU_GetGpuCoreCount NvAPI_GPU_GetGpuCoreCount;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1850,9 +1853,7 @@ _NvAPI_GPU_GetFullName NvAPI_GPU_GetFullName;
 //! \retval  NVAPI_EXPECTED_PHYSICAL_GPU_HANDLE  hPhysicalGpu was not a physical GPU handle
 //! \ingroup gpu
 ///////////////////////////////////////////////////////////////////////////////
-//NVAPI_INTERFACE NvAPI_GPU_GetPCIIdentifiers(NvPhysicalGpuHandle hPhysicalGpu,NvU32 *pDeviceId,NvU32 *pSubSystemId,NvU32 *pRevisionId,NvU32 *pExtDeviceId);
-    
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetPCIIdentifiers)(NvPhysicalGpuHandle hPhysicalGpu, NvU32* pDeviceId, NvU32* pSubSystemId, NvU32* pRevisionId, NvU32* pExtDeviceId);
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetPCIIdentifiers)(_In_ NvPhysicalGpuHandle hPhysicalGpu, _Out_ NvU32* pDeviceId, _Out_ NvU32* pSubSystemId, _Out_ NvU32* pRevisionId, _Out_ NvU32* pExtDeviceId);
 _NvAPI_GPU_GetPCIIdentifiers NvAPI_GPU_GetPCIIdentifiers;
 
 
@@ -1949,8 +1950,6 @@ _NvAPI_GPU_GetBusType NvAPI_GPU_GetBusType;
 //!
 //!  \ingroup gpu
 ///////////////////////////////////////////////////////////////////////////////
-//NVAPI_INTERFACE NvAPI_GPU_GetBusId(NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pBusId);
-
 typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetBusId)(NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pBusId);
 _NvAPI_GPU_GetBusId NvAPI_GPU_GetBusId;
 
@@ -1974,8 +1973,6 @@ _NvAPI_GPU_GetBusId NvAPI_GPU_GetBusId;
 //!
 //!  \ingroup gpu
 ///////////////////////////////////////////////////////////////////////////////
-//NVAPI_INTERFACE NvAPI_GPU_GetBusSlotId(NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pBusSlotId);
-
 typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetBusSlotId)(NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pBusSlotId);
 _NvAPI_GPU_GetBusSlotId NvAPI_GPU_GetBusSlotId;
 
@@ -1998,8 +1995,6 @@ _NvAPI_GPU_GetBusSlotId NvAPI_GPU_GetBusSlotId;
 //! \retval  NVAPI_EXPECTED_PHYSICAL_GPU_HANDLE  hPhysicalGpu was not a physical GPU handle.
 //! \ingroup gpu
 ///////////////////////////////////////////////////////////////////////////////
-//NVAPI_INTERFACE NvAPI_GPU_GetIRQ(NvPhysicalGpuHandle hPhysicalGpu, NvU32* pIRQ);
-
 typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetIRQ)(NvPhysicalGpuHandle hPhysicalGpu, NvU32* pIRQ);
 _NvAPI_GPU_GetIRQ NvAPI_GPU_GetIRQ;
 
@@ -2211,8 +2206,6 @@ typedef NV_BOARD_INFO_V1    NV_BOARD_INFO;
 //! 
 //! \ingroup gpu
 ///////////////////////////////////////////////////////////////////////////////
-//NVAPI_INTERFACE NvAPI_GPU_GetBoardInfo(NvPhysicalGpuHandle hPhysicalGpu, NV_BOARD_INFO *pBoardInfo);
-
 typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetBoardInfo)(NvPhysicalGpuHandle hPhysicalGpu, NV_BOARD_INFO *pBoardInfo);
 _NvAPI_GPU_GetBoardInfo NvAPI_GPU_GetBoardInfo;
 
@@ -2559,10 +2552,10 @@ typedef struct _NV_GPU_PSTATE20_CLOCK_ENTRY_V1
 
     //! Clock type ID
     NV_GPU_PERF_PSTATE20_CLOCK_TYPE_ID          typeId;
-    NvU32                                       bIsEditable:1;
+    NvU32                                       bIsEditable : 1;
 
     //! These bits are reserved for future use (must be always 0)
-    NvU32                                       reserved:31;
+    NvU32                                       reserved : 31;
 
     //! Current frequency delta from nominal settings in (kHz)
     NV_GPU_PERF_PSTATES20_PARAM_DELTA           freqDelta_kHz;
@@ -2658,10 +2651,10 @@ typedef struct _NV_GPU_PERF_PSTATES20_INFO_V2
     //! Version info of the structure (NV_GPU_PERF_PSTATES20_INFO_VER<n>)
     NvU32 version; 
 
-    NvU32 bIsEditable:1;
+    NvU32 bIsEditable : 1;
 
     //! These bits are reserved for future use (must be always 0)
-    NvU32 reserved:31;
+    NvU32 reserved : 31;
 
     //! Number of populated pstates
     NvU32 numPstates;

@@ -21,12 +21,11 @@
  */
 
 #include "main.h"
-
-#include <pshpack8.h> // Make sure we have consistent structure packings
+#include <pshpack8.h>
 
 // rev
 #define NVAPI_MAX_USAGES_PER_GPU    33
-#define NVAPI_MAX_CLOCKS_PER_GPU          0x120
+#define NVAPI_MAX_CLOCKS_PER_GPU    0x120
 #define NVAPI_MAX_COOLERS_PER_GPU   3
 #define NVAPI_MIN_COOLER_LEVEL      0
 #define NVAPI_MAX_COOLER_LEVEL      100
@@ -38,23 +37,88 @@ typedef PVOID (__cdecl *_NvAPI_QueryInterface)(NvU32 FunctionOffset);
 _NvAPI_QueryInterface NvAPI_QueryInterface;
 
 // rev
-typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetShaderPipeCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pShaderPipeCount);
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetShaderPipeCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pShaderPipeCount);
 _NvAPI_GPU_GetShaderPipeCount NvAPI_GPU_GetShaderPipeCount;
 
 // rev
-typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetShaderSubPipeCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pShaderSubPipeCount);
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetShaderSubPipeCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pShaderSubPipeCount);
 _NvAPI_GPU_GetShaderSubPipeCount NvAPI_GPU_GetShaderSubPipeCount;
 
+
 // rev
-typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetRamType)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pRamType);
+typedef enum _NV_RAM_TYPE
+{
+    NV_RAM_TYPE_NONE,
+    NV_RAM_TYPE_SDRAM,
+    NV_RAM_TYPE_DDR1,
+    NV_RAM_TYPE_DDR2,
+    NV_RAM_TYPE_GDDR2,
+    NV_RAM_TYPE_GDDR3,
+    NV_RAM_TYPE_GDDR4,
+    NV_RAM_TYPE_DDR3,
+    NV_RAM_TYPE_GDDR5,
+    NV_RAM_TYPE_LPDDR2
+} NV_RAM_TYPE;
+
+// rev 
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetRamType)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NV_RAM_TYPE* pRamType);
 _NvAPI_GPU_GetRamType NvAPI_GPU_GetRamType;
+
+
+// rev 
+typedef enum _NV_RAM_MAKER
+{
+    NV_RAM_MAKER_NONE,
+    NV_RAM_MAKER_SAMSUNG,
+    NV_RAM_MAKER_QIMONDA,
+    NV_RAM_MAKER_ELPIDA,
+    NV_RAM_MAKER_ETRON,
+    NV_RAM_MAKER_NANYA,
+    NV_RAM_MAKER_HYNIX,
+    NV_RAM_MAKER_MOSEL,
+    NV_RAM_MAKER_WINBOND,
+    NV_RAM_MAKER_ELITE,
+    NV_RAM_MAKER_MICRON
+} NV_RAM_MAKER;
+
+// rev 
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetRamType)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NV_RAM_MAKER* pRamMaker);
+_NvAPI_GPU_GetRamType NvAPI_GPU_GetRamMaker;
+
+// rev 
+typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetRamBusWidth)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pRamBusWidth);
+_NvAPI_GPU_GetRamBusWidth NvAPI_GPU_GetRamBusWidth;
+
+// rev 
+typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetRamBankCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pRamBankCount);
+_NvAPI_GPU_GetRamBankCount NvAPI_GPU_GetRamBankCount;
+
+
+
+typedef enum _NV_FOUNDRY
+{
+    NV_FOUNDRY_NONE,
+    NV_FOUNDRY_TSMC,
+    NV_FOUNDRY_UMC,
+    NV_FOUNDRY_IBM,
+    NV_FOUNDRY_SMIC,
+    NV_FOUNDRY_CSM,
+    NV_FOUNDRY_TOSHIBA
+} NV_FOUNDRY;
+
+// rev 
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetFoundry)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NV_FOUNDRY* pFoundry);
+_NvAPI_GPU_GetFoundry NvAPI_GPU_GetFoundry;
+
+
 
 // rev
 typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetFBWidthAndLocation)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pWidth, NvU32* pLocation);
 _NvAPI_GPU_GetFBWidthAndLocation NvAPI_GPU_GetFBWidthAndLocation;
 
-// rev
-typedef NvAPI_Status(__cdecl *_NvAPI_GetDisplayDriverMemoryInfo)(_In_ NvDisplayHandle NvDispHandle, _Inout_ NV_DISPLAY_DRIVER_MEMORY_INFO* pMemoryInfo);
+
+// rev  (This has a different offset than the NvAPI_GPU_GetMemoryInfo function despite both returning the same struct).
+typedef NvAPI_Status (__cdecl *_NvAPI_GetDisplayDriverMemoryInfo)(_In_ NvDisplayHandle NvDispHandle, _Inout_ NV_DISPLAY_DRIVER_MEMORY_INFO* pMemoryInfo);
 _NvAPI_GetDisplayDriverMemoryInfo NvAPI_GetDisplayDriverMemoryInfo;
 
 
@@ -395,7 +459,7 @@ _NvAPI_GPU_QueryActiveApps NvAPI_GPU_QueryActiveApps;
 
 
 
-// rev
+// rev - NvAPI_GPU_GetPowerMizerInfo
 typedef enum _PowerSourceInfo
 {
     PowerSourceInfo_Unknown1 = 1,
@@ -423,7 +487,118 @@ typedef enum _LevelInfo
     LevelInfo_Unknown7
 } LevelInfo;
 
-typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetPowerMizerInfo)(_In_ NvPhysicalGpuHandle hPhysicalGPU, PowerSourceInfo powerSourceInfo, SelectSource select, LevelInfo* pLevelInfo);
+// rev
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetPowerMizerInfo)(_In_ NvPhysicalGpuHandle hPhysicalGPU, PowerSourceInfo powerSourceInfo, SelectSource select, LevelInfo* pLevelInfo);
 _NvAPI_GPU_GetPowerMizerInfo NvAPI_GPU_GetPowerMizerInfo;
+
+
+
+// rev
+typedef NvAPI_Status (__cdecl *_NvAPI_GetDisplayDriverRegistryPath)(_In_ NvDisplayHandle hNvDisplay, _Inout_ NvAPI_LongString szDriverRegistryPath);
+_NvAPI_GetDisplayDriverRegistryPath NvAPI_GetDisplayDriverRegistryPath;
+
+
+
+// rev
+typedef NvAPI_Status (__cdecl *_NvAPI_RestartDisplayDriver)(_In_ NvU32 NvDriverIndex);
+_NvAPI_RestartDisplayDriver NvAPI_RestartDisplayDriver;
+
+
+typedef enum _NV_POWER_TOPOLOGY_FLAGS
+{
+    NV_POWER_TOPOLOGY_FLAG_UNKNOWN1,
+    NV_POWER_TOPOLOGY_FLAG_UNKNOWN2
+} NV_POWER_TOPOLOGY_FLAGS;
+
+
+typedef struct _NV_POWER_TOPOLOGY_1
+{
+    NvU32 unknown1;
+    NvU32 unknown2;
+    NvU32 unknown3;
+
+    //public uint UInt32_0
+    //{
+    //    get { return this.unknown1 & 1u; }
+    //}
+
+    //public uint UInt32_1
+    //{
+    //    get { return (this.unknown1 & 4294967294u) / 2u; }
+    //}
+} NV_POWER_TOPOLOGY_1;
+
+
+typedef struct _NV_POWER_TOPOLOGY_2
+{
+    NV_POWER_TOPOLOGY_FLAGS flags;
+    NV_POWER_TOPOLOGY_1 unknown;
+} NV_POWER_TOPOLOGY_2;
+
+typedef struct _NV_POWER_TOPOLOGY_STATUS
+{
+    NvU32 version;        //!< Structure version
+    NvU32 count;
+
+    NV_POWER_TOPOLOGY_2 unknown[4];
+} NV_POWER_TOPOLOGY_STATUS;
+
+#define NV_POWER_TOPOLOGY_STATUS_VER   MAKE_NVAPI_VERSION(NV_POWER_TOPOLOGY_STATUS, 1)
+
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_ClientPowerTopologyGetStatus)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_POWER_TOPOLOGY_STATUS* pClientPowerTopologyStatus);
+_NvAPI_GPU_ClientPowerTopologyGetStatus NvAPI_GPU_ClientPowerTopologyGetStatus;
+
+
+
+// rev
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetShortName)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NvAPI_ShortString szName);
+_NvAPI_GPU_GetShortName NvAPI_GPU_GetShortName;
+
+
+// rev
+typedef struct _NV_ARCH_INFO
+{
+    NvU32 version;        //!< Structure version
+    NvU32 unknown[3];
+} NV_ARCH_INFO;
+
+#define NV_ARCH_INFO_VER   MAKE_NVAPI_VERSION(NV_ARCH_INFO, 2)
+
+// rev
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetArchInfo)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_ARCH_INFO* pArchInfo);
+_NvAPI_GPU_GetArchInfo NvAPI_GPU_GetArchInfo;
+
+
+
+// rev
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetPartitionCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Out_ NvU32* pCount);
+_NvAPI_GPU_GetPartitionCount NvAPI_GPU_GetPartitionCount;
+
+
+
+
+typedef struct _NV_PCIE_INFO_UNKNOWN
+{
+    NvU32 unknown0;
+    NvU32 unknown1;
+    NvU32 unknown2;
+    NvU32 unknown3;
+    NvU32 unknown4;
+    NvU32 unknown5;
+    NvU32 unknown6;
+    NvU32 unknown7;
+} NV_PCIE_INFO_UNKNOWN;
+
+typedef struct _NV_PCIE_INFO
+{
+    NvU32                   version;          //!< Structure version
+    NV_PCIE_INFO_UNKNOWN    info[5];
+} NV_PCIE_INFO;
+
+#define NV_PCIE_INFO_VER   MAKE_NVAPI_VERSION(NV_PCIE_INFO, 2)
+
+typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetPCIEInfo)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_PCIE_INFO* pPciInfo);
+_NvAPI_GPU_GetPCIEInfo NvAPI_GPU_GetPCIEInfo;
+
 
 #include <poppack.h>

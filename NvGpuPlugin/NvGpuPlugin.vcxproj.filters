@@ -27,7 +27,7 @@
     <ClInclude Include="nvapi\nvapi_lite_common.h">
       <Filter>Header Files\nvapi</Filter>
     </ClInclude>
-    <ClInclude Include="NvGpuPlugin.h">
+    <ClInclude Include="nvidia.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -38,10 +38,13 @@
     <ClCompile Include="graph.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NvGpuPlugin.c">
+    <ClCompile Include="options.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="options.c">
+    <ClCompile Include="nvidia.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="details.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -52,5 +55,10 @@
     <ResourceCompile Include="NvGpuPlugin.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\NVLogo_2D.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

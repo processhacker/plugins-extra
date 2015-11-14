@@ -64,16 +64,17 @@
     <Import Project="..\ExtraPlugins.props" />
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="details.c" />
     <ClCompile Include="graph.c" />
     <ClCompile Include="main.c" />
-    <ClCompile Include="NvGpuPlugin.c" />
+    <ClCompile Include="nvidia.c" />
     <ClCompile Include="options.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
     <ClInclude Include="nvapi\nvapi.h" />
     <ClInclude Include="nvapi\nvapi_lite_common.h" />
-    <ClInclude Include="NvGpuPlugin.h" />
+    <ClInclude Include="nvidia.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
@@ -81,6 +82,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="CHANGELOG.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\NVLogo_2D.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
