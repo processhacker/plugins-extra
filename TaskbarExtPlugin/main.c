@@ -48,7 +48,7 @@ static VOID ProcessesUpdatedCallback(
     PH_PLUGIN_SYSTEM_STATISTICS statistics;
 
     ProcessesUpdatedCount++;
-    if (ProcessesUpdatedCount < 3)
+    if (ProcessesUpdatedCount < 5)
         return;
 
     taskbarIconType = PhGetIntegerSetting(SETTING_NAME_TASKBAR_ICON_TYPE);
