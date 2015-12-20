@@ -55,43 +55,13 @@ static VOID ShowBootEntryMenu(
     _In_ HWND hwndDlg
     )
 {
-    HMENU menu;
-    HMENU subMenu;
-    ULONG id;
-    POINT cursorPos = { 0, 0 };
-
-    PPH_STRING bootEntryName = PhGetSelectedListViewItemText(Context->ListViewHandle);
+    PPH_STRING bootEntryName;
+    
+    bootEntryName = PhGetSelectedListViewItemText(Context->ListViewHandle);
 
     if (bootEntryName)
     {
-        GetCursorPos(&cursorPos);
-
-        menu = LoadMenu(
-            PluginInstance->DllBase,
-            MAKEINTRESOURCE(IDR_BOOT_ENTRY_MENU)
-            );
-
-        subMenu = GetSubMenu(menu, 0);
-
-        id = (ULONG)TrackPopupMenu(
-            subMenu,
-            TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
-            cursorPos.x,
-            cursorPos.y,
-            0,
-            hwndDlg,
-            NULL
-            );
-
-        DestroyMenu(menu);
-
-        switch (id)
-        {
-        case ID_MENU_MOVEUP:
-        case ID_MENU_MOVEDOWN:
-            break;
-        }
-
+        // TODO: Add MoveUp and MoveDown menu.
         PhDereferenceObject(bootEntryName);
     }
 }

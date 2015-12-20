@@ -188,101 +188,99 @@ static VOID ShowStatusMenu(
     _In_ HWND hwndDlg
     )
 {
-    HMENU menu;
-    HMENU subMenu;
-    ULONG id;
-    POINT cursorPos = { 0, 0 };
-
-    PPH_STRING cacheEntryName = PhGetSelectedListViewItemText(ListViewWndHandle);
+    PPH_STRING cacheEntryName;
+        
+    cacheEntryName = PhGetSelectedListViewItemText(ListViewWndHandle);
 
     if (cacheEntryName)
     {
+        POINT cursorPos;
+        PPH_EMENU menu;
+        PPH_EMENU_ITEM selectedItem;
+
         GetCursorPos(&cursorPos);
 
-        menu = LoadMenu(
-            PluginInstance->DllBase,
-            MAKEINTRESOURCE(IDR_MAIN_MENU)
-            );
+        menu = PhCreateEMenu();
+        PhInsertEMenuItem(menu, PhCreateEMenuItem(0, 1, L"Remove", NULL, NULL), -1);
 
-        subMenu = GetSubMenu(menu, 0);
-
-        id = (ULONG)TrackPopupMenu(
-            subMenu,
-            TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
+        selectedItem = PhShowEMenu(
+            menu,
+            ListViewWndHandle,
+            PH_EMENU_SHOW_LEFTRIGHT,
+            PH_ALIGN_LEFT | PH_ALIGN_TOP,
             cursorPos.x,
-            cursorPos.y,
-            0,
-            hwndDlg,
-            NULL
+            cursorPos.y
             );
 
-        DestroyMenu(menu);
-
-        switch (id)
+        if (selectedItem && selectedItem->Id != -1)
         {
-        case ID_ATOMMENU_REMOVE:
+            switch (selectedItem->Id)
             {
-                INT lvItemIndex = PhFindListViewItemByFlags(
-                    ListViewWndHandle,
-                    -1,
-                    LVNI_SELECTED
-                    );
-
-                if (lvItemIndex != -1)
+            case 1:
                 {
-                    if (!PhGetIntegerSetting(L"EnableWarnings") || PhShowConfirmMessage(
-                        hwndDlg,
-                        L"remove",
-                        cacheEntryName->Buffer,
-                        NULL,
-                        FALSE
-                        ))
+                    INT lvItemIndex = PhFindListViewItemByFlags(
+                        ListViewWndHandle,
+                        -1,
+                        LVNI_SELECTED
+                        );
+
+                    if (lvItemIndex != -1)
                     {
-                        PATOM_TABLE_INFORMATION atomTable = NULL;
-
-                        if (!NT_SUCCESS(PhEnumAtomTable(&atomTable)))
-                            return;
-
-                        for (ULONG i = 0; i < atomTable->NumberOfAtoms; i++)
+                        if (!PhGetIntegerSetting(L"EnableWarnings") || PhShowConfirmMessage(
+                            hwndDlg,
+                            L"remove",
+                            cacheEntryName->Buffer,
+                            NULL,
+                            FALSE
+                            ))
                         {
-                            PATOM_BASIC_INFORMATION atomInfo = NULL;
+                            PATOM_TABLE_INFORMATION atomTable = NULL;
 
-                            if (!NT_SUCCESS(PhQueryAtomTableEntry(atomTable->Atoms[i], &atomInfo)))
-                                continue;
+                            if (!NT_SUCCESS(PhEnumAtomTable(&atomTable)))
+                                return;
 
-                            if (!PhEqualStringZ(atomInfo->Name, cacheEntryName->Buffer, TRUE))
-                                continue;
-
-                            do
+                            for (ULONG i = 0; i < atomTable->NumberOfAtoms; i++)
                             {
-                                if (!NT_SUCCESS(NtDeleteAtom(atomTable->Atoms[i])))
-                                {
-                                    break;
-                                }
-
-                                PhFree(atomInfo);
-                                atomInfo = NULL;
+                                PATOM_BASIC_INFORMATION atomInfo = NULL;
 
                                 if (!NT_SUCCESS(PhQueryAtomTableEntry(atomTable->Atoms[i], &atomInfo)))
-                                    break;
+                                    continue;
 
-                            } while (atomInfo->UsageCount >= 1);
+                                if (!PhEqualStringZ(atomInfo->Name, cacheEntryName->Buffer, TRUE))
+                                    continue;
 
-                            ListView_DeleteItem(ListViewWndHandle, lvItemIndex);
+                                do
+                                {
+                                    if (!NT_SUCCESS(NtDeleteAtom(atomTable->Atoms[i])))
+                                    {
+                                        break;
+                                    }
 
-                            if (atomInfo)
-                            {
-                                PhFree(atomInfo);
+                                    PhFree(atomInfo);
+                                    atomInfo = NULL;
+
+                                    if (!NT_SUCCESS(PhQueryAtomTableEntry(atomTable->Atoms[i], &atomInfo)))
+                                        break;
+
+                                } while (atomInfo->UsageCount >= 1);
+
+                                ListView_DeleteItem(ListViewWndHandle, lvItemIndex);
+
+                                if (atomInfo)
+                                {
+                                    PhFree(atomInfo);
+                                }
                             }
-                        }
 
-                        PhFree(atomTable);
+                            PhFree(atomTable);
+                        }
                     }
                 }
+                break;
             }
-            break;
         }
 
+        PhDestroyEMenu(menu);
         PhDereferenceObject(cacheEntryName);
     }
 }

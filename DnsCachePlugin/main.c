@@ -170,66 +170,65 @@ static VOID ShowStatusMenu(
     _In_ HWND hwndDlg
     )
 {
-    HMENU menu;
-    HMENU subMenu;
-    ULONG id;
-    POINT cursorPos = { 0, 0 };
-
-    PPH_STRING cacheEntryName = PhGetSelectedListViewItemText(ListViewWndHandle);
+    PPH_STRING cacheEntryName;
+    
+    cacheEntryName = PhGetSelectedListViewItemText(ListViewWndHandle);
 
     if (cacheEntryName)
     {
+        POINT cursorPos;
+        PPH_EMENU menu;
+        PPH_EMENU_ITEM selectedItem;
+
         GetCursorPos(&cursorPos);
 
-        menu = LoadMenu(
-            PluginInstance->DllBase,
-            MAKEINTRESOURCE(IDR_MAIN_MENU)
-            );
+        menu = PhCreateEMenu();
+        PhInsertEMenuItem(menu, PhCreateEMenuItem(0, 1, L"Remove", NULL, NULL), -1);
 
-        subMenu = GetSubMenu(menu, 0);
-
-        id = (ULONG)TrackPopupMenu(
-            subMenu,
-            TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
+        selectedItem = PhShowEMenu(
+            menu,
+            PhMainWndHandle,
+            PH_EMENU_SHOW_LEFTRIGHT,
+            PH_ALIGN_LEFT | PH_ALIGN_TOP,
             cursorPos.x,
-            cursorPos.y,
-            0,
-            hwndDlg,
-            NULL
+            cursorPos.y
             );
 
-        DestroyMenu(menu);
-
-        switch (id)
+        if (selectedItem && selectedItem->Id != -1)
         {
-        case ID_DNSENTRY_FLUSH:
-        {
-            INT lvItemIndex = PhFindListViewItemByFlags(
-                ListViewWndHandle,
-                -1,
-                LVNI_SELECTED
-                );
-
-            if (lvItemIndex != -1)
+            switch (selectedItem->Id)
             {
-                if (!PhGetIntegerSetting(L"EnableWarnings") || PhShowConfirmMessage(
-                    hwndDlg,
-                    L"remove",
-                    cacheEntryName->Buffer,
-                    NULL,
-                    FALSE
-                    ))
+            case 1:
                 {
-                    if (DnsFlushResolverCacheEntry_I(cacheEntryName->Buffer))
+                    INT lvItemIndex = PhFindListViewItemByFlags(
+                        ListViewWndHandle,
+                        -1,
+                        LVNI_SELECTED
+                        );
+
+                    if (lvItemIndex != -1)
                     {
-                        ListView_DeleteItem(ListViewWndHandle, lvItemIndex);
+                        if (!PhGetIntegerSetting(L"EnableWarnings") || PhShowConfirmMessage(
+                            hwndDlg,
+                            L"remove",
+                            cacheEntryName->Buffer,
+                            NULL,
+                            FALSE
+                            ))
+                        {
+                            if (DnsFlushResolverCacheEntry_I(cacheEntryName->Buffer))
+                            {
+                                ListView_DeleteAllItems(ListViewWndHandle);
+                                EnumDnsCacheTable(ListViewWndHandle);
+                            }
+                        }
                     }
                 }
+                break;
             }
         }
-            break;
-        }
 
+        PhDestroyEMenu(menu);
         PhDereferenceObject(cacheEntryName);
     }
 }

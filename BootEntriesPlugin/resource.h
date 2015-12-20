@@ -3,11 +3,8 @@
 // Used by BootEntriesPlugin.rc
 //
 #define IDD_BOOT                        101
-#define IDR_BOOT_ENTRY_MENU             102
 #define IDC_BOOT_LIST                   40001
 #define IDC_BOOT_REFRESH                40002
-#define ID_MENU_MOVEUP                  40003
-#define ID_MENU_MOVEDOWN                40004
 
 // Next default values for new objects
 // 

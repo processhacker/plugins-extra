@@ -3,11 +3,9 @@
 // Used by DnsCachePlugin.rc
 //
 #define IDD_DNSVIEW                     101
-#define IDR_MAIN_MENU                   111
 #define IDC_DNSLIST                     1021
 #define IDC_DNS_REFRESH                 4355
 #define IDC_DNS_CLEAR                   4356
-#define ID_DNSENTRY_FLUSH               40004
 
 // Next default values for new objects
 // 

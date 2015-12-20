@@ -121,10 +121,6 @@ static VOID ShowListViewMenu(
     )
 {
     INT index;
-    ULONG id;
-    POINT cursorPos;
-    HMENU menu;
-    HMENU subMenu;
     PDEBUG_LOG_ENTRY entry;
 
     index = PhFindListViewItemByFlags(Context->ListViewHandle, -1, LVNI_SELECTED);
@@ -136,73 +132,87 @@ static VOID ShowListViewMenu(
 
     if (entry)
     {
+        POINT cursorPos;
+        PPH_EMENU menu;
+        PPH_EMENU_ITEM selectedItem;
+
         GetCursorPos(&cursorPos);
 
-        menu = LoadMenu(PluginInstance->DllBase, MAKEINTRESOURCE(IDR_MAIN_MENU));
-        subMenu = GetSubMenu(menu, 0);
+        menu = PhCreateEMenu();
+        PhInsertEMenuItem(menu, PhCreateEMenuItem(0, 1, L"View Message", NULL, NULL), -1);
+        PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+        PhInsertEMenuItem(menu, PhCreateEMenuItem(0, 2, L"Go to Owning &Process", NULL, NULL), -1);
+        PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+        PhInsertEMenuItem(menu, selectedItem = PhCreateEMenuItem(0, 0, L"E&xclude Process", NULL, NULL), -1);
+        PhInsertEMenuItem(selectedItem, PhCreateEMenuItem(0, 3, L"By PID", NULL, NULL), -1);
+        PhInsertEMenuItem(selectedItem, PhCreateEMenuItem(0, 4, L"By Name", NULL, NULL), -1);
+        PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+        PhInsertEMenuItem(menu, PhCreateEMenuItem(0, 5, L"&Copy", NULL, NULL), -1);
 
-        id = (ULONG)TrackPopupMenu(
-            subMenu,
-            TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
+        selectedItem = PhShowEMenu(
+            menu,
+            Context->ListViewHandle,
+            PH_EMENU_SHOW_LEFTRIGHT,
+            PH_ALIGN_LEFT | PH_ALIGN_TOP,
             cursorPos.x,
-            cursorPos.y,
-            0,
-            Context->DialogHandle,
-            NULL
+            cursorPos.y
             );
 
-        DestroyMenu(menu);
-
-        switch (id)
+        if (selectedItem && selectedItem->Id != -1)
         {
-        case ID_GOTOOWNINGPROCESS:
+            switch (selectedItem->Id)
             {
-                PPH_PROCESS_NODE processNode;
-
-                if (processNode = PhFindProcessNode(entry->ProcessId))
+            case 1:
                 {
-                    ProcessHacker_ToggleVisible(PhMainWndHandle, TRUE);
-                    ProcessHacker_SelectTabPage(PhMainWndHandle, 0);
-                    ProcessHacker_SelectProcessNode(PhMainWndHandle, processNode);
+                    DialogBoxParam(
+                        PluginInstance->DllBase,
+                        MAKEINTRESOURCE(IDD_MESSAGE_DIALOG),
+                        Context->DialogHandle,
+                        DbgPropDlgProc,
+                        (LPARAM)entry
+                        );
                 }
-            }
-            break;
-        case ID_PROPERTIES:
-            {
-                DialogBoxParam(
-                    PluginInstance->DllBase,
-                    MAKEINTRESOURCE(IDD_MESSAGE_DIALOG),
-                    Context->DialogHandle,
-                    DbgPropDlgProc,
-                    (LPARAM)entry
-                    );
-            }
-            break;
-        case ID_COPY:
-            {
-                PPH_STRING string;
+                break;
+            case 2:
+                {
+                    PPH_PROCESS_NODE processNode;
 
-                string = DbgGetStringForSelectedLogEntries(Context, FALSE);
+                    if (processNode = PhFindProcessNode(entry->ProcessId))
+                    {
+                        ProcessHacker_ToggleVisible(PhMainWndHandle, TRUE);
+                        ProcessHacker_SelectTabPage(PhMainWndHandle, 0);
+                        ProcessHacker_SelectProcessNode(PhMainWndHandle, processNode);
+                    }
+                }
+                break;
+            case 3:
+                {
+                    AddFilterType(Context, FilterByPid, entry->ProcessId, entry->ProcessName);
+                    DbgUpdateLogList(Context);
+                }
+                break;
+            case 4:
+                {
+                    AddFilterType(Context, FilterByName, entry->ProcessId, entry->ProcessName);
+                    DbgUpdateLogList(Context);
+                }
+                break;
+            case 5:
+                {
+                    PPH_STRING string;
 
-                PhSetClipboardString(Context->DialogHandle, &string->sr);
-                PhDereferenceObject(string);
+                    string = DbgGetStringForSelectedLogEntries(Context, FALSE);
 
-                SetFocus(Context->ListViewHandle);
+                    PhSetClipboardString(Context->DialogHandle, &string->sr);
+                    PhDereferenceObject(string);
+
+                    SetFocus(Context->ListViewHandle);
+                }
+                break;
             }
-            break;
-        case ID_EXCLUDEPROCESS_BYPID:
-            {
-                AddFilterType(Context, FilterByPid, entry->ProcessId, entry->ProcessName);
-                DbgUpdateLogList(Context);
-            }
-            break;
-        case ID_EXCLUDEPROCESS_BYNAME:
-            {
-                AddFilterType(Context, FilterByName, entry->ProcessId, entry->ProcessName);
-                DbgUpdateLogList(Context);
-            }
-            break;
         }
+
+        PhDestroyEMenu(menu);
     }
 }
 

@@ -116,21 +116,6 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Menu
-//
-
-IDR_BOOT_ENTRY_MENU MENU
-BEGIN
-    POPUP "Menu"
-    BEGIN
-        MENUITEM "Move Up",                     ID_MENU_MOVEUP
-        MENUITEM "Move Down",                   ID_MENU_MOVEDOWN
-    END
-END
-
 #endif    // English (Australia) resources
 /////////////////////////////////////////////////////////////////////////////
 

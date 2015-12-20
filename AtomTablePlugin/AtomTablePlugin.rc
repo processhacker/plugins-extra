@@ -16,6 +16,7 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENA)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_AUS
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -114,20 +115,6 @@ BEGIN
 END
 
 #endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Menu
-//
-
-IDR_MAIN_MENU MENU
-BEGIN
-    POPUP "AtomMenu"
-    BEGIN
-        MENUITEM "Remove",                      ID_ATOMMENU_REMOVE
-    END
-END
 
 #endif    // English (Australia) resources
 /////////////////////////////////////////////////////////////////////////////
