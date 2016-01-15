@@ -998,7 +998,7 @@ typedef struct _NV_DISPLAY_DRIVER_VERSION
 
 
 //! \ingroup driverapi
-__nvapi_deprecated_function("Do not use this function - it is deprecated in release 290. Instead, use NvAPI_SYS_GetDriverAndBranchVersion.")
+//__nvapi_deprecated_function("Do not use this function - it is deprecated in release 290. Instead, use NvAPI_SYS_GetDriverAndBranchVersion.")
 typedef NvAPI_Status (__cdecl *_NvAPI_GetDisplayDriverVersion)(NvDisplayHandle hNvDisplay, NV_DISPLAY_DRIVER_VERSION *pVersion);
 _NvAPI_GetDisplayDriverVersion NvAPI_GetDisplayDriverVersion;
 

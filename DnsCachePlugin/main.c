@@ -264,8 +264,7 @@ static INT_PTR CALLBACK DnsCacheDlgProc(
             PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
             PhLoadListViewColumnsFromSetting(SETTING_NAME_COLUMNS, ListViewWndHandle);
 
-            DnsApiHandle = LoadLibrary(L"dnsapi.dll");
-            if (DnsApiHandle)
+            if (DnsApiHandle = LoadLibrary(L"dnsapi.dll"))
             {
                 DnsQuery_I = PhGetProcedureAddress(DnsApiHandle, "DnsQuery_W", 0);
                 DnsFree_I = PhGetProcedureAddress(DnsApiHandle, "DnsFree", 0);
