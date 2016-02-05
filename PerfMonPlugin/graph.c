@@ -146,7 +146,7 @@ static INT_PTR CALLBACK PerfCounterDialogProc(
                         PPH_GRAPH_GETDRAWINFO getDrawInfo = (PPH_GRAPH_GETDRAWINFO)header;
                         PPH_GRAPH_DRAW_INFO drawInfo = getDrawInfo->DrawInfo;
 
-                        drawInfo->Flags = PH_GRAPH_USE_GRID;
+                        drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y | PH_GRAPH_LOGARITHMIC_GRID_Y;
                         context->SysinfoSection->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
 
                         PhGraphStateGetDrawInfo(
@@ -173,6 +173,7 @@ static INT_PTR CALLBACK PerfCounterDialogProc(
                                 maxGraphHeight,
                                 drawInfo->LineDataCount
                                 );
+                            drawInfo->GridHeight = 1 / maxGraphHeight;
 
                             context->GraphState.Valid = TRUE;
                         }
@@ -308,7 +309,7 @@ static BOOLEAN PerfCounterSectionCallback(
         {
             PPH_GRAPH_DRAW_INFO drawInfo = (PPH_GRAPH_DRAW_INFO)Parameter1;
 
-            drawInfo->Flags = PH_GRAPH_USE_GRID;
+            drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y | PH_GRAPH_LOGARITHMIC_GRID_Y;
             Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
 
             PhGetDrawInfoGraphBuffers(&Section->GraphState.Buffers, drawInfo, context->HistoryBuffer.Count);
@@ -331,6 +332,7 @@ static BOOLEAN PerfCounterSectionCallback(
                     maxGraphHeight,
                     drawInfo->LineDataCount
                     );
+                drawInfo->GridHeight = 1 / maxGraphHeight;
 
                 Section->GraphState.Valid = TRUE;
             }

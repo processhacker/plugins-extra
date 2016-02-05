@@ -288,7 +288,7 @@ static VOID NvGpuNotifyUsageGraph(
             PPH_GRAPH_GETDRAWINFO getDrawInfo = (PPH_GRAPH_GETDRAWINFO)Header;
             PPH_GRAPH_DRAW_INFO drawInfo = getDrawInfo->DrawInfo;
 
-            drawInfo->Flags = PH_GRAPH_USE_GRID;
+            drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
             PhGraphStateGetDrawInfo(&Context->GpuGraphState, getDrawInfo, Context->GpuUtilizationHistory.Count);
 
@@ -354,7 +354,7 @@ static VOID NvGpuNotifyMemoryGraph(
             PPH_GRAPH_GETDRAWINFO getDrawInfo = (PPH_GRAPH_GETDRAWINFO)Header;
             PPH_GRAPH_DRAW_INFO drawInfo = getDrawInfo->DrawInfo;
 
-            drawInfo->Flags = PH_GRAPH_USE_GRID;
+            drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorPhysical"), 0);
             PhGraphStateGetDrawInfo(&Context->MemGraphState, getDrawInfo, Context->GpuMemoryHistory.Count);
 
@@ -439,7 +439,7 @@ static VOID NvGpuNotifySharedGraph(
             PPH_GRAPH_GETDRAWINFO getDrawInfo = (PPH_GRAPH_GETDRAWINFO)Header;
             PPH_GRAPH_DRAW_INFO drawInfo = getDrawInfo->DrawInfo;
 
-            drawInfo->Flags = PH_GRAPH_USE_GRID;
+            drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
             PhGraphStateGetDrawInfo(&Context->SharedGraphState, getDrawInfo, Context->GpuBoardHistory.Count);
 
@@ -506,7 +506,7 @@ static VOID NvGpuNotifyBusGraph(
             PPH_GRAPH_GETDRAWINFO getDrawInfo = (PPH_GRAPH_GETDRAWINFO)Header;
             PPH_GRAPH_DRAW_INFO drawInfo = getDrawInfo->DrawInfo;
 
-            drawInfo->Flags = PH_GRAPH_USE_GRID;
+            drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
             PhGraphStateGetDrawInfo(&Context->BusGraphState, getDrawInfo, Context->GpuBusHistory.Count);
 
@@ -809,7 +809,7 @@ static BOOLEAN NvGpuSectionCallback(
         {
             PPH_GRAPH_DRAW_INFO drawInfo = (PPH_GRAPH_DRAW_INFO)Parameter1;
 
-            drawInfo->Flags = PH_GRAPH_USE_GRID;
+            drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y;
             Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
             PhGetDrawInfoGraphBuffers(&Section->GraphState.Buffers, drawInfo, context->GpuUtilizationHistory.Count);
 
