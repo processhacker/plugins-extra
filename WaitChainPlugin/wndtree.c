@@ -22,7 +22,7 @@
 
 #include "main.h"
 
-BOOLEAN WepWindowNodeHashtableCompareFunction(
+BOOLEAN WepWindowNodeHashtableEqualFunction(
     _In_ PVOID Entry1,
     _In_ PVOID Entry2
     );
@@ -56,8 +56,8 @@ VOID WtcInitializeWindowTree(
 
     Context->NodeHashtable = PhCreateHashtable(
         sizeof(PWCT_ROOT_NODE),
-        (PPH_HASHTABLE_COMPARE_FUNCTION)WepWindowNodeHashtableCompareFunction,
-        (PPH_HASHTABLE_HASH_FUNCTION)WepWindowNodeHashtableHashFunction,
+        WepWindowNodeHashtableEqualFunction,
+        WepWindowNodeHashtableHashFunction,
         100
         );
     Context->NodeList = PhCreateList(100);
@@ -108,7 +108,7 @@ VOID WtcDeleteWindowTree(
     PhDereferenceObject(Context->NodeRootList);
 }
 
-BOOLEAN WepWindowNodeHashtableCompareFunction(
+BOOLEAN WepWindowNodeHashtableEqualFunction(
     _In_ PVOID Entry1,
     _In_ PVOID Entry2
     )
