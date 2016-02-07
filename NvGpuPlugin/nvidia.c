@@ -147,7 +147,7 @@ BOOLEAN InitializeNvApi(VOID)
     //NvAPI_GetPhysicalGPUsFromDisplay = NvAPI_QueryInterface(0x34EF9506);
     NvAPI_GetDisplayDriverVersion = NvAPI_QueryInterface(0xF951A4D1UL);
     NvAPI_GetDisplayDriverRegistryPath = NvAPI_QueryInterface(0x0E24CEEEUL);
-    NvAPI_RestartDisplayDriver = NvAPI_QueryInterface(0xB4B26B65UL);
+    //NvAPI_RestartDisplayDriver = NvAPI_QueryInterface(0xB4B26B65UL);
 
     //NvAPI_GPU_GetBoardInfo = NvAPI_QueryInterface(0x22D54523);
     //NvAPI_GPU_GetBusType = NvAPI_QueryInterface(0x1BB18724);
@@ -938,19 +938,6 @@ PPH_STRING NvGpuQueryFanSpeed(VOID)
     }
 
     return PhCreateString(L"N/A");
-}
-
-
-
-
-BOOLEAN NvGpuRestartDisplayDriver(VOID)
-{
-    if (NvApiInitialized && NvAPI_RestartDisplayDriver)
-    {
-        return NvAPI_RestartDisplayDriver(0) == NVAPI_OK;
-    }
-
-    return FALSE;
 }
 
 

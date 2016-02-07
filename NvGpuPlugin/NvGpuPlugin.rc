@@ -155,7 +155,6 @@ BEGIN
     EDITTEXT        IDC_EDIT10,111,95,74,12,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        IDC_EDIT11,31,129,179,12,ES_AUTOHSCROLL | ES_READONLY
     EDITTEXT        IDC_EDIT12,31,148,179,12,ES_AUTOHSCROLL | ES_READONLY
-    PUSHBUTTON      "Reset",IDC_RESET,7,224,50,14
     RTEXT           "Name",IDC_STATIC,7,9,20,8
     RTEXT           "GPU",IDC_STATIC,7,28,20,8
     RTEXT           "Revision",IDC_STATIC,101,28,28,8
@@ -219,6 +218,7 @@ END
 //
 
 IDB_NV_LOGO_PNG         PNG                     "resources\\NVLogo_2D.png"
+
 #endif    // English (Australia) resources
 /////////////////////////////////////////////////////////////////////////////
 

@@ -500,8 +500,8 @@ _NvAPI_GetDisplayDriverRegistryPath NvAPI_GetDisplayDriverRegistryPath;
 
 
 // rev
-typedef NvAPI_Status (__cdecl *_NvAPI_RestartDisplayDriver)(_In_ NvU32 NvDriverIndex);
-_NvAPI_RestartDisplayDriver NvAPI_RestartDisplayDriver;
+//typedef NvAPI_Status (__cdecl *_NvAPI_RestartDisplayDriver)(_In_ NvU32 NvDriverIndex);
+//_NvAPI_RestartDisplayDriver NvAPI_RestartDisplayDriver;
 
 
 typedef enum _NV_POWER_TOPOLOGY_FLAGS

@@ -105,14 +105,6 @@ static INT_PTR CALLBACK DetailsDlgProc(
             case IDOK:
                 EndDialog(hwndDlg, IDOK);
                 break;
-            case IDC_RESET:
-                {
-                    if (PhShowConfirmMessage(hwndDlg, L"Restart", L"the display driver", NULL, TRUE))
-                    {
-                        
-                    }
-                }
-                break;
             }
         }
         break;

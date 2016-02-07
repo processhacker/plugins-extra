@@ -70,12 +70,9 @@ PPH_STRING NvGpuQueryShaderCount(VOID);
 PPH_STRING NvGpuQueryPciInfo(VOID);
 PPH_STRING NvGpuQueryBusWidth(VOID);
 PPH_STRING NvGpuQueryPcbValue(VOID);
-
 PPH_STRING NvGpuQueryDriverSettings(VOID);
-
 PPH_STRING NvGpuQueryFanSpeed(VOID);
 
-BOOLEAN NvGpuRestartDisplayDriver(VOID);
 BOOLEAN NvGpuDriverIsWHQL(VOID);
 
 VOID NvGpuUpdateValues(VOID);
