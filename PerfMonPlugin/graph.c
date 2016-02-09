@@ -24,6 +24,35 @@
 
 #define MSG_UPDATE (WM_APP + 1)
 
+PPH_STRING PerfCounterLabelYFunction(
+    _In_ PPH_GRAPH_DRAW_INFO DrawInfo,
+    _In_ ULONG DataIndex,
+    _In_ FLOAT Value,
+    _In_ FLOAT Parameter
+    )
+{
+    ULONG64 size;
+
+    size = (ULONG64)(Value * Parameter);
+
+    if (size != 0)
+    {
+        PH_FORMAT format;
+
+        format.Type = Int64FormatType | FormatUsePrecision | FormatUseRadix;
+        format.Precision = 0;
+        format.Radix = -1;
+        format.u.Size = size;
+
+        return PhFormat(&format, 1, 0);
+    }
+    else
+    {
+        return PhReferenceEmptyString();
+    }
+}
+
+
 static VOID NTAPI ProcessesUpdatedHandler(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
@@ -338,7 +367,7 @@ static BOOLEAN PerfCounterSectionCallback(
                         );
                 }
 
-                drawInfo->LabelYFunction = PhSiSizeLabelYFunction;
+                drawInfo->LabelYFunction = PerfCounterLabelYFunction;
                 drawInfo->LabelYFunctionParameter = max;
 
                 Section->GraphState.Valid = TRUE;
