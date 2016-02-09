@@ -56,7 +56,7 @@ typedef struct _PH_PERFMON_SYSINFO_CONTEXT
     HQUERY PerfQueryHandle;
     HCOUNTER PerfCounterHandle;
 
-    ULONG GraphValue;
+    ULONG64 GraphValue;
     HWND WindowHandle;
     HWND GraphHandle;
 
@@ -65,7 +65,7 @@ typedef struct _PH_PERFMON_SYSINFO_CONTEXT
     PH_LAYOUT_MANAGER LayoutManager;
     PH_CALLBACK_REGISTRATION ProcessesUpdatedRegistration;
 
-    PH_CIRCULAR_BUFFER_ULONG HistoryBuffer;
+    PH_CIRCULAR_BUFFER_ULONG64 HistoryBuffer;
 } PH_PERFMON_SYSINFO_CONTEXT, *PPH_PERFMON_SYSINFO_CONTEXT;
 
 VOID LoadCounterList(

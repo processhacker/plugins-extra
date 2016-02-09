@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Performance Monitor Plugin
  *
- * Copyright (C) 2015 dmex
+ * Copyright (C) 2015-2016 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -146,34 +146,36 @@ static INT_PTR CALLBACK PerfCounterDialogProc(
                         PPH_GRAPH_GETDRAWINFO getDrawInfo = (PPH_GRAPH_GETDRAWINFO)header;
                         PPH_GRAPH_DRAW_INFO drawInfo = getDrawInfo->DrawInfo;
 
-                        drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y | PH_GRAPH_LOGARITHMIC_GRID_Y;
+                        drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y | PH_GRAPH_LABEL_MAX_Y;
                         context->SysinfoSection->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
-
-                        PhGraphStateGetDrawInfo(
-                            &context->GraphState,
-                            getDrawInfo,
-                            context->HistoryBuffer.Count
-                            );
+                        PhGraphStateGetDrawInfo(&context->GraphState, getDrawInfo, context->HistoryBuffer.Count);
 
                         if (!context->GraphState.Valid)
                         {
-                            FLOAT maxGraphHeight = 0;
+                            FLOAT max = 0;
 
                             for (ULONG i = 0; i < drawInfo->LineDataCount; i++)
                             {
-                                context->GraphState.Data1[i] = (FLOAT)PhGetItemCircularBuffer_ULONG(&context->HistoryBuffer, i);
+                                context->GraphState.Data1[i] = (FLOAT)PhGetItemCircularBuffer_ULONG64(&context->HistoryBuffer, i);
 
-                                if (context->GraphState.Data1[i] > maxGraphHeight)
-                                    maxGraphHeight = context->GraphState.Data1[i];
+                                if (context->GraphState.Data1[i] > max)
+                                    max = context->GraphState.Data1[i];
                             }
 
-                            // Scale the data.
-                            PhDivideSinglesBySingle(
-                                context->GraphState.Data1,
-                                maxGraphHeight,
-                                drawInfo->LineDataCount
-                                );
-                            drawInfo->GridHeight = 1 / maxGraphHeight;
+
+                            if (max != 0)
+                            {
+                                // Scale the data.
+
+                                PhDivideSinglesBySingle(
+                                    context->GraphState.Data1,
+                                    max,
+                                    drawInfo->LineDataCount
+                                    );
+                            }
+
+                            drawInfo->LabelYFunction = PhSiSizeLabelYFunction;
+                            drawInfo->LabelYFunctionParameter = max;
 
                             context->GraphState.Valid = TRUE;
                         }
@@ -187,13 +189,13 @@ static INT_PTR CALLBACK PerfCounterDialogProc(
                         {
                             if (context->GraphState.TooltipIndex != getTooltipText->Index)
                             {
-                                ULONG itemUsage = PhGetItemCircularBuffer_ULONG(
+                                ULONG64 itemUsage = PhGetItemCircularBuffer_ULONG64(
                                     &context->HistoryBuffer,
                                     getTooltipText->Index
                                     );
 
                                 PhMoveReference(&context->GraphState.TooltipText, PhFormatString(
-                                    L"%lu\n%s",
+                                    L"%I64u\n%s",
                                     itemUsage,
                                     ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                                     ));
@@ -232,7 +234,7 @@ static BOOLEAN PerfCounterSectionCallback(
             PDH_STATUS counterStatus = 0;
             //PPDH_COUNTER_INFO counterInfo;
 
-            PhInitializeCircularBuffer_ULONG(&context->HistoryBuffer, PhGetIntegerSetting(L"SampleCount"));
+            PhInitializeCircularBuffer_ULONG64(&context->HistoryBuffer, PhGetIntegerSetting(L"SampleCount"));
 
             // Create the query handle.
             if ((counterStatus = PdhOpenQuery(NULL, 0, &context->PerfQueryHandle)) != ERROR_SUCCESS)
@@ -260,7 +262,7 @@ static BOOLEAN PerfCounterSectionCallback(
         return TRUE;
     case SysInfoDestroy:
         {
-            PhDeleteCircularBuffer_ULONG(&context->HistoryBuffer);
+            PhDeleteCircularBuffer_ULONG64(&context->HistoryBuffer);
 
             // Close the query handle.
             if (context->PerfQueryHandle)
@@ -283,16 +285,16 @@ static BOOLEAN PerfCounterSectionCallback(
 
             PdhGetFormattedCounterValue(
                 context->PerfCounterHandle,
-                PDH_FMT_LONG | PDH_FMT_NOSCALE | PDH_FMT_NOCAP100,
+                PDH_FMT_LARGE | PDH_FMT_NOSCALE | PDH_FMT_NOCAP100,
                 &counterType,
                 &displayValue
                 );
 
             //if (counterType == PERF_COUNTER_COUNTER) {  }
 
-            context->GraphValue = displayValue.longValue;
+            context->GraphValue = displayValue.largeValue;
 
-            PhAddItemCircularBuffer_ULONG(&context->HistoryBuffer, displayValue.longValue);
+            PhAddItemCircularBuffer_ULONG64(&context->HistoryBuffer, displayValue.largeValue);
         }
         return TRUE;
     case SysInfoCreateDialog:
@@ -309,30 +311,35 @@ static BOOLEAN PerfCounterSectionCallback(
         {
             PPH_GRAPH_DRAW_INFO drawInfo = (PPH_GRAPH_DRAW_INFO)Parameter1;
 
-            drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y | PH_GRAPH_LOGARITHMIC_GRID_Y;
+            drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y | PH_GRAPH_LABEL_MAX_Y;
             Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
-
             PhGetDrawInfoGraphBuffers(&Section->GraphState.Buffers, drawInfo, context->HistoryBuffer.Count);
 
             if (!Section->GraphState.Valid)
             {
-                FLOAT maxGraphHeight = 0;
+                FLOAT max = 0;
 
                 for (ULONG i = 0; i < drawInfo->LineDataCount; i++)
                 {
-                    Section->GraphState.Data1[i] = (FLOAT)PhGetItemCircularBuffer_ULONG(&context->HistoryBuffer, i);
+                    Section->GraphState.Data1[i] = (FLOAT)PhGetItemCircularBuffer_ULONG64(&context->HistoryBuffer, i);
 
-                    if (Section->GraphState.Data1[i] > maxGraphHeight)
-                        maxGraphHeight = Section->GraphState.Data1[i];
+                    if (Section->GraphState.Data1[i] > max)
+                        max = Section->GraphState.Data1[i];
                 }
 
-                // Scale the data.
-                PhDivideSinglesBySingle(
-                    Section->GraphState.Data1,
-                    maxGraphHeight,
-                    drawInfo->LineDataCount
-                    );
-                drawInfo->GridHeight = 1 / maxGraphHeight;
+                if (max != 0)
+                {
+                    // Scale the data.
+
+                    PhDivideSinglesBySingle(
+                        Section->GraphState.Data1,
+                        max,
+                        drawInfo->LineDataCount
+                        );
+                }
+
+                drawInfo->LabelYFunction = PhSiSizeLabelYFunction;
+                drawInfo->LabelYFunctionParameter = max;
 
                 Section->GraphState.Valid = TRUE;
             }
@@ -342,13 +349,13 @@ static BOOLEAN PerfCounterSectionCallback(
         {
             PPH_SYSINFO_GRAPH_GET_TOOLTIP_TEXT getTooltipText = (PPH_SYSINFO_GRAPH_GET_TOOLTIP_TEXT)Parameter1;
 
-            ULONG counterValue = PhGetItemCircularBuffer_ULONG(
+            ULONG64 counterValue = PhGetItemCircularBuffer_ULONG64(
                 &context->HistoryBuffer,
                 getTooltipText->Index
                 );
 
             PhMoveReference(&Section->GraphState.TooltipText, PhFormatString(
-                L"%lu\n%s",
+                L"%I64u\n%s",
                 counterValue,
                 ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                 ));
@@ -362,7 +369,7 @@ static BOOLEAN PerfCounterSectionCallback(
 
             drawPanel->Title = PhCreateString(Section->Name.Buffer);
             drawPanel->SubTitle = PhFormatString(
-                L"%lu",
+                L"%I64u",
                 context->GraphValue
                 );
         }
