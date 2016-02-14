@@ -37,14 +37,7 @@ PPH_STRING PerfCounterLabelYFunction(
 
     if (size != 0)
     {
-        PH_FORMAT format;
-
-        format.Type = Int64FormatType | FormatUsePrecision | FormatUseRadix;
-        format.Precision = 0;
-        format.Radix = -1;
-        format.u.Size = size;
-
-        return PhFormat(&format, 1, 0);
+        return PhFormatUInt64(size, TRUE);
     }
     else
     {
