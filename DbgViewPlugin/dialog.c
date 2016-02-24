@@ -278,7 +278,7 @@ static VOID ShowDropdownMenu(
             break;
         case ID_CAPTURE_WIN32_GLOBAL:
             {
-                if (!PhElevated)
+                if (!PhGetOwnTokenAttributes().Elevated)
                 {
                     PhShowInformation(Context->DialogHandle, L"This option requires elevation.");
                     break;

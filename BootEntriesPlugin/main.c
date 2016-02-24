@@ -69,7 +69,7 @@ static VOID NTAPI MenuItemCallback(
     {
     case BOOT_ENTRIES_MENUITEM:
         {
-            if (!PhElevated)
+            if (!PhGetOwnTokenAttributes().Elevated)
             {
                 PhShowInformation(menuItem->OwnerWindow, L"This option requires elevation.");
                 break;
