@@ -502,7 +502,7 @@ LOGICAL DllMain(
                 {
                     { StringSettingType, SETTING_NAME_TREE_LIST_COLUMNS, L"" },
                     { IntegerPairSettingType, SETTING_NAME_WINDOW_POSITION, L"100,100" },
-                    { IntegerPairSettingType, SETTING_NAME_WINDOW_SIZE, L"690,540" }
+                    { ScalableIntegerPairSettingType, SETTING_NAME_WINDOW_SIZE, L"@96|690,540" }
                 };
 
                 PhAddSettings(settings, ARRAYSIZE(settings));
