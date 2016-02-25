@@ -21,6 +21,7 @@
  */
 
 #include "main.h"
+#include <objbase.h>
 
 static PPH_PLUGIN PluginInstance;
 static PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
