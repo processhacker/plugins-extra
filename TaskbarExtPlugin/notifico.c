@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Taskbar Extensions
  *
- * Copyright (C) 2015 dmex
+ * Copyright (C) 2015-2016 dmex
  * Copyright (C) 2011-2013 wj32
  *
  * This file is part of Process Hacker.
@@ -51,7 +51,7 @@ static VOID PhBeginBitmap2(
     {
         HDC hdc;
 
-        hdc = GetDC(PhMainWndHandle);
+        hdc = GetDC(NULL);
         Context->Hdc = CreateCompatibleDC(hdc);
 
         memset(&Context->Header, 0, sizeof(BITMAPINFOHEADER));
@@ -62,7 +62,7 @@ static VOID PhBeginBitmap2(
         Context->Header.biBitCount = 32;
         Context->Bitmap = CreateDIBSection(hdc, (BITMAPINFO*)&Context->Header, DIB_RGB_COLORS, &Context->Bits, NULL, 0);
 
-        ReleaseDC(PhMainWndHandle, hdc);
+        ReleaseDC(NULL, hdc);
 
         Context->Initialized = TRUE;
     }

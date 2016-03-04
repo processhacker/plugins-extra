@@ -48,7 +48,8 @@ static VOID ProcessesUpdatedCallback(
     PH_PLUGIN_SYSTEM_STATISTICS statistics;
 
     ProcessesUpdatedCount++;
-    if (ProcessesUpdatedCount < 5)
+
+    if (ProcessesUpdatedCount < 2)
         return;
 
     taskbarIconType = PhGetIntegerSetting(SETTING_NAME_TASKBAR_ICON_TYPE);
@@ -168,9 +169,6 @@ static VOID NTAPI LoadCallback(
     _In_opt_ PVOID Context
     )
 {
-    if (WindowsVersion < WINDOWS_7)
-        return;
-
     // Update settings
     TaskbarIconType = PhGetIntegerSetting(SETTING_NAME_TASKBAR_ICON_TYPE);
 
@@ -218,9 +216,6 @@ static VOID NTAPI MainWindowShowingCallback(
     _In_opt_ PVOID Context
     )
 {
-    if (WindowsVersion < WINDOWS_7)
-        return;
-
     SetWindowSubclass(PhMainWndHandle, MainWndSubclassProc, 0, 0); 
 }
 
@@ -239,6 +234,9 @@ LOGICAL DllMain(
             {
                 { IntegerSettingType, SETTING_NAME_TASKBAR_ICON_TYPE, L"1" }
             };
+
+            if (WindowsVersion < WINDOWS_7)
+                break;
 
             PluginInstance = PhRegisterPlugin(PLUGIN_NAME, Instance, &info);
 
