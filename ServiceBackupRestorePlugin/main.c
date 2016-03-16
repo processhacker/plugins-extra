@@ -36,10 +36,10 @@ static VOID NTAPI LoadCallback(
 {
     HANDLE tokenHandle;
 
-    if (NT_SUCCESS(PhOpenProcessToken(
-        &tokenHandle,
+    if (NT_SUCCESS(NtOpenProcessToken(
+        NtCurrentProcess(),
         TOKEN_ADJUST_PRIVILEGES,
-        NtCurrentProcess()
+        &tokenHandle
         )))
     {
         // Enable the backup and restore privileges

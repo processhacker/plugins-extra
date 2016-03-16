@@ -204,10 +204,10 @@ NTSTATUS EnumerateBootEntriesThread(
     HANDLE tokenHandle;
 
     // Enable required privileges
-    if (NT_SUCCESS(PhOpenProcessToken(
-        &tokenHandle,
+    if (NT_SUCCESS(NtOpenProcessToken(
+        NtCurrentProcess(),
         TOKEN_ADJUST_PRIVILEGES,
-        NtCurrentProcess()
+        &tokenHandle
         )))
     {
         PhSetTokenPrivilege(tokenHandle, SE_SYSTEM_ENVIRONMENT_NAME, NULL, SE_PRIVILEGE_ENABLED);

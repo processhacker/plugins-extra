@@ -29,7 +29,7 @@
 #define CINTERFACE
 #define COBJMACROS
 #include "phdk.h"
-#include "phappresource.h"
+#include <phappresource.h>
 #include "resource.h"
 
 #include <Shobjidl.h>
