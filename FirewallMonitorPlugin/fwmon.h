@@ -43,7 +43,7 @@ typedef struct _FW_EVENT_ITEM
     PPH_STRING RemotePortString;
     PPH_STRING RemoteAddressString;
 
-    HICON Icon;
+    //HICON Icon;
     PH_STRINGREF FwRuleActionString;
     PPH_STRING FwRuleNameString;
     PPH_STRING FwRuleDescriptionString;

@@ -43,10 +43,6 @@ static PH_TN_FILTER_SUPPORT FilterSupport;
 static PTOOLSTATUS_INTERFACE ToolStatusInterface;
 static PH_CALLBACK_REGISTRATION SearchChangedRegistration;
 
-VOID NTAPI EtpToolStatusActivateContent(
-    _In_ BOOLEAN Select
-    );
-
 HWND NTAPI EtpToolStatusGetTreeNewHandle(
     VOID
     );
@@ -56,8 +52,6 @@ INT_PTR CALLBACK FwTabErrorDialogProc(
     _In_ WPARAM wParam,
     _In_ LPARAM lParam
     );
-
-
 
 VOID InitializeFwTab(
     VOID
@@ -350,8 +344,8 @@ VOID RemoveFwNode(
     if (FwNode->EventItem->IndexString)
         PhDereferenceObject(FwNode->EventItem->IndexString);
 
-    if (FwNode->EventItem->Icon)
-        DestroyIcon(FwNode->EventItem->Icon);
+    //if (FwNode->EventItem->Icon)
+    //    DestroyIcon(FwNode->EventItem->Icon);
 
     PhDereferenceObject(FwNode->EventItem);
     PhFree(FwNode);
@@ -592,23 +586,23 @@ BOOLEAN NTAPI FwTreeNewCallback(
             getCellText->Flags = TN_CACHE;
         }
         return TRUE;
-    case TreeNewGetNodeIcon:
-        {
-            PPH_TREENEW_GET_NODE_ICON getNodeIcon = (PPH_TREENEW_GET_NODE_ICON)Parameter1;
-            node = (PFW_EVENT_NODE)getNodeIcon->Node;
-
-            if (node->EventItem->Icon)
-            {
-                getNodeIcon->Icon = node->EventItem->Icon;
-            }
-            else
-            {
-                PhGetStockApplicationIcon(&getNodeIcon->Icon, NULL);
-            }
-
-            getNodeIcon->Flags = TN_CACHE;
-        }
-        return TRUE;
+    //case TreeNewGetNodeIcon:
+    //    {
+    //        PPH_TREENEW_GET_NODE_ICON getNodeIcon = (PPH_TREENEW_GET_NODE_ICON)Parameter1;
+    //        node = (PFW_EVENT_NODE)getNodeIcon->Node;
+    //
+    //        if (node->EventItem->Icon)
+    //        {
+    //            getNodeIcon->Icon = node->EventItem->Icon;
+    //        }
+    //        else
+    //        {
+    //            PhGetStockApplicationIcon(&getNodeIcon->Icon, NULL);
+    //        }
+    //
+    //        getNodeIcon->Flags = TN_CACHE;
+    //    }
+    //    return TRUE;
     case TreeNewGetCellTooltip:
         {
             PPH_TREENEW_GET_CELL_TOOLTIP getCellTooltip = (PPH_TREENEW_GET_CELL_TOOLTIP)Parameter1;
