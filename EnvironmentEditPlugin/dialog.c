@@ -270,6 +270,9 @@ static INT_PTR CALLBACK DbgViewDlgProc(
         {
             DestroyItems(context);
 
+            if (context->ProcessHandle)
+                NtClose(context->ProcessHandle);
+
             PhDereferenceObject(context->ProcessItem);
 
             PhSaveListViewColumnsToSetting(SETTING_NAME_COLUMNS, context->ListViewHandle);
