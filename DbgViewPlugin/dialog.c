@@ -472,6 +472,8 @@ static INT_PTR CALLBACK DbgViewDlgProc(
 
             PhUnregisterCallback(&DbgLoggedCallback, &context->DebugLoggedRegistration);
             PhUnregisterDialog(hwndDlg);
+
+            PostQuitMessage(0);
         }
         break;
     case WM_SIZE:
@@ -496,7 +498,7 @@ static INT_PTR CALLBACK DbgViewDlgProc(
                 break;
             case IDCLOSE:
             case IDCANCEL:
-                PostQuitMessage(0);
+                DestroyWindow(hwndDlg);
                 break;
             case IDC_AUTOSCROLL:
                 {
@@ -663,12 +665,6 @@ static NTSTATUS DbgViewDialogThread(
 
     PhDeleteAutoPool(&autoPool);
     PhResetEvent(&InitializedEvent);
-
-    if (DbgDialogHandle)
-    {
-        DestroyWindow(DbgDialogHandle);
-        DbgDialogHandle = NULL;
-    }
 
     if (DbgDialogThreadHandle)
     {
