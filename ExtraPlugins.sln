@@ -38,6 +38,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SecurityExplorer", "Securit
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ServiceBackupRestorePlugin", "ServiceBackupRestorePlugin\ServiceBackupRestorePlugin.vcxproj", "{D08A2B6C-822F-46C8-A7AC-A2EE609237D6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EnvironmentEditPlugin", "EnvironmentEditPlugin\EnvironmentEditPlugin.vcxproj", "{B52F1971-6C2C-4B3B-B54D-A2A1D17C26C6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -170,6 +172,14 @@ Global
 		{D08A2B6C-822F-46C8-A7AC-A2EE609237D6}.Release|Win32.Build.0 = Release|Win32
 		{D08A2B6C-822F-46C8-A7AC-A2EE609237D6}.Release|x64.ActiveCfg = Release|x64
 		{D08A2B6C-822F-46C8-A7AC-A2EE609237D6}.Release|x64.Build.0 = Release|x64
+		{B52F1971-6C2C-4B3B-B54D-A2A1D17C26C6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B52F1971-6C2C-4B3B-B54D-A2A1D17C26C6}.Debug|Win32.Build.0 = Debug|Win32
+		{B52F1971-6C2C-4B3B-B54D-A2A1D17C26C6}.Debug|x64.ActiveCfg = Debug|x64
+		{B52F1971-6C2C-4B3B-B54D-A2A1D17C26C6}.Debug|x64.Build.0 = Debug|x64
+		{B52F1971-6C2C-4B3B-B54D-A2A1D17C26C6}.Release|Win32.ActiveCfg = Release|Win32
+		{B52F1971-6C2C-4B3B-B54D-A2A1D17C26C6}.Release|Win32.Build.0 = Release|Win32
+		{B52F1971-6C2C-4B3B-B54D-A2A1D17C26C6}.Release|x64.ActiveCfg = Release|x64
+		{B52F1971-6C2C-4B3B-B54D-A2A1D17C26C6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
