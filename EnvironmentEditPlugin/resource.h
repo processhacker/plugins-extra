@@ -2,14 +2,10 @@
 // Microsoft Visual C++ generated include file.
 // Used by EnvironmentEditPlugin.rc
 //
-#define IDD_DBGVIEW_DIALOG              101
 #define IDD_ENVIRONMENT_DIALOG          101
 #define IDR_MAIN_MENU                   102
-#define IDD_MESSAGE_DIALOG              103
-#define IDD_VIEW_DIALOG                 103
 #define IDD_ADD_EDIT_DIALOG             105
 #define IDC_DEBUGLISTVIEW               1001
-#define IDC_MESSAGE                     1002
 #define IDC_ADD                         1006
 #define IDC_EDIT                        1007
 #define IDC_NAME_TEXT                   1007

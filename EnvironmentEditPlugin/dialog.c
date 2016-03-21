@@ -419,7 +419,7 @@ static NTSTATUS EnvViewDialogThread(
 
     EnvDialogHandle = CreateDialogParam(
         PluginInstance->DllBase,
-        MAKEINTRESOURCE(IDD_DBGVIEW_DIALOG),
+        MAKEINTRESOURCE(IDD_ENVIRONMENT_DIALOG),
         NULL,
         DbgViewDlgProc,
         (LPARAM)Parameter
