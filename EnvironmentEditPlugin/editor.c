@@ -89,7 +89,7 @@ static INT_PTR CALLBACK EnvironmentEditorDlgProc(
         break;
     case WM_SHOWDIALOG:
         {
-            if (IsIconic(hwndDlg))
+            if (IsMinimized(hwndDlg))
                 ShowWindow(hwndDlg, SW_RESTORE);
             else
                 ShowWindow(hwndDlg, SW_SHOW);
