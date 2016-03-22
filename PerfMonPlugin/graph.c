@@ -196,7 +196,7 @@ static INT_PTR CALLBACK PerfCounterDialogProc(
                                     );
                             }
 
-                            drawInfo->LabelYFunction = PhSiSizeLabelYFunction;
+                            drawInfo->LabelYFunction = PerfCounterLabelYFunction;
                             drawInfo->LabelYFunctionParameter = max;
 
                             context->GraphState.Valid = TRUE;
