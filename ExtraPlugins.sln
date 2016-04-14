@@ -34,8 +34,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BootEntriesPlugin", "BootEn
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TaskbarExtPlugin", "TaskbarExtPlugin\TaskbarExtPlugin.vcxproj", "{58E266DF-088C-470D-9EC8-403B40042373}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FirewallMonitorPlugin", "FirewallMonitorPlugin\FirewallMonitorPlugin.vcxproj", "{44A7C3BA-BAD5-40F3-AB70-442D44539053}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SecurityExplorer", "SecurityExplorerPlugin\SecurityExplorer.vcxproj", "{0DCBC570-B4E3-482A-9872-8BB5678F5E5C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ServiceBackupRestorePlugin", "ServiceBackupRestorePlugin\ServiceBackupRestorePlugin.vcxproj", "{D08A2B6C-822F-46C8-A7AC-A2EE609237D6}"
@@ -156,14 +154,6 @@ Global
 		{58E266DF-088C-470D-9EC8-403B40042373}.Release|Win32.Build.0 = Release|Win32
 		{58E266DF-088C-470D-9EC8-403B40042373}.Release|x64.ActiveCfg = Release|x64
 		{58E266DF-088C-470D-9EC8-403B40042373}.Release|x64.Build.0 = Release|x64
-		{44A7C3BA-BAD5-40F3-AB70-442D44539053}.Debug|Win32.ActiveCfg = Debug|Win32
-		{44A7C3BA-BAD5-40F3-AB70-442D44539053}.Debug|Win32.Build.0 = Debug|Win32
-		{44A7C3BA-BAD5-40F3-AB70-442D44539053}.Debug|x64.ActiveCfg = Debug|x64
-		{44A7C3BA-BAD5-40F3-AB70-442D44539053}.Debug|x64.Build.0 = Debug|x64
-		{44A7C3BA-BAD5-40F3-AB70-442D44539053}.Release|Win32.ActiveCfg = Release|Win32
-		{44A7C3BA-BAD5-40F3-AB70-442D44539053}.Release|Win32.Build.0 = Release|Win32
-		{44A7C3BA-BAD5-40F3-AB70-442D44539053}.Release|x64.ActiveCfg = Release|x64
-		{44A7C3BA-BAD5-40F3-AB70-442D44539053}.Release|x64.Build.0 = Release|x64
 		{0DCBC570-B4E3-482A-9872-8BB5678F5E5C}.Debug|Win32.ActiveCfg = Debug|Win32
 		{0DCBC570-B4E3-482A-9872-8BB5678F5E5C}.Debug|Win32.Build.0 = Debug|Win32
 		{0DCBC570-B4E3-482A-9872-8BB5678F5E5C}.Debug|x64.ActiveCfg = Debug|x64
