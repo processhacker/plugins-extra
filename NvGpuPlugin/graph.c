@@ -25,24 +25,6 @@
 static RECT NormalGraphTextMargin = { 5, 5, 5, 5 };
 static RECT NormalGraphTextPadding = { 3, 3, 3, 3 };
 
-static VOID NTAPI ProcessesUpdatedHandler(
-    _In_opt_ PVOID Parameter,
-    _In_opt_ PVOID Context
-    )
-{
-    PPH_NVGPU_SYSINFO_CONTEXT context = Context;
-
-    if (context->WindowHandle)
-    {
-        PostMessage(context->WindowHandle, MSG_UPDATE, 0, 0);
-    }
-
-    if (context->DetailsHandle)
-    {
-        PostMessage(context->DetailsHandle, MSG_UPDATE, 0, 0);
-    }
-}
-
 static INT_PTR CALLBACK NvGpuPanelDialogProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
@@ -290,7 +272,7 @@ static VOID NvGpuNotifyUsageGraph(
 
             drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
-            PhGraphStateGetDrawInfo(&Context->GpuGraphState, getDrawInfo, Context->GpuUtilizationHistory.Count);
+            PhGraphStateGetDrawInfo(&Context->GpuGraphState, getDrawInfo, GpuUtilizationHistory.Count);
 
             if (PhGetIntegerSetting(L"GraphShowText"))
             {
@@ -311,7 +293,7 @@ static VOID NvGpuNotifyUsageGraph(
 
             if (!Context->GpuGraphState.Valid)
             {
-                PhCopyCircularBuffer_FLOAT(&Context->GpuUtilizationHistory, Context->GpuGraphState.Data1, drawInfo->LineDataCount);
+                PhCopyCircularBuffer_FLOAT(&GpuUtilizationHistory, Context->GpuGraphState.Data1, drawInfo->LineDataCount);
                 Context->GpuGraphState.Valid = TRUE;
             }
         }
@@ -326,7 +308,7 @@ static VOID NvGpuNotifyUsageGraph(
                 {
                     FLOAT gpuUsageValue;
 
-                    gpuUsageValue = PhGetItemCircularBuffer_FLOAT(&Context->GpuUtilizationHistory, getTooltipText->Index);
+                    gpuUsageValue = PhGetItemCircularBuffer_FLOAT(&GpuUtilizationHistory, getTooltipText->Index);
 
                     PhMoveReference(&Context->GpuGraphState.TooltipText, PhFormatString(
                         L"%.0f%%\n%s",
@@ -356,7 +338,7 @@ static VOID NvGpuNotifyMemoryGraph(
 
             drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorPhysical"), 0);
-            PhGraphStateGetDrawInfo(&Context->MemGraphState, getDrawInfo, Context->GpuMemoryHistory.Count);
+            PhGraphStateGetDrawInfo(&Context->MemGraphState, getDrawInfo, GpuMemoryHistory.Count);
 
             if (PhGetIntegerSetting(L"GraphShowText"))
             {
@@ -382,7 +364,7 @@ static VOID NvGpuNotifyMemoryGraph(
             {
                 for (ULONG i = 0; i < drawInfo->LineDataCount; i++)
                 {
-                    Context->MemGraphState.Data1[i] = (FLOAT)PhGetItemCircularBuffer_ULONG(&Context->GpuMemoryHistory, i);
+                    Context->MemGraphState.Data1[i] = (FLOAT)PhGetItemCircularBuffer_ULONG(&GpuMemoryHistory, i);
                 }
 
                 if (GpuMemoryLimit != 0)
@@ -409,7 +391,7 @@ static VOID NvGpuNotifyMemoryGraph(
                 {
                     ULONG usedPages;
 
-                    usedPages = PhGetItemCircularBuffer_ULONG(&Context->GpuMemoryHistory, getTooltipText->Index);
+                    usedPages = PhGetItemCircularBuffer_ULONG(&GpuMemoryHistory, getTooltipText->Index);
 
                     PhMoveReference(&Context->MemGraphState.TooltipText, PhFormatString(
                         L"%s / %s (%.2f%%)\n%s",
@@ -441,7 +423,7 @@ static VOID NvGpuNotifySharedGraph(
 
             drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
-            PhGraphStateGetDrawInfo(&Context->SharedGraphState, getDrawInfo, Context->GpuBoardHistory.Count);
+            PhGraphStateGetDrawInfo(&Context->SharedGraphState, getDrawInfo, GpuBoardHistory.Count);
 
             if (PhGetIntegerSetting(L"GraphShowText"))
             {
@@ -463,7 +445,7 @@ static VOID NvGpuNotifySharedGraph(
 
             if (!Context->SharedGraphState.Valid)
             {
-                PhCopyCircularBuffer_FLOAT(&Context->GpuBoardHistory, Context->SharedGraphState.Data1, drawInfo->LineDataCount);
+                PhCopyCircularBuffer_FLOAT(&GpuBoardHistory, Context->SharedGraphState.Data1, drawInfo->LineDataCount);
                 Context->SharedGraphState.Valid = TRUE;
             }
         }
@@ -478,7 +460,7 @@ static VOID NvGpuNotifySharedGraph(
                 {
                     FLOAT usedPages;
 
-                    usedPages = PhGetItemCircularBuffer_FLOAT(&Context->GpuBoardHistory, getTooltipText->Index);
+                    usedPages = PhGetItemCircularBuffer_FLOAT(&GpuBoardHistory, getTooltipText->Index);
 
                     PhMoveReference(&Context->SharedGraphState.TooltipText, PhFormatString(
                         L"%.0f%%\n%s",
@@ -508,7 +490,7 @@ static VOID NvGpuNotifyBusGraph(
 
             drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y;
             Context->Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
-            PhGraphStateGetDrawInfo(&Context->BusGraphState, getDrawInfo, Context->GpuBusHistory.Count);
+            PhGraphStateGetDrawInfo(&Context->BusGraphState, getDrawInfo, GpuBusHistory.Count);
 
             if (PhGetIntegerSetting(L"GraphShowText"))
             {
@@ -530,7 +512,7 @@ static VOID NvGpuNotifyBusGraph(
 
             if (!Context->BusGraphState.Valid)
             {
-                PhCopyCircularBuffer_FLOAT(&Context->GpuBusHistory, Context->BusGraphState.Data1, drawInfo->LineDataCount);
+                PhCopyCircularBuffer_FLOAT(&GpuBusHistory, Context->BusGraphState.Data1, drawInfo->LineDataCount);
                 Context->BusGraphState.Valid = TRUE;
             }
         }
@@ -545,7 +527,7 @@ static VOID NvGpuNotifyBusGraph(
                 {
                     FLOAT busUsage;
 
-                    busUsage = PhGetItemCircularBuffer_FLOAT(&Context->GpuBusHistory, getTooltipText->Index);
+                    busUsage = PhGetItemCircularBuffer_FLOAT(&GpuBusHistory, getTooltipText->Index);
 
                     PhMoveReference(&Context->BusGraphState.TooltipText, PhFormatString(
                         L"%.0f%%\n%s",
@@ -657,8 +639,6 @@ static INT_PTR CALLBACK NvGpuDialogProc(
             if (context->GpuPanel)
                 DestroyWindow(context->GpuPanel);
 
-            PhUnregisterCallback(&PhProcessesUpdatedEvent, &context->ProcessesUpdatedRegistration);
-
             RemoveProp(hwndDlg, L"Context");
         }
     }
@@ -704,13 +684,6 @@ static INT_PTR CALLBACK NvGpuDialogProc(
             NvGpuUpdateValues();
             NvGpuUpdateGraphs(context);
             NvGpuUpdatePanel(context);
-
-            PhRegisterCallback(
-                &PhProcessesUpdatedEvent,
-                ProcessesUpdatedHandler,
-                context,
-                &context->ProcessesUpdatedRegistration
-                );
         }
         break;
     case WM_SIZE:
@@ -761,38 +734,26 @@ static BOOLEAN NvGpuSectionCallback(
     switch (Message)
     {
     case SysInfoCreate:
-        {
-            ULONG sampleCount;
-
-            sampleCount = PhGetIntegerSetting(L"SampleCount");
-
-            PhInitializeCircularBuffer_FLOAT(&context->GpuUtilizationHistory, sampleCount);
-            PhInitializeCircularBuffer_ULONG(&context->GpuMemoryHistory, sampleCount);
-            PhInitializeCircularBuffer_FLOAT(&context->GpuBoardHistory, sampleCount);
-            PhInitializeCircularBuffer_FLOAT(&context->GpuBusHistory, sampleCount);
-        }
         return TRUE;
     case SysInfoDestroy:
         {
             if (context->GpuName)
                 PhDereferenceObject(context->GpuName);
 
-            PhDeleteCircularBuffer_FLOAT(&context->GpuUtilizationHistory);
-            PhDeleteCircularBuffer_ULONG(&context->GpuMemoryHistory);
-            PhDeleteCircularBuffer_FLOAT(&context->GpuBoardHistory);
-            PhDeleteCircularBuffer_FLOAT(&context->GpuBusHistory);
-
             PhFree(context);
         }
         return TRUE;
     case SysInfoTick:
         {
-            NvGpuUpdateValues();
+            if (context->WindowHandle)
+            {
+                PostMessage(context->WindowHandle, MSG_UPDATE, 0, 0);
+            }
 
-            PhAddItemCircularBuffer_FLOAT(&context->GpuUtilizationHistory, GpuCurrentGpuUsage);
-            PhAddItemCircularBuffer_ULONG(&context->GpuMemoryHistory, GpuCurrentMemUsage);
-            PhAddItemCircularBuffer_FLOAT(&context->GpuBoardHistory, GpuCurrentCoreUsage);
-            PhAddItemCircularBuffer_FLOAT(&context->GpuBusHistory, GpuCurrentBusUsage);
+            if (context->DetailsHandle)
+            {
+                PostMessage(context->DetailsHandle, MSG_UPDATE, 0, 0);
+            }
         }
         return TRUE;
     case SysInfoCreateDialog:
@@ -811,11 +772,11 @@ static BOOLEAN NvGpuSectionCallback(
 
             drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y;
             Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
-            PhGetDrawInfoGraphBuffers(&Section->GraphState.Buffers, drawInfo, context->GpuUtilizationHistory.Count);
+            PhGetDrawInfoGraphBuffers(&Section->GraphState.Buffers, drawInfo, GpuUtilizationHistory.Count);
 
             if (!Section->GraphState.Valid)
             {
-                PhCopyCircularBuffer_FLOAT(&context->GpuUtilizationHistory, Section->GraphState.Data1, drawInfo->LineDataCount);
+                PhCopyCircularBuffer_FLOAT(&GpuUtilizationHistory, Section->GraphState.Data1, drawInfo->LineDataCount);
                 Section->GraphState.Valid = TRUE;
             }
         }
@@ -825,7 +786,7 @@ static BOOLEAN NvGpuSectionCallback(
             FLOAT gpuUsageValue;
             PPH_SYSINFO_GRAPH_GET_TOOLTIP_TEXT getTooltipText = (PPH_SYSINFO_GRAPH_GET_TOOLTIP_TEXT)Parameter1;
 
-            gpuUsageValue = PhGetItemCircularBuffer_FLOAT(&context->GpuUtilizationHistory, getTooltipText->Index);
+            gpuUsageValue = PhGetItemCircularBuffer_FLOAT(&GpuUtilizationHistory, getTooltipText->Index);
 
             PhMoveReference(&Section->GraphState.TooltipText, PhFormatString(
                 L"%.0f%%\n%s",

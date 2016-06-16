@@ -47,6 +47,9 @@
     <ClCompile Include="details.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="nvgpu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="CHANGELOG.txt" />

@@ -103,13 +103,22 @@ typedef struct _PH_NVGPU_SYSINFO_CONTEXT
     PH_GRAPH_STATE SharedGraphState;
     PH_GRAPH_STATE BusGraphState;
 
-    PH_CIRCULAR_BUFFER_FLOAT GpuUtilizationHistory;
-    PH_CIRCULAR_BUFFER_ULONG GpuMemoryHistory;
-    PH_CIRCULAR_BUFFER_FLOAT GpuBoardHistory;
-    PH_CIRCULAR_BUFFER_FLOAT GpuBusHistory;
-
-    PH_CALLBACK_REGISTRATION ProcessesUpdatedRegistration;
 } PH_NVGPU_SYSINFO_CONTEXT, *PPH_NVGPU_SYSINFO_CONTEXT;
+
+
+extern PH_CIRCULAR_BUFFER_FLOAT GpuUtilizationHistory;
+extern PH_CIRCULAR_BUFFER_ULONG GpuMemoryHistory;
+extern PH_CIRCULAR_BUFFER_FLOAT GpuBoardHistory;
+extern PH_CIRCULAR_BUFFER_FLOAT GpuBusHistory;
+
+VOID NvGpuInitialize(
+    VOID
+    );
+
+VOID NvGpuUpdate(
+    VOID
+    );
+
 
 VOID NvGpuSysInfoInitializing(
     _In_ PPH_PLUGIN_SYSINFO_POINTERS Pointers

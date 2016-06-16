@@ -67,6 +67,7 @@
     <ClCompile Include="details.c" />
     <ClCompile Include="graph.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="nvgpu.c" />
     <ClCompile Include="nvidia.c" />
     <ClCompile Include="options.c" />
   </ItemGroup>

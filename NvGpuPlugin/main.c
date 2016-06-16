@@ -24,12 +24,13 @@
 
 BOOLEAN NvApiInitialized = FALSE;
 PPH_PLUGIN PluginInstance = NULL;
-static PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
-static PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
-static PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
-static PH_CALLBACK_REGISTRATION SystemInformationInitializingCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
+PH_CALLBACK_REGISTRATION ProcessesUpdatedCallbackRegistration;
+PH_CALLBACK_REGISTRATION SystemInformationInitializingCallbackRegistration;
 
-static VOID NTAPI LoadCallback(
+VOID NTAPI LoadCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -38,9 +39,14 @@ static VOID NTAPI LoadCallback(
     {
         NvApiInitialized = InitializeNvApi();
     }
+
+    if (NvApiInitialized)
+    {
+        NvGpuInitialize();
+    }
 }
 
-static VOID NTAPI UnloadCallback(
+VOID NTAPI UnloadCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -48,7 +54,7 @@ static VOID NTAPI UnloadCallback(
     DestroyNvApi();
 }
 
-static VOID NTAPI ShowOptionsCallback(
+VOID NTAPI ShowOptionsCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -56,7 +62,15 @@ static VOID NTAPI ShowOptionsCallback(
     ShowOptionsDialog((HWND)Parameter);
 }
 
-static VOID NTAPI SystemInformationInitializingCallback(
+VOID NTAPI ProcessesUpdatedCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    NvGpuUpdate();
+}
+
+VOID NTAPI SystemInformationInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -114,6 +128,14 @@ LOGICAL DllMain(
                 NULL,
                 &PluginShowOptionsCallbackRegistration
                 );
+
+            PhRegisterCallback(
+                &PhProcessesUpdatedEvent,
+                ProcessesUpdatedCallback,
+                NULL,
+                &ProcessesUpdatedCallbackRegistration
+                );
+
             PhRegisterCallback(
                 PhGetGeneralCallback(GeneralCallbackSystemInformationInitializing),
                 SystemInformationInitializingCallback,
