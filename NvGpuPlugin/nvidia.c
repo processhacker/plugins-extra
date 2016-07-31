@@ -56,7 +56,7 @@ static VOID NvGpuEnumPhysicalHandles(VOID)
 
     memset(gpuHandles, 0, sizeof(gpuHandles));
 
-    if (NvAPI_EnumPhysicalGPUs(gpuHandles, &gpuCount) == NVAPI_OK)
+    if (NvAPI_EnumPhysicalGPUs && NvAPI_EnumPhysicalGPUs(gpuHandles, &gpuCount) == NVAPI_OK)
     {
         PhAddItemsList(NvGpuPhysicalHandleList, gpuHandles, gpuCount);
     }
@@ -64,6 +64,9 @@ static VOID NvGpuEnumPhysicalHandles(VOID)
 
 static VOID NvGpuEnumDisplayHandles(VOID)
 {
+    if (!NvAPI_EnumNvidiaDisplayHandle)
+        return;
+
     for (NvU32 i = 0; i < NVAPI_MAX_DISPLAYS; i++)
     {
         NvDisplayHandle displayHandle;
@@ -79,23 +82,17 @@ static VOID NvGpuEnumDisplayHandles(VOID)
 
 BOOLEAN InitializeNvApi(VOID)
 {
-    UNICODE_STRING dllName;
-
-    if (NvApiInitialized)
-        return TRUE;
-
     NvGpuPhysicalHandleList = PhCreateList(1);
     NvGpuDisplayHandleList = PhCreateList(1);
 
 #ifdef _M_IX86
-    RtlInitUnicodeString(&dllName, L"nvapi.dll");
+    if (!(NvApiLibrary = LoadLibrary(L"nvapi.dll")))
+        return FALSE;
 #else
-    RtlInitUnicodeString(&dllName, L"nvapi64.dll");
+    if (!(NvApiLibrary = LoadLibrary(L"nvapi64.dll")))
+        return FALSE;
 #endif
     
-    if (!NT_SUCCESS(LdrLoadDll(NULL, NULL, &dllName, &NvApiLibrary)))
-        return FALSE;
-
     // Retrieve the NvAPI_QueryInterface function address
     if (!(NvAPI_QueryInterface = PhGetProcedureAddress(NvApiLibrary, "nvapi_QueryInterface", 0)))
         return FALSE;
@@ -111,8 +108,10 @@ BOOLEAN InitializeNvApi(VOID)
         return FALSE;
 
     // Handle functions
-    NvAPI_EnumPhysicalGPUs = NvAPI_QueryInterface(0xE5AC921FUL);
-    NvAPI_EnumNvidiaDisplayHandle = NvAPI_QueryInterface(0x9ABDD40DUL);
+    if (!(NvAPI_EnumPhysicalGPUs = NvAPI_QueryInterface(0xE5AC921FUL)))
+        return FALSE;
+    if (!(NvAPI_EnumNvidiaDisplayHandle = NvAPI_QueryInterface(0x9ABDD40DUL)))
+        return FALSE;
 
     // Information functions
     NvAPI_SYS_GetDriverAndBranchVersion = NvAPI_QueryInterface(0x2926AAADUL);
@@ -235,7 +234,7 @@ BOOLEAN DestroyNvApi(VOID)
 
 PPH_STRING NvGpuQueryDriverVersion(VOID)
 {
-    if (NvApiInitialized && NvAPI_SYS_GetDriverAndBranchVersion)
+    if (NvAPI_SYS_GetDriverAndBranchVersion)
     {
         NvU32 driverVersion = 0;
         NvAPI_ShortString driverAndBranchString = "";
@@ -251,7 +250,7 @@ PPH_STRING NvGpuQueryDriverVersion(VOID)
         }
     }
 
-    if (NvApiInitialized && NvAPI_GetDisplayDriverVersion)
+    if (NvAPI_GetDisplayDriverVersion)
     {
         NV_DISPLAY_DRIVER_VERSION nvDisplayDriverVersion = { NV_DISPLAY_DRIVER_VERSION_VER };
 
@@ -271,7 +270,7 @@ PPH_STRING NvGpuQueryDriverVersion(VOID)
 
 PPH_STRING NvGpuQueryVbiosVersionString(VOID)
 {
-    if (NvApiInitialized && NvAPI_GPU_GetVbiosVersionString)
+    if (NvAPI_GPU_GetVbiosVersionString)
     {
         NvAPI_ShortString biosRevision = "";
 
@@ -286,7 +285,7 @@ PPH_STRING NvGpuQueryVbiosVersionString(VOID)
 
 PPH_STRING NvGpuQueryName(VOID)
 {
-    if (NvApiInitialized && NvAPI_GPU_GetFullName)
+    if (NvAPI_GPU_GetFullName)
     {
         NvAPI_ShortString nvNameAnsiString = "";
 
@@ -301,7 +300,7 @@ PPH_STRING NvGpuQueryName(VOID)
 
 PPH_STRING NvGpuQueryShortName(VOID)
 {
-    if (NvApiInitialized && NvAPI_GPU_GetShortName)
+    if (NvAPI_GPU_GetShortName)
     {
         NvAPI_ShortString nvShortNameAnsiString = "";
 
@@ -316,7 +315,7 @@ PPH_STRING NvGpuQueryShortName(VOID)
 
 PPH_STRING NvGpuQueryRevision(VOID)
 {
-    if (NvApiInitialized && NvAPI_GPU_GetArchInfo)
+    if (NvAPI_GPU_GetArchInfo)
     {
         NV_ARCH_INFO nvArchInfo = { NV_ARCH_INFO_VER };
 
@@ -333,103 +332,98 @@ PPH_STRING NvGpuQueryRevision(VOID)
 
 PPH_STRING NvGpuQueryRamType(VOID)
 {
-    if (NvApiInitialized)
+    PPH_STRING ramTypeString = NULL;
+    PPH_STRING ramMakerString = NULL;
+    NV_RAM_TYPE nvRamType = NV_RAM_TYPE_NONE;
+    NV_RAM_MAKER nvRamMaker = NV_RAM_MAKER_NONE;
+
+    if (NvAPI_GPU_GetRamType)
     {
-        PPH_STRING ramTypeString = NULL;
-        PPH_STRING ramMakerString = NULL;
-        NV_RAM_TYPE nvRamType = NV_RAM_TYPE_NONE;
-        NV_RAM_MAKER nvRamMaker = NV_RAM_MAKER_NONE;
-
-        if (NvAPI_GPU_GetRamType)
-        {
-            NvAPI_GPU_GetRamType(NvGpuPhysicalHandleList->Items[0], &nvRamType);
-        }
-
-        if (NvAPI_GPU_GetRamMaker)
-        {
-            NvAPI_GPU_GetRamMaker(NvGpuPhysicalHandleList->Items[0], &nvRamMaker);
-        }
-
-        switch (nvRamType)
-        {
-        case NV_RAM_TYPE_SDRAM:
-            ramTypeString = PhaCreateString(L"SDRAM");
-            break;
-        case NV_RAM_TYPE_DDR1:
-            ramTypeString = PhaCreateString(L"DDR1");
-            break;
-        case NV_RAM_TYPE_DDR2:
-            ramTypeString = PhaCreateString(L"DDR2");
-            break;
-        case NV_RAM_TYPE_GDDR2:
-            ramTypeString = PhaCreateString(L"GDDR2");
-            break;
-        case NV_RAM_TYPE_GDDR3:
-            ramTypeString = PhaCreateString(L"GDDR3");
-            break;
-        case NV_RAM_TYPE_GDDR4:
-            ramTypeString = PhaCreateString(L"GDDR4");
-            break;
-        case NV_RAM_TYPE_DDR3:
-            ramTypeString = PhaCreateString(L"DDR3");
-            break;
-        case NV_RAM_TYPE_GDDR5:
-            ramTypeString = PhaCreateString(L"GDDR5");
-            break;
-        case NV_RAM_TYPE_LPDDR2:
-            ramTypeString = PhaCreateString(L"LPDDR2");
-            break;
-        default:
-            ramTypeString = PhaFormatString(L"Unknown: %lu", nvRamType);
-            break;
-        }
-
-        switch (nvRamMaker)
-        {
-        case NV_RAM_MAKER_SAMSUNG:
-            ramMakerString = PhaCreateString(L"Samsung");
-            break;
-        case NV_RAM_MAKER_QIMONDA:
-            ramMakerString = PhaCreateString(L"Qimonda");
-            break;
-        case NV_RAM_MAKER_ELPIDA:
-            ramMakerString = PhaCreateString(L"Elpida");
-            break;
-        case NV_RAM_MAKER_ETRON:
-            ramMakerString = PhaCreateString(L"Etron");
-            break;
-        case NV_RAM_MAKER_NANYA:
-            ramMakerString = PhaCreateString(L"Nanya");
-            break;
-        case NV_RAM_MAKER_HYNIX:
-            ramMakerString = PhaCreateString(L"Hynix");
-            break;
-        case NV_RAM_MAKER_MOSEL:
-            ramMakerString = PhaCreateString(L"Mosel");
-            break;
-        case NV_RAM_MAKER_WINBOND:
-            ramMakerString = PhaCreateString(L"Winbond");
-            break;
-        case NV_RAM_MAKER_ELITE:
-            ramMakerString = PhaCreateString(L"Elite");
-            break;
-        case NV_RAM_MAKER_MICRON:
-            ramMakerString = PhaCreateString(L"Micron");
-            break;
-        default:
-            ramMakerString = PhaFormatString(L"Unknown: %lu", nvRamMaker);
-            break;
-        }
-
-        return PhFormatString(L"%s (%s)", ramTypeString->Buffer, ramMakerString->Buffer);
+        NvAPI_GPU_GetRamType(NvGpuPhysicalHandleList->Items[0], &nvRamType);
     }
 
-    return PhCreateString(L"N/A");
+    if (NvAPI_GPU_GetRamMaker)
+    {
+        NvAPI_GPU_GetRamMaker(NvGpuPhysicalHandleList->Items[0], &nvRamMaker);
+    }
+
+    switch (nvRamType)
+    {
+    case NV_RAM_TYPE_SDRAM:
+        ramTypeString = PhaCreateString(L"SDRAM");
+        break;
+    case NV_RAM_TYPE_DDR1:
+        ramTypeString = PhaCreateString(L"DDR1");
+        break;
+    case NV_RAM_TYPE_DDR2:
+        ramTypeString = PhaCreateString(L"DDR2");
+        break;
+    case NV_RAM_TYPE_GDDR2:
+        ramTypeString = PhaCreateString(L"GDDR2");
+        break;
+    case NV_RAM_TYPE_GDDR3:
+        ramTypeString = PhaCreateString(L"GDDR3");
+        break;
+    case NV_RAM_TYPE_GDDR4:
+        ramTypeString = PhaCreateString(L"GDDR4");
+        break;
+    case NV_RAM_TYPE_DDR3:
+        ramTypeString = PhaCreateString(L"DDR3");
+        break;
+    case NV_RAM_TYPE_GDDR5:
+        ramTypeString = PhaCreateString(L"GDDR5");
+        break;
+    case NV_RAM_TYPE_LPDDR2:
+        ramTypeString = PhaCreateString(L"LPDDR2");
+        break;
+    default:
+        ramTypeString = PhaFormatString(L"Unknown: %lu", nvRamType);
+        break;
+    }
+
+    switch (nvRamMaker)
+    {
+    case NV_RAM_MAKER_SAMSUNG:
+        ramMakerString = PhaCreateString(L"Samsung");
+        break;
+    case NV_RAM_MAKER_QIMONDA:
+        ramMakerString = PhaCreateString(L"Qimonda");
+        break;
+    case NV_RAM_MAKER_ELPIDA:
+        ramMakerString = PhaCreateString(L"Elpida");
+        break;
+    case NV_RAM_MAKER_ETRON:
+        ramMakerString = PhaCreateString(L"Etron");
+        break;
+    case NV_RAM_MAKER_NANYA:
+        ramMakerString = PhaCreateString(L"Nanya");
+        break;
+    case NV_RAM_MAKER_HYNIX:
+        ramMakerString = PhaCreateString(L"Hynix");
+        break;
+    case NV_RAM_MAKER_MOSEL:
+        ramMakerString = PhaCreateString(L"Mosel");
+        break;
+    case NV_RAM_MAKER_WINBOND:
+        ramMakerString = PhaCreateString(L"Winbond");
+        break;
+    case NV_RAM_MAKER_ELITE:
+        ramMakerString = PhaCreateString(L"Elite");
+        break;
+    case NV_RAM_MAKER_MICRON:
+        ramMakerString = PhaCreateString(L"Micron");
+        break;
+    default:
+        ramMakerString = PhaFormatString(L"Unknown: %lu", nvRamMaker);
+        break;
+    }
+
+    return PhFormatString(L"%s (%s)", ramTypeString->Buffer, ramMakerString->Buffer);
 }
 
 PPH_STRING NvGpuQueryFoundry(VOID)
 {
-    if (NvApiInitialized && NvAPI_GPU_GetFoundry)
+    if (NvAPI_GPU_GetFoundry)
     {
         NV_FOUNDRY nvFoundryType = NV_FOUNDRY_NONE;
 
@@ -460,7 +454,7 @@ PPH_STRING NvGpuQueryFoundry(VOID)
 
 PPH_STRING NvGpuQueryDeviceId(VOID)
 {
-    if (NvApiInitialized && NvAPI_GPU_GetPCIIdentifiers)
+    if (NvAPI_GPU_GetPCIIdentifiers)
     {
         NvU32 pDeviceId = 0;
         NvU32 pSubSystemId = 0;
@@ -478,7 +472,7 @@ PPH_STRING NvGpuQueryDeviceId(VOID)
 
 PPH_STRING NvGpuQueryRopsCount(VOID)
 {
-    if (NvApiInitialized && NvAPI_GPU_GetPartitionCount)
+    if (NvAPI_GPU_GetPartitionCount)
     {
         NvU32 pCount = 0;
 
@@ -504,7 +498,7 @@ PPH_STRING NvGpuQueryRopsCount(VOID)
 
 PPH_STRING NvGpuQueryShaderCount(VOID)
 {
-    if (NvApiInitialized && NvAPI_GPU_GetGpuCoreCount)
+    if (NvAPI_GPU_GetGpuCoreCount)
     {
         NvU32 pCount = 0;
 
@@ -519,7 +513,7 @@ PPH_STRING NvGpuQueryShaderCount(VOID)
 
 PPH_STRING NvGpuQueryPciInfo(VOID)
 {
-    if (NvApiInitialized && NvAPI_GPU_GetPCIEInfo)
+    if (NvAPI_GPU_GetPCIEInfo)
     {
         NV_PCIE_INFO pciInfo = { NV_PCIE_INFO_VER };
 
@@ -538,7 +532,7 @@ PPH_STRING NvGpuQueryPciInfo(VOID)
 
 PPH_STRING NvGpuQueryBusWidth(VOID)
 {
-    if (NvApiInitialized && NvAPI_GPU_GetFBWidthAndLocation)
+    if (NvAPI_GPU_GetFBWidthAndLocation)
     {
         NvU32 pWidth = 0;
         NvU32 pLocation = 0;
@@ -555,7 +549,7 @@ PPH_STRING NvGpuQueryBusWidth(VOID)
 
 PPH_STRING NvGpuQueryPcbValue(VOID)
 {
-    if (NvApiInitialized && NvAPI_GPU_ClientPowerTopologyGetStatus)
+    if (NvAPI_GPU_ClientPowerTopologyGetStatus)
     {
         NV_POWER_TOPOLOGY_STATUS nvPowerTopologyStatus = { NV_POWER_TOPOLOGY_STATUS_VER };
 
@@ -579,7 +573,7 @@ PPH_STRING NvGpuQueryPcbValue(VOID)
 
 PPH_STRING NvGpuQueryDriverSettings(VOID)
 {
-    if (NvApiInitialized && NvAPI_GetDisplayDriverRegistryPath)
+    if (NvAPI_GetDisplayDriverRegistryPath)
     {
         NvAPI_LongString nvKeyPathAnsiString = "";
 
@@ -689,9 +683,6 @@ BOOLEAN NvGpuDriverIsWHQL(VOID)
 
     __try
     {
-        if (!NvApiInitialized)
-            __leave;
-
         if (!NvAPI_GetDisplayDriverRegistryPath)
             __leave;
 
@@ -910,38 +901,30 @@ BOOLEAN NvGpuDriverIsWHQL(VOID)
     return nvGpuDriverIsWHQL;
 }
 
-
-
 PPH_STRING NvGpuQueryFanSpeed(VOID)
 {
     NvU32 tachValue = 0;
     NV_GPU_COOLER_SETTINGS coolerInfo = { NV_GPU_COOLER_SETTINGS_VER };
 
-    if (NvApiInitialized)
+    if (NvAPI_GPU_GetTachReading && NvAPI_GPU_GetTachReading(NvGpuPhysicalHandleList->Items[0], &tachValue) == NVAPI_OK)
     {
-        if (NvAPI_GPU_GetTachReading(NvGpuPhysicalHandleList->Items[0], &tachValue) == NVAPI_OK)
+        if (NvAPI_GPU_GetCoolerSettings && NvAPI_GPU_GetCoolerSettings(NvGpuPhysicalHandleList->Items[0], NVAPI_COOLER_TARGET_ALL, &coolerInfo) == NVAPI_OK)
         {
-            if (NvAPI_GPU_GetCoolerSettings(NvGpuPhysicalHandleList->Items[0], NVAPI_COOLER_TARGET_ALL, &coolerInfo) == NVAPI_OK)
-            {
-                return PhFormatString(L"%lu RPM (%lu%%)", tachValue, coolerInfo.cooler[0].currentLevel);
-            }
-
-            return PhFormatString(L"%lu RPM", tachValue);
+            return PhFormatString(L"%lu RPM (%lu%%)", tachValue, coolerInfo.cooler[0].currentLevel);
         }
-        else
+
+        return PhFormatString(L"%lu RPM", tachValue);
+    }
+    else
+    {
+        if (NvAPI_GPU_GetCoolerSettings && NvAPI_GPU_GetCoolerSettings(NvGpuPhysicalHandleList->Items[0], NVAPI_COOLER_TARGET_ALL, &coolerInfo) == NVAPI_OK)
         {
-            if (NvAPI_GPU_GetCoolerSettings(NvGpuPhysicalHandleList->Items[0], NVAPI_COOLER_TARGET_ALL, &coolerInfo) == NVAPI_OK)
-            {
-                return PhFormatString(L"%lu%%", coolerInfo.cooler[0].currentLevel);
-            }
+            return PhFormatString(L"%lu%%", coolerInfo.cooler[0].currentLevel);
         }
     }
 
     return PhCreateString(L"N/A");
 }
-
-
-
 
 VOID NvGpuUpdateValues(VOID)
 {
@@ -951,9 +934,6 @@ VOID NvGpuUpdateValues(VOID)
     NV_GPU_CLOCK_FREQUENCIES clkFreqs  = { NV_GPU_CLOCK_FREQUENCIES_VER };
     NV_CLOCKS_INFO clocksInfo = { NV_CLOCKS_INFO_VER };
     NV_VOLTAGE_DOMAINS voltageDomains = { NV_VOLTAGE_DOMAIN_INFO_VER };
-
-    if (!NvApiInitialized)
-        return;
 
     if (NvAPI_GPU_GetMemoryInfo(NvGpuDisplayHandleList->Items[0], &memoryInfo) == NVAPI_OK)
     {

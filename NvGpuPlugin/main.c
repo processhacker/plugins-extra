@@ -51,7 +51,10 @@ VOID NTAPI UnloadCallback(
     _In_opt_ PVOID Context
     )
 {
-    DestroyNvApi();
+    if (NvApiInitialized)
+    {
+        DestroyNvApi();
+    }
 }
 
 VOID NTAPI ShowOptionsCallback(
@@ -67,7 +70,10 @@ VOID NTAPI ProcessesUpdatedCallback(
     _In_opt_ PVOID Context
     )
 {
-    NvGpuUpdate();
+    if (NvApiInitialized)
+    {
+        NvGpuUpdate();
+    }
 }
 
 VOID NTAPI SystemInformationInitializingCallback(
