@@ -29,6 +29,8 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
+#include <Wincodec.h>
+#include <time.h>
 
 #include "resource.h"
 
@@ -41,14 +43,20 @@ typedef struct _NETWORK_EXTENSION
 {
     BOOLEAN LocalValid;
     BOOLEAN RemoteValid;
+    BOOLEAN CountryValid;
     PPH_STRING LocalServiceName;
     PPH_STRING RemoteServiceName;
+
+    HICON CountryIcon;
+    PPH_STRING RemoteCountryCode;
+    PPH_STRING RemoteCountryName;
 } NETWORK_EXTENSION, *PNETWORK_EXTENSION;
 
 typedef enum _NETWORK_COLUMN_ID
 {
     NETWORK_COLUMN_ID_LOCAL_SERVICE = 1,
-    NETWORK_COLUMN_ID_REMOTE_SERVICE = 2
+    NETWORK_COLUMN_ID_REMOTE_SERVICE = 2,
+    NETWORK_COLUMN_ID_REMOTE_COUNTRY = 3,
 } NETWORK_COLUMN_ID;
 
 typedef struct _RESOLVED_PORT
@@ -57,12 +65,25 @@ typedef struct _RESOLVED_PORT
     USHORT Port;
 } RESOLVED_PORT;
 
+extern PPH_PLUGIN PluginInstance;
 extern RESOLVED_PORT ResolvedPortsTable[6265];
+
+HBITMAP LoadImageFromResources(
+	_In_ UINT Width,
+	_In_ UINT Height,
+	_In_ PPH_STRING Name,
+	_In_ BOOLEAN RGBAImage);
 
 VOID UpdateNetworkNode(
     _In_ NETWORK_COLUMN_ID ColumnID,
     _In_ PPH_NETWORK_NODE Node,
-    _In_ PNETWORK_EXTENSION Extension
-    );
+    _In_ PNETWORK_EXTENSION Extension);
+
+VOID LoadGeoLiteDb(VOID);
+
+BOOLEAN LookupCountryCode(
+    _In_ PH_IP_ADDRESS RemoteAddress,
+    _Out_ PPH_STRING* CountryCode,
+    _Out_ PPH_STRING* CountryName);
 
 #endif

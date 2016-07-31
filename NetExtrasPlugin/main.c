@@ -22,28 +22,12 @@
 
 #include "main.h"
 
-static HWND NetworkTreeNewHandle = NULL;
-static PPH_PLUGIN PluginInstance = NULL;
+PPH_PLUGIN PluginInstance = NULL;
 static PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
 static PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
 static PH_CALLBACK_REGISTRATION NetworkTreeNewInitializingCallbackRegistration;
 static PH_CALLBACK_REGISTRATION TreeNewMessageCallbackRegistration;
-
-static VOID LoadCallback(
-    _In_opt_ PVOID Parameter,
-    _In_opt_ PVOID Context
-    )
-{
-    NOTHING;
-}
-
-static VOID NTAPI UnloadCallback(
-    _In_opt_ PVOID Parameter,
-    _In_opt_ PVOID Context
-    )
-{
-    NOTHING;
-}
+static HWND NetworkTreeNewHandle = NULL;
 
 static LONG NTAPI NetworkServiceSortFunction(
     _In_ PVOID Node1,
@@ -66,12 +50,30 @@ static LONG NTAPI NetworkServiceSortFunction(
          return PhCompareStringWithNull(extension1->LocalServiceName, extension2->LocalServiceName, TRUE);
     case NETWORK_COLUMN_ID_REMOTE_SERVICE:
          return PhCompareStringWithNull(extension1->RemoteServiceName, extension2->RemoteServiceName, TRUE);
+    case NETWORK_COLUMN_ID_REMOTE_COUNTRY:
+        return PhCompareStringWithNull(extension1->RemoteCountryCode, extension2->RemoteCountryCode, TRUE);
     }
 
     return 0;
 }
 
-static VOID NetworkTreeNewInitializingCallback(
+VOID NTAPI LoadCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    LoadGeoLiteDb();
+}
+
+VOID NTAPI UnloadCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    NOTHING;
+}
+
+VOID NTAPI NetworkTreeNewInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -92,9 +94,16 @@ static VOID NetworkTreeNewInitializingCallback(
     column.Width = 140;
     column.Alignment = PH_ALIGN_LEFT;
     PhPluginAddTreeNewColumn(PluginInstance, info->CmData, &column, NETWORK_COLUMN_ID_REMOTE_SERVICE, NULL, NetworkServiceSortFunction);
+
+    memset(&column, 0, sizeof(PH_TREENEW_COLUMN));
+    column.Text = L"Country";
+    column.Width = 140;
+    column.Alignment = PH_ALIGN_LEFT;
+    column.CustomDraw = TRUE; // Owner-draw this column to show country flags
+    PhPluginAddTreeNewColumn(PluginInstance, info->CmData, &column, NETWORK_COLUMN_ID_REMOTE_COUNTRY, NULL, NetworkServiceSortFunction);
 }
 
-static VOID NetworkItemCreateCallback(
+VOID NTAPI NetworkItemCreateCallback(
     _In_ PVOID Object,
     _In_ PH_EM_OBJECT_TYPE ObjectType,
     _In_ PVOID Extension
@@ -106,7 +115,7 @@ static VOID NetworkItemCreateCallback(
     memset(extension, 0, sizeof(NETWORK_EXTENSION));
 }
 
-static VOID NetworkItemDeleteCallback(
+VOID NTAPI NetworkItemDeleteCallback(
     _In_ PVOID Object,
     _In_ PH_EM_OBJECT_TYPE ObjectType,
     _In_ PVOID Extension
@@ -117,9 +126,16 @@ static VOID NetworkItemDeleteCallback(
 
     PhClearReference(&extension->LocalServiceName);
     PhClearReference(&extension->RemoteServiceName);
+    PhClearReference(&extension->RemoteCountryCode);
+
+    if (extension->CountryIcon)
+    {
+        DestroyIcon(extension->CountryIcon);
+    }
 }
 
-static VOID TreeNewMessageCallback(
+
+VOID NTAPI TreeNewMessageCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -135,7 +151,7 @@ static VOID TreeNewMessageCallback(
                 PPH_TREENEW_GET_CELL_TEXT getCellText = message->Parameter1;
                 PPH_NETWORK_NODE networkNode = (PPH_NETWORK_NODE)getCellText->Node;
                 PNETWORK_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, networkNode->NetworkItem, EmNetworkItemType);
-                
+
                 UpdateNetworkNode(message->SubId, networkNode, extension);
 
                 switch (message->SubId)
@@ -150,13 +166,101 @@ static VOID TreeNewMessageCallback(
             }
         }
         break;
+    case TreeNewCustomDraw:
+        {
+            PPH_TREENEW_CUSTOM_DRAW customDraw = message->Parameter1;
+            PPH_NETWORK_NODE networkNode = (PPH_NETWORK_NODE)customDraw->Node;
+			PNETWORK_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, networkNode->NetworkItem, EmNetworkItemType);
+            HDC hdc = customDraw->Dc;
+            RECT rect = customDraw->CellRect;
+
+            // Check if this is the country column
+            if (message->SubId != NETWORK_COLUMN_ID_REMOTE_COUNTRY)
+                break;
+
+            // Update the country data for this connection
+            if (!extension->CountryValid)
+            {
+                PPH_STRING remoteCountryCode = NULL;
+                PPH_STRING remoteCountryName = NULL;
+
+                if (LookupCountryCode(networkNode->NetworkItem->RemoteEndpoint.Address, &remoteCountryCode, &remoteCountryName))
+                {
+                    PhSwapReference(&extension->RemoteCountryCode, remoteCountryCode);
+                    PhSwapReference(&extension->RemoteCountryName, remoteCountryName);
+                }
+
+                extension->CountryValid = TRUE;
+            }
+
+            // Check if there's something to draw
+            if (rect.right - rect.left <= 1)
+            {
+                // nothing to draw
+                break;
+            }
+            
+            // Padding
+            rect.left += 5;
+
+            // Draw the column data
+			if (extension->RemoteCountryCode && extension->RemoteCountryName)
+			{
+                if (!extension->CountryIcon)
+                {                
+                    HBITMAP countryBitmap;
+
+                    if (countryBitmap = LoadImageFromResources(16, 11, extension->RemoteCountryCode, TRUE))
+                    {
+                        HDC screenDc = GetDC(NULL);
+                        HBITMAP screenBitmap = CreateCompatibleBitmap(screenDc, 16, 11);
+
+                        ICONINFO iconInfo = { 0 };
+                        iconInfo.fIcon = TRUE;
+                        iconInfo.hbmColor = countryBitmap;
+                        iconInfo.hbmMask = screenBitmap;
+
+                        extension->CountryIcon = CreateIconIndirect(&iconInfo);
+
+                        DeleteObject(screenBitmap);
+                        ReleaseDC(NULL, screenDc);
+
+                        DeleteObject(countryBitmap);
+                    }
+                }
+ 
+                if (extension->CountryIcon)
+                {
+                    DrawIconEx(
+                        hdc,
+                        rect.left,
+                        rect.top + ((rect.bottom - rect.top) - 11) / 2,
+                        extension->CountryIcon,
+                        16,
+                        11,
+                        0,
+                        NULL,
+                        DI_NORMAL);
+
+                    rect.left += 16 + 2;
+                }
+
+                DrawText(
+                    hdc, 
+                    extension->RemoteCountryName->Buffer,
+                    (INT)extension->RemoteCountryName->Length / 2,
+                    &rect,
+                    DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+			}
+        }
+        break;
     }
 }
 
 LOGICAL DllMain(
     _In_ HINSTANCE Instance,
     _In_ ULONG Reason,
-    _Reserved_ PVOID Reserved
+    _Reserved_ PVOID Reserved  
     )
 {
     switch (Reason)

@@ -123,25 +123,25 @@ static LRESULT CALLBACK MainWndSubclassProc(
             ButtonsArray[0].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
             ButtonsArray[0].iId = PHAPP_ID_VIEW_SYSTEMINFORMATION;
             ButtonsArray[0].iBitmap = 0;
-            wcscpy_s(ButtonsArray[0].szTip, ARRAYSIZE(ButtonsArray[0].szTip), L"System Information");
+            wcsncpy_s(ButtonsArray[0].szTip, ARRAYSIZE(ButtonsArray[0].szTip), L"System Information", _TRUNCATE);
 
             ButtonsArray[1].dwMask = THB_FLAGS | THB_BITMAP | THB_TOOLTIP;
             ButtonsArray[1].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
             ButtonsArray[1].iId = PHAPP_ID_HACKER_FINDHANDLESORDLLS;
             ButtonsArray[1].iBitmap = 1;
-            wcscpy_s(ButtonsArray[1].szTip, ARRAYSIZE(ButtonsArray[1].szTip), L"Find Handles or DLLs");
+            wcsncpy_s(ButtonsArray[1].szTip, ARRAYSIZE(ButtonsArray[1].szTip), L"Find Handles or DLLs", _TRUNCATE);
 
             ButtonsArray[2].dwMask = THB_FLAGS | THB_BITMAP | THB_TOOLTIP;
             ButtonsArray[2].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
             ButtonsArray[2].iId = PHAPP_ID_HELP_LOG;
             ButtonsArray[2].iBitmap = 2;
-            wcscpy_s(ButtonsArray[2].szTip, ARRAYSIZE(ButtonsArray[2].szTip), L"Application Log");
+            wcsncpy_s(ButtonsArray[2].szTip, ARRAYSIZE(ButtonsArray[2].szTip), L"Application Log", _TRUNCATE);
 
             ButtonsArray[3].dwMask = THB_FLAGS | THB_BITMAP | THB_TOOLTIP;
             ButtonsArray[3].dwFlags = THBF_ENABLED | THBF_DISMISSONCLICK;
             ButtonsArray[3].iId = PHAPP_ID_TOOLS_INSPECTEXECUTABLEFILE;
             ButtonsArray[3].iBitmap = 3;
-            wcscpy_s(ButtonsArray[3].szTip, ARRAYSIZE(ButtonsArray[3].szTip), L"Inspect Executable File");
+            wcsncpy_s(ButtonsArray[3].szTip, ARRAYSIZE(ButtonsArray[3].szTip), L"Inspect Executable File", _TRUNCATE);
 
             TaskbarButtonsCreated = TRUE;
         }
