@@ -66,13 +66,13 @@ BEGIN
     BEGIN
         BLOCK "0c0904b0"
         BEGIN
-            VALUE "CompanyName", "wj32"
-            VALUE "FileDescription", "Process critical status plugin for Process Hacker"
+            VALUE "CompanyName", "dmex"
+            VALUE "FileDescription", "Force shutdown plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
             VALUE "InternalName", "ForceShutdownPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "ForceShutdownPlugin.dll"
-            VALUE "ProductName", "Process critical status plugin for Process Hacker"
+            VALUE "ProductName", "Force shutdown plugin for Process Hacker"
             VALUE "ProductVersion", "1.0"
         END
     END
