@@ -59,7 +59,9 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="CHANGELOG.txt" />
-    <Text Include="resources\licence.txt" />
+    <Text Include="resources\licence.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="NetExtrasPlugin.rc">
