@@ -70,7 +70,7 @@ VOID NTAPI UnloadCallback(
     _In_opt_ PVOID Context
     )
 {
-    NOTHING;
+    FreeGeoLiteDb();
 }
 
 VOID NTAPI NetworkTreeNewInitializingCallback(
@@ -170,7 +170,7 @@ VOID NTAPI TreeNewMessageCallback(
         {
             PPH_TREENEW_CUSTOM_DRAW customDraw = message->Parameter1;
             PPH_NETWORK_NODE networkNode = (PPH_NETWORK_NODE)customDraw->Node;
-			PNETWORK_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, networkNode->NetworkItem, EmNetworkItemType);
+            PNETWORK_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, networkNode->NetworkItem, EmNetworkItemType);
             HDC hdc = customDraw->Dc;
             RECT rect = customDraw->CellRect;
 
@@ -204,13 +204,13 @@ VOID NTAPI TreeNewMessageCallback(
             rect.left += 5;
 
             // Draw the column data
-			if (extension->RemoteCountryCode && extension->RemoteCountryName)
-			{
+            if (GeoDbLoaded && extension->RemoteCountryCode && extension->RemoteCountryName)
+            {
                 if (!extension->CountryIcon)
                 {                
                     HBITMAP countryBitmap;
 
-                    if (countryBitmap = LoadImageFromResources(16, 11, extension->RemoteCountryCode, TRUE))
+                    if (countryBitmap = LoadImageFromResources(16, 11, extension->RemoteCountryCode))
                     {
                         HDC screenDc = GetDC(NULL);
                         HBITMAP screenBitmap = CreateCompatibleBitmap(screenDc, 16, 11);
@@ -251,7 +251,17 @@ VOID NTAPI TreeNewMessageCallback(
                     (INT)extension->RemoteCountryName->Length / 2,
                     &rect,
                     DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-			}
+            }
+
+            if (!GeoDbLoaded)
+            {
+                DrawText(
+                    hdc,
+                    L"Geoip database error.",
+                    -1,
+                    &rect,
+                    DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+            }
         }
         break;
     }

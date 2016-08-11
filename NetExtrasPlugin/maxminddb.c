@@ -223,7 +223,7 @@ LOCAL char *bytes_to_hex(uint8_t *bytes, uint32_t size);
 
 #define FREE_AND_SET_NULL(p) { free((void *)(p)); (p) = NULL; }
 
-int MMDB_open(const char *const filename, uint32_t flags, MMDB_s *const mmdb)
+int MMDB_open(const wchar_t* const filename, uint32_t flags, MMDB_s *const mmdb)
 {
     int status = MMDB_SUCCESS;
 
@@ -233,7 +233,7 @@ int MMDB_open(const char *const filename, uint32_t flags, MMDB_s *const mmdb)
     mmdb->metadata.languages.count = 0;
     mmdb->metadata.description.count = 0;
 
-    mmdb->filename = mmdb_strdup(filename);
+    mmdb->filename = _wcsdup(filename); // dmex: modified for wchar_t
     if (NULL == mmdb->filename) {
         status = MMDB_OUT_OF_MEMORY_ERROR;
         goto cleanup;
@@ -306,7 +306,7 @@ LOCAL int map_file(MMDB_s *const mmdb)
     ssize_t size;
     int status = MMDB_SUCCESS;
     HANDLE mmh = NULL;
-    HANDLE fd = CreateFileA(mmdb->filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+    HANDLE fd = CreateFileW(mmdb->filename, GENERIC_READ, FILE_SHARE_READ, NULL, // dmex: modified for wchar_t
                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (fd == INVALID_HANDLE_VALUE) {
         status = MMDB_FILE_OPEN_ERROR;

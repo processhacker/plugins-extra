@@ -311,8 +311,7 @@ static INT LookupResourceCode(_In_ PPH_STRING Name)
 HBITMAP LoadImageFromResources(
     _In_ UINT Width,
     _In_ UINT Height,
-    _In_ PPH_STRING Name,
-    _In_ BOOLEAN RGBAImage
+    _In_ PPH_STRING Name
     )
 {
     UINT frameCount = 0;
@@ -334,7 +333,6 @@ HBITMAP LoadImageFromResources(
     IWICBitmapScaler* wicScaler = NULL;
     WICPixelFormatGUID pixelFormat;
     WICRect rect = { 0, 0, Width, Height };
-    GUID imagePixelFormat = RGBAImage ? GUID_WICPixelFormat32bppPRGBA : GUID_WICPixelFormat32bppPBGRA;
 
     INT resourceCode = LookupResourceCode(Name);
 
@@ -388,7 +386,7 @@ HBITMAP LoadImageFromResources(
             __leave;
 
         // Check if the image format is supported:
-        if (IsEqualGUID(&pixelFormat, &imagePixelFormat))
+        if (IsEqualGUID(&pixelFormat, &GUID_WICPixelFormat32bppPRGBA))
         {
             wicBitmapSource = (IWICBitmapSource*)wicFrame;
         }
@@ -402,7 +400,7 @@ HBITMAP LoadImageFromResources(
             if (FAILED(IWICFormatConverter_Initialize(
                 wicFormatConverter,
                 (IWICBitmapSource*)wicFrame,
-                &imagePixelFormat,
+                &GUID_WICPixelFormat32bppPRGBA,
                 WICBitmapDitherTypeNone,
                 NULL,
                 0.0,

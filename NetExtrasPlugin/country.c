@@ -23,21 +23,59 @@
 #include "main.h"
 #include "maxminddb.h"
 
+BOOLEAN GeoDbLoaded = FALSE;
 static MMDB_s GeoDb = { 0 };
-static BOOLEAN GeoDbLoaded = FALSE;
 
-NTSYSAPI PSTR NTAPI RtlIpv4AddressToStringA(
-    _In_ const IN_ADDR *Addr,
-    _Out_writes_(16) PSTR S);
 
-NTSYSAPI PSTR NTAPI RtlIpv6AddressToStringA(
-    _In_ const IN6_ADDR *Addr,
-    _Out_ PSTR S);
+// Copied from mstcpip.h (due to PH-SDK conflicts).
+// Note: Ipv6 versions are already available from ws2ipdef.h and did not need copying.
+
+#define INADDR_ANY (ULONG)0x00000000
+#define INADDR_LOOPBACK 0x7f000001
+
+FORCEINLINE 
+BOOLEAN 
+IN4_IS_ADDR_UNSPECIFIED(_In_ CONST IN_ADDR *a)
+{
+    return (BOOLEAN)(a->s_addr == INADDR_ANY);
+}
+
+FORCEINLINE 
+BOOLEAN 
+IN4_IS_ADDR_LOOPBACK(_In_ CONST IN_ADDR *a)
+{
+    return (BOOLEAN)(*((PUCHAR)a) == 0x7f); // 127/8
+}
+// end copy from mstcpip.h
+
 
 VOID LoadGeoLiteDb(VOID)
 {
-    if (MMDB_open("plugins\\maxminddb\\GeoLite2-Country.mmdb", MMDB_MODE_MMAP, &GeoDb) == MMDB_SUCCESS)
+    PPH_STRING directory;
+    PPH_STRING path;
+
+    directory = PH_AUTO(PhGetApplicationDirectory());
+    path = PhaCreateString(DATABASE_PATH);
+    path = PH_AUTO(PhConcatStringRef2(&directory->sr, &path->sr));
+
+    if (MMDB_open(path->Buffer, MMDB_MODE_MMAP, &GeoDb) == MMDB_SUCCESS)
     {
+        time_t systemTime;
+
+        // Query the current time
+        time(&systemTime);
+
+        // Check if the Geoip database is older than 6 months (182 days = approx. 6 months).
+        if ((systemTime - GeoDb.metadata.build_epoch) > (182 * 24 * 60 * 60))
+        {
+            // TODO: Warn about old database...
+        }
+
+        if (GeoDb.metadata.ip_version == 6)
+        {
+            // Database includes ipv6 entires.
+        }
+
         GeoDbLoaded = TRUE;
     }
 }
@@ -53,65 +91,80 @@ VOID FreeGeoLiteDb(VOID)
 BOOLEAN LookupCountryCode(
     _In_ PH_IP_ADDRESS RemoteAddress,
     _Out_ PPH_STRING* CountryCode,
-    _Out_ PPH_STRING* CountryName)
+    _Out_ PPH_STRING* CountryName
+    )
 {
     PPH_STRING countryCode = NULL;
     PPH_STRING countryName = NULL;
-    time_t systemTime;
-    MMDB_entry_data_s entry_data;
-	MMDB_lookup_result_s lookup_result;
-    int gai_error, mmdb_error;
-    CHAR addressString[INET_ADDRSTRLEN] = "";
+    MMDB_entry_data_s mmdb_entry;
+    MMDB_lookup_result_s mmdb_lookup;
+    INT mmdb_error = 0;
 
     if (!GeoDbLoaded)
         return FALSE;
 
-    time(&systemTime);
-
-    // 182 days = approx. 6 months
-    if ((systemTime - GeoDb.metadata.build_epoch) < (182 * 24 * 60 * 60))
-    {
-        // valid
-    }
-    else
-    {
-        // expired
-    }
-
-    if (GeoDb.metadata.ip_version == 6)
-    {
-        // Database includes ipv6 entires.
-    }
-
     if (RemoteAddress.Type == PH_IPV4_NETWORK_TYPE)
     {
-        RtlIpv4AddressToStringA(&RemoteAddress.InAddr, addressString);
+        SOCKADDR_IN ipv4SockAddr;
+
+        if (IN4_IS_ADDR_UNSPECIFIED(&RemoteAddress.InAddr))
+            return FALSE;
+
+        if (IN4_IS_ADDR_LOOPBACK(&RemoteAddress.InAddr))
+            return FALSE;
+        
+        memset(&ipv4SockAddr, 0, sizeof(SOCKADDR_IN));
+        memset(&mmdb_lookup, 0, sizeof(MMDB_lookup_result_s));
+
+        ipv4SockAddr.sin_family = AF_INET;
+        ipv4SockAddr.sin_addr = RemoteAddress.InAddr;
+      
+        mmdb_lookup = MMDB_lookup_sockaddr(
+            &GeoDb, 
+            (struct sockaddr*)&ipv4SockAddr, 
+            &mmdb_error
+            );
     }
     else
     {
-        RtlIpv6AddressToStringA(&RemoteAddress.In6Addr, addressString);
+        SOCKADDR_IN6 ipv6SockAddr;
+
+        if (IN6_IS_ADDR_UNSPECIFIED(&RemoteAddress.In6Addr))
+            return FALSE;
+
+        if (IN6_IS_ADDR_LOOPBACK(&RemoteAddress.In6Addr))
+            return FALSE;
+
+        memset(&ipv6SockAddr, 0, sizeof(SOCKADDR_IN6));
+        memset(&mmdb_lookup, 0, sizeof(MMDB_lookup_result_s));
+
+        ipv6SockAddr.sin6_family = AF_INET6;
+        ipv6SockAddr.sin6_addr = RemoteAddress.In6Addr;
+     
+        mmdb_lookup = MMDB_lookup_sockaddr(
+            &GeoDb, 
+            (struct sockaddr*)&ipv6SockAddr, 
+            &mmdb_error
+            );
     }
-  
-    //MMDB_lookup_result_s result = MMDB_lookup_sockaddr(&mmdb, &remoteAddr, &mmdb_error);
-    lookup_result = MMDB_lookup_string(&GeoDb, addressString, &gai_error, &mmdb_error);
 
-    if (lookup_result.found_entry)
+    if (mmdb_error == 0 && mmdb_lookup.found_entry)
     {
-        //if (MMDB_get_value(&res.entry, &entry_data, "continent", "code", NULL) == MMDB_SUCCESS)
+        memset(&mmdb_entry, 0, sizeof(MMDB_entry_data_s));
 
-		if (MMDB_get_value(&lookup_result.entry, &entry_data, "country", "iso_code", NULL) == MMDB_SUCCESS)
-		{
-            if (entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UTF8_STRING)
-            {
-                countryCode = PhConvertUtf8ToUtf16Ex((PCHAR)entry_data.utf8_string, entry_data.data_size);
-            }
-		}
-
-        if (MMDB_get_value(&lookup_result.entry, &entry_data, "country", "names", "en", NULL) == MMDB_SUCCESS)
+        if (MMDB_get_value(&mmdb_lookup.entry, &mmdb_entry, "country", "iso_code", NULL) == MMDB_SUCCESS)
         {
-            if (entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UTF8_STRING)
+            if (mmdb_entry.has_data && mmdb_entry.type == MMDB_DATA_TYPE_UTF8_STRING)
             {
-                countryName = PhConvertUtf8ToUtf16Ex((PCHAR)entry_data.utf8_string, entry_data.data_size);
+                countryCode = PhConvertUtf8ToUtf16Ex((PCHAR)mmdb_entry.utf8_string, mmdb_entry.data_size);
+            }
+        }
+
+        if (MMDB_get_value(&mmdb_lookup.entry, &mmdb_entry, "country", "names", "en", NULL) == MMDB_SUCCESS)
+        {
+            if (mmdb_entry.has_data && mmdb_entry.type == MMDB_DATA_TYPE_UTF8_STRING)
+            {
+                countryName = PhConvertUtf8ToUtf16Ex((PCHAR)mmdb_entry.utf8_string, mmdb_entry.data_size);
             }
         }
     }

@@ -53,7 +53,9 @@
     <ClCompile Include="country.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="png.c" />
+    <ClCompile Include="png.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CHANGELOG.txt" />

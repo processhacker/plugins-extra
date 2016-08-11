@@ -24,12 +24,14 @@
 #define _EXTRA_H_
 
 #define PLUGIN_NAME L"dmex.NetworkExtrasPlugin"
+#define DATABASE_PATH L"plugins\\maxminddb\\GeoLite2-Country.mmdb"
 
 #define CINTERFACE
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
-#include <Wincodec.h>
+#include <workqueue.h>
+#include <wincodec.h>
 #include <time.h>
 
 #include "resource.h"
@@ -67,23 +69,27 @@ typedef struct _RESOLVED_PORT
 
 extern PPH_PLUGIN PluginInstance;
 extern RESOLVED_PORT ResolvedPortsTable[6265];
+extern BOOLEAN GeoDbLoaded;
 
 HBITMAP LoadImageFromResources(
-	_In_ UINT Width,
-	_In_ UINT Height,
-	_In_ PPH_STRING Name,
-	_In_ BOOLEAN RGBAImage);
+    _In_ UINT Width,
+    _In_ UINT Height,
+    _In_ PPH_STRING Name
+    );
 
 VOID UpdateNetworkNode(
     _In_ NETWORK_COLUMN_ID ColumnID,
     _In_ PPH_NETWORK_NODE Node,
-    _In_ PNETWORK_EXTENSION Extension);
+    _In_ PNETWORK_EXTENSION Extension
+    );
 
 VOID LoadGeoLiteDb(VOID);
+VOID FreeGeoLiteDb(VOID);
 
 BOOLEAN LookupCountryCode(
     _In_ PH_IP_ADDRESS RemoteAddress,
     _Out_ PPH_STRING* CountryCode,
-    _Out_ PPH_STRING* CountryName);
+    _Out_ PPH_STRING* CountryName
+    );
 
 #endif
