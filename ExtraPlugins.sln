@@ -42,6 +42,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FirewallMonitorPlugin", "Fi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ForceShutdownPlugin", "ForceShutdownPlugin\ForceShutdownPlugin.vcxproj", "{4417E8FC-5FA6-4631-B792-1872561E7DC2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TrustedInstallerPlugin", "TrustedInstallerPlugin\TrustedInstallerPlugin.vcxproj", "{652D6556-B8E3-4173-B321-60F623E127E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -190,6 +192,14 @@ Global
 		{4417E8FC-5FA6-4631-B792-1872561E7DC2}.Release|Win32.Build.0 = Release|Win32
 		{4417E8FC-5FA6-4631-B792-1872561E7DC2}.Release|x64.ActiveCfg = Release|x64
 		{4417E8FC-5FA6-4631-B792-1872561E7DC2}.Release|x64.Build.0 = Release|x64
+		{652D6556-B8E3-4173-B321-60F623E127E8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{652D6556-B8E3-4173-B321-60F623E127E8}.Debug|Win32.Build.0 = Debug|Win32
+		{652D6556-B8E3-4173-B321-60F623E127E8}.Debug|x64.ActiveCfg = Debug|x64
+		{652D6556-B8E3-4173-B321-60F623E127E8}.Debug|x64.Build.0 = Debug|x64
+		{652D6556-B8E3-4173-B321-60F623E127E8}.Release|Win32.ActiveCfg = Release|Win32
+		{652D6556-B8E3-4173-B321-60F623E127E8}.Release|Win32.Build.0 = Release|Win32
+		{652D6556-B8E3-4173-B321-60F623E127E8}.Release|x64.ActiveCfg = Release|x64
+		{652D6556-B8E3-4173-B321-60F623E127E8}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
