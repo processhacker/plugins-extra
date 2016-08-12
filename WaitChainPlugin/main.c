@@ -165,7 +165,10 @@ static NTSTATUS WaitChainCallbackThread(
         PSYSTEM_PROCESS_INFORMATION process = NULL;
 
         if (!NT_SUCCESS(status = PhEnumProcesses(&processes)))
+        {
+            PhFree(processes);
             return status;
+        }
 
         process = PH_FIRST_PROCESS(processes);
 
@@ -179,6 +182,8 @@ static NTSTATUS WaitChainCallbackThread(
                 }
             }
         } while (process = PH_NEXT_PROCESS(process));
+
+        PhFree(processes);
     }
     else
     {

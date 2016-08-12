@@ -28,7 +28,7 @@ static PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
 static PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
 static PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
 
-static NTSTATUS EnumRunningObjectTable(
+NTSTATUS EnumRunningObjectTable(
     _In_ PVOID ThreadParam
     )
 {
@@ -83,7 +83,7 @@ static NTSTATUS EnumRunningObjectTable(
     return STATUS_SUCCESS;
 }
 
-static INT_PTR CALLBACK RotViewDlgProc(
+INT_PTR CALLBACK RotViewDlgProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -171,7 +171,7 @@ static INT_PTR CALLBACK RotViewDlgProc(
     return FALSE;
 }
 
-static VOID NTAPI MenuItemCallback(
+VOID NTAPI MenuItemCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -193,7 +193,7 @@ static VOID NTAPI MenuItemCallback(
     }
 }
 
-static VOID NTAPI MainMenuInitializingCallback(
+VOID NTAPI MainMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )

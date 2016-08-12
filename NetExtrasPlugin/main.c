@@ -51,7 +51,7 @@ static LONG NTAPI NetworkServiceSortFunction(
     case NETWORK_COLUMN_ID_REMOTE_SERVICE:
          return PhCompareStringWithNull(extension1->RemoteServiceName, extension2->RemoteServiceName, TRUE);
     case NETWORK_COLUMN_ID_REMOTE_COUNTRY:
-        return PhCompareStringWithNull(extension1->RemoteCountryCode, extension2->RemoteCountryCode, TRUE);
+         return PhCompareStringWithNull(extension1->RemoteCountryCode, extension2->RemoteCountryCode, TRUE);
     }
 
     return 0;
@@ -284,7 +284,7 @@ LOGICAL DllMain(
             if (!PluginInstance)
                 return FALSE;
 
-            info->DisplayName = L"Network Extras Plugin";
+            info->DisplayName = L"Network Extras";
             info->Author = L"dmex";
             info->Description = L"Plugin for extra network information.";
             info->HasOptions = FALSE;
