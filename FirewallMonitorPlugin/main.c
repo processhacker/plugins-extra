@@ -41,8 +41,7 @@ static VOID NTAPI UnloadCallback(
     _In_opt_ PVOID Context
     )
 { 
-    StopFwMonitor();
-    SaveSettingsFwTreeList();
+    NOTHING;
 }
 
 static VOID NTAPI ShowOptionsCallback(
