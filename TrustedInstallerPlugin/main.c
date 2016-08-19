@@ -90,6 +90,7 @@ LOGICAL DllMain(
         info->DisplayName = L"Trusted Installer";
         info->Description = L"Run processes with Trusted Installer privileges via the Hacker menu > 'Run as trusted installer' menu.";
         info->Author = L"dmex";
+        info->Url = L"https://wj32.org/processhacker/forums/viewtopic.php?t=2407";
 
         PhRegisterCallback(
             PhGetPluginCallback(PluginInstance, PluginCallbackMenuItem),

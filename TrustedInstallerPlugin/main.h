@@ -32,6 +32,7 @@
 #include <phappresource.h>
 #include <verify.h>
 #include <windowsx.h>
+#include <shlwapi.h>
 
 #include "resource.h"
 
