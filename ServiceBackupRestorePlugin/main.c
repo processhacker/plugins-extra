@@ -146,7 +146,7 @@ LOGICAL DllMain(
             if (!PluginInstance)
                 return FALSE;
 
-            info->DisplayName = L"Service Backup and Restore Plugin";
+            info->DisplayName = L"Service Backup and Restore";
             info->Author = L"dmex";
             info->Description = L"Plugin for backing up and restoring individual services.";
             info->HasOptions = FALSE;

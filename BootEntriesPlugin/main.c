@@ -122,7 +122,7 @@ LOGICAL DllMain(
             if (!PluginInstance)
                 return FALSE;
 
-            info->DisplayName = L"Boot Entries Plugin";
+            info->DisplayName = L"Boot Entries";
             info->Author = L"dmex";
             info->Description = L"Plugin for viewing native Boot Entries via the Tools menu.";
             info->HasOptions = FALSE;

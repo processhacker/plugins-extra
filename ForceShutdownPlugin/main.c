@@ -95,9 +95,10 @@ LOGICAL DllMain(
         if (!PluginInstance)
             return FALSE;
 
-        info->DisplayName = L"Force a system shutdown or reboot via the Process Hacker tray menu";
-        info->Description = L"Adds a new Process Hacker tray menu > Computer > 'Force' shutdown or reboot menu items.";
+        info->DisplayName = L"Force Shutdown";
         info->Author = L"dmex";
+        info->Description = L"Force a system shutdown or reboot via the Process Hacker tray menu > Computer > 'Force' shutdown or reboot menu items.";
+        info->HasOptions = FALSE;
 
         PhRegisterCallback(
             PhGetPluginCallback(PluginInstance, PluginCallbackMenuItem),
