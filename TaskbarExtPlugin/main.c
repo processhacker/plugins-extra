@@ -38,7 +38,7 @@ static HICON BlackIcon = NULL;
 static HIMAGELIST ButtonsImageList = NULL;
 static THUMBBUTTON ButtonsArray[4] = { 0 }; // maximum 8
 
-static VOID ProcessesUpdatedCallback(
+VOID NTAPI ProcessesUpdatedCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -98,7 +98,7 @@ static VOID ProcessesUpdatedCallback(
     }
 }
 
-static LRESULT CALLBACK MainWndSubclassProc(
+LRESULT CALLBACK MainWndSubclassProc(
     _In_ HWND hWnd,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -164,7 +164,7 @@ static LRESULT CALLBACK MainWndSubclassProc(
     return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
-static VOID NTAPI LoadCallback(
+VOID NTAPI LoadCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -195,7 +195,7 @@ static VOID NTAPI LoadCallback(
     PhRegisterCallback(&PhProcessesUpdatedEvent, ProcessesUpdatedCallback, NULL, &ProcessesUpdatedCallbackRegistration);
 }
 
-static VOID NTAPI UnloadCallback(
+VOID NTAPI UnloadCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -203,7 +203,7 @@ static VOID NTAPI UnloadCallback(
     NOTHING;
 }
 
-static VOID NTAPI ShowOptionsCallback(
+VOID NTAPI ShowOptionsCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -211,7 +211,7 @@ static VOID NTAPI ShowOptionsCallback(
     ShowOptionsDialog((HWND)Parameter);
 }
 
-static VOID NTAPI MainWindowShowingCallback(
+VOID NTAPI MainWindowShowingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )

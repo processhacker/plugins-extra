@@ -22,7 +22,7 @@
 
 #include "main.h"
 
-static PPH_STRING PhGetSelectedListViewItemText(
+PPH_STRING PhGetSelectedListViewItemText(
     _In_ HWND hWnd
     )
 {
@@ -50,7 +50,7 @@ static PPH_STRING PhGetSelectedListViewItemText(
     return NULL;
 }
 
-static VOID ShowBootEntryMenu(
+VOID ShowBootEntryMenu(
     _In_ PBOOT_WINDOW_CONTEXT Context,
     _In_ HWND hwndDlg
     )

@@ -25,7 +25,7 @@
 static RECT NormalGraphTextMargin = { 5, 5, 5, 5 };
 static RECT NormalGraphTextPadding = { 3, 3, 3, 3 };
 
-static INT_PTR CALLBACK NvGpuPanelDialogProc(
+INT_PTR CALLBACK NvGpuPanelDialogProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -71,7 +71,7 @@ static INT_PTR CALLBACK NvGpuPanelDialogProc(
     return FALSE;
 }
 
-static VOID NvGpuCreateGraphs(
+VOID NvGpuCreateGraphs(
     _Inout_ PPH_NVGPU_SYSINFO_CONTEXT Context
     )
 {
@@ -136,7 +136,7 @@ static VOID NvGpuCreateGraphs(
     Graph_SetTooltip(Context->BusGraphHandle, TRUE);
 }
 
-static VOID NvGpuLayoutGraphs(
+VOID NvGpuLayoutGraphs(
     _Inout_ PPH_NVGPU_SYSINFO_CONTEXT Context
     )
 {
@@ -258,7 +258,7 @@ static VOID NvGpuLayoutGraphs(
     EndDeferWindowPos(deferHandle);
 }
 
-static VOID NvGpuNotifyUsageGraph(
+VOID NvGpuNotifyUsageGraph(
     _Inout_ PPH_NVGPU_SYSINFO_CONTEXT Context,
     _In_ NMHDR *Header
     )
@@ -324,7 +324,7 @@ static VOID NvGpuNotifyUsageGraph(
     }
 }
 
-static VOID NvGpuNotifyMemoryGraph(
+VOID NvGpuNotifyMemoryGraph(
     _Inout_ PPH_NVGPU_SYSINFO_CONTEXT Context,
     _In_ NMHDR *Header
     )
@@ -409,7 +409,7 @@ static VOID NvGpuNotifyMemoryGraph(
     }
 }
 
-static VOID NvGpuNotifySharedGraph(
+VOID NvGpuNotifySharedGraph(
     _Inout_ PPH_NVGPU_SYSINFO_CONTEXT Context,
     _In_ NMHDR *Header
     )
@@ -476,7 +476,7 @@ static VOID NvGpuNotifySharedGraph(
     }
 }
 
-static VOID NvGpuNotifyBusGraph(
+VOID NvGpuNotifyBusGraph(
     _Inout_ PPH_NVGPU_SYSINFO_CONTEXT Context,
     _In_ NMHDR *Header
     )
@@ -543,7 +543,7 @@ static VOID NvGpuNotifyBusGraph(
     }
 }
 
-static VOID NvGpuUpdateGraphs(
+VOID NvGpuUpdateGraphs(
     _Inout_ PPH_NVGPU_SYSINFO_CONTEXT Context
     )
 {
@@ -576,7 +576,7 @@ static VOID NvGpuUpdateGraphs(
     InvalidateRect(Context->BusGraphHandle, NULL, FALSE);
 }
 
-static VOID NvGpuUpdatePanel(
+VOID NvGpuUpdatePanel(
     _Inout_ PPH_NVGPU_SYSINFO_CONTEXT Context
     )
 {
@@ -600,7 +600,7 @@ static VOID NvGpuUpdatePanel(
     SetDlgItemText(Context->GpuPanel, IDC_VOLTAGE, PhaFormatString(L"%lu mV", GpuCurrentVoltage)->Buffer);
 }
 
-static INT_PTR CALLBACK NvGpuDialogProc(
+INT_PTR CALLBACK NvGpuDialogProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -722,7 +722,7 @@ static INT_PTR CALLBACK NvGpuDialogProc(
     return FALSE;
 }
 
-static BOOLEAN NvGpuSectionCallback(
+BOOLEAN NvGpuSectionCallback(
     _In_ PPH_SYSINFO_SECTION Section,
     _In_ PH_SYSINFO_SECTION_MESSAGE Message,
     _In_opt_ PVOID Parameter1,

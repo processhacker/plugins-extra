@@ -26,7 +26,7 @@ static HANDLE DbgDialogThreadHandle = NULL;
 static HWND DbgDialogHandle = NULL;
 static PH_EVENT InitializedEvent = PH_EVENT_INIT;
 
-static VOID NTAPI DbgLoggedEventCallback(
+VOID NTAPI DbgLoggedEventCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -39,7 +39,7 @@ static VOID NTAPI DbgLoggedEventCallback(
     }
 }
 
-static VOID DbgUpdateLogList(
+VOID DbgUpdateLogList(
     _Inout_ PPH_DBGEVENTS_CONTEXT Context
     )
 {
@@ -55,7 +55,7 @@ static VOID DbgUpdateLogList(
     }
 }
 
-static PPH_STRING DbgGetStringForSelectedLogEntries(
+PPH_STRING DbgGetStringForSelectedLogEntries(
     _Inout_ PPH_DBGEVENTS_CONTEXT Context,
     _In_ BOOLEAN All
     )
@@ -116,7 +116,7 @@ ContinueLoop:
     return PhFinalStringBuilderString(&stringBuilder);
 }
 
-static VOID ShowListViewMenu(
+VOID ShowListViewMenu(
     _Inout_ PPH_DBGEVENTS_CONTEXT Context
     )
 {
@@ -216,7 +216,7 @@ static VOID ShowListViewMenu(
     }
 }
 
-static VOID ShowDropdownMenu(
+VOID ShowDropdownMenu(
     _Inout_ PPH_DBGEVENTS_CONTEXT Context
     )
 {
@@ -355,7 +355,7 @@ static VOID ShowDropdownMenu(
     PhDestroyEMenu(menu);
 }
 
-static INT_PTR CALLBACK DbgViewDlgProc(
+INT_PTR CALLBACK DbgViewDlgProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -630,7 +630,7 @@ static INT_PTR CALLBACK DbgViewDlgProc(
     return FALSE;
 }
 
-static NTSTATUS DbgViewDialogThread(
+NTSTATUS DbgViewDialogThread(
     _In_ PVOID Parameter
     )
 {

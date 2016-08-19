@@ -28,7 +28,7 @@ static PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
 static PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
 static PH_CALLBACK_REGISTRATION MainWindowShowingCallbackRegistration;
 
-static VOID NTAPI LoadCallback(
+VOID NTAPI LoadCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -36,7 +36,7 @@ static VOID NTAPI LoadCallback(
     FwEnabled = StartFwMonitor();
 }
 
-static VOID NTAPI UnloadCallback(
+VOID NTAPI UnloadCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -44,7 +44,7 @@ static VOID NTAPI UnloadCallback(
     NOTHING;
 }
 
-static VOID NTAPI ShowOptionsCallback(
+VOID NTAPI ShowOptionsCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -52,7 +52,7 @@ static VOID NTAPI ShowOptionsCallback(
     NOTHING;
 }
 
-static VOID NTAPI MainWindowShowingCallback(
+VOID NTAPI MainWindowShowingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )

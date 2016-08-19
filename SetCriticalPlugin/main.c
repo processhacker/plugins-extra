@@ -29,7 +29,7 @@ static PPH_PLUGIN PluginInstance;
 static PH_CALLBACK_REGISTRATION MenuItemCallbackRegistration;
 static PH_CALLBACK_REGISTRATION ProcessMenuInitializingCallbackRegistration;
 
-static VOID MenuItemCallback(
+VOID NTAPI MenuItemCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -91,7 +91,7 @@ static VOID MenuItemCallback(
     }
 }
 
-static VOID ProcessMenuInitializingCallback(
+VOID NTAPI ProcessMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )

@@ -30,7 +30,7 @@ static PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
 static PH_CALLBACK_REGISTRATION ProcessMenuInitializingCallbackRegistration;
 static PH_CALLBACK_REGISTRATION ThreadMenuInitializingCallbackRegistration;
 
-static BOOLEAN WaitChainRegisterCallbacks(
+BOOLEAN WaitChainRegisterCallbacks(
     _Inout_ PWCT_CONTEXT Context
     )
 {
@@ -53,7 +53,7 @@ static BOOLEAN WaitChainRegisterCallbacks(
     return TRUE;
 }
 
-static VOID WaitChainCheckThread(
+VOID WaitChainCheckThread(
     _Inout_ PWCT_CONTEXT Context,
     _In_ HANDLE ThreadId
     )
@@ -143,7 +143,7 @@ static VOID WaitChainCheckThread(
     TreeNew_NodesStructured(Context->TreeNewHandle);
 }
 
-static NTSTATUS WaitChainCallbackThread(
+NTSTATUS WaitChainCallbackThread(
     _In_ PVOID Parameter
     )
 {
@@ -203,7 +203,7 @@ static NTSTATUS WaitChainCallbackThread(
     return status;
 }
 
-static INT_PTR CALLBACK WaitChainDlgProc(
+INT_PTR CALLBACK WaitChainDlgProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -359,7 +359,7 @@ static INT_PTR CALLBACK WaitChainDlgProc(
     return FALSE;
 }
 
-static VOID NTAPI MenuItemCallback(
+VOID NTAPI MenuItemCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -382,7 +382,7 @@ static VOID NTAPI MenuItemCallback(
     }
 }
 
-static VOID NTAPI ProcessMenuInitializingCallback(
+VOID NTAPI ProcessMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -413,19 +413,21 @@ static VOID NTAPI ProcessMenuInitializingCallback(
     context->IsProcessItem = TRUE;
     context->ProcessItem = processItem;
 
-    miscMenuItem = PhFindEMenuItem(menuInfo->Menu, 0, L"Miscellaneous", 0);
-    if (miscMenuItem)
+    if (miscMenuItem = PhFindEMenuItem(menuInfo->Menu, 0, L"Miscellaneous", 0))
     {
-        menuItem = PhPluginCreateEMenuItem(PluginInstance, 0, IDD_WCT_MENUITEM, L"Wait Chain Traversal", context);
-        PhInsertEMenuItem(miscMenuItem, menuItem, -1);
+        PhInsertEMenuItem(miscMenuItem, menuItem = PhPluginCreateEMenuItem(PluginInstance, 0, IDD_WCT_MENUITEM, L"Wait Chain Traversal", context), -1);
 
         // Disable menu if current process selected.
         if (processItem == NULL || processItem->ProcessId == NtCurrentProcessId())
             menuItem->Flags |= PH_EMENU_DISABLED;
     }
+    else
+    {
+        PhFree(context);
+    }
 }
 
-static VOID NTAPI ThreadMenuInitializingCallback(
+VOID NTAPI ThreadMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )

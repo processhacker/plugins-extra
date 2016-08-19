@@ -49,7 +49,7 @@ ULONG GpuCurrentShaderClock = 0;
 ULONG GpuCurrentVoltage = 0;
 //NVAPI_GPU_PERF_DECREASE GpuPerfDecreaseReason = NV_GPU_PERF_DECREASE_NONE;
 
-static VOID NvGpuEnumPhysicalHandles(VOID)
+VOID NvGpuEnumPhysicalHandles(VOID)
 {
     NvU32 gpuCount = 0;
     NvPhysicalGpuHandle gpuHandles[NVAPI_MAX_PHYSICAL_GPUS];
@@ -62,7 +62,7 @@ static VOID NvGpuEnumPhysicalHandles(VOID)
     }
 }
 
-static VOID NvGpuEnumDisplayHandles(VOID)
+VOID NvGpuEnumDisplayHandles(VOID)
 {
     if (!NvAPI_EnumNvidiaDisplayHandle)
         return;

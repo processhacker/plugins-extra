@@ -70,7 +70,7 @@ VOID LoadCounterList(
     }
 }
 
-static VOID FreeCounterEntry(
+VOID FreeCounterEntry(
     _In_ PPH_PERFMON_ENTRY Entry
     )
 {
@@ -82,7 +82,7 @@ static VOID FreeCounterEntry(
     PhFree(Entry);
 }
 
-static VOID ClearCounterList(
+VOID ClearCounterList(
     _Inout_ PPH_LIST FilterList
     )
 {
@@ -94,7 +94,7 @@ static VOID ClearCounterList(
     PhClearList(FilterList);
 }
 
-static VOID CopyCounterList(
+VOID CopyCounterList(
     _Inout_ PPH_LIST Destination,
     _In_ PPH_LIST Source
     )
@@ -114,7 +114,7 @@ static VOID CopyCounterList(
     }
 }
 
-static PPH_STRING SaveCounterList(
+PPH_STRING SaveCounterList(
     _Inout_ PPH_LIST FilterList
     )
 {
@@ -153,7 +153,7 @@ static PPH_STRING SaveCounterList(
     return PhFinalStringBuilderString(&stringBuilder);
 }
 
-static VOID AddCounterToListView(
+VOID AddCounterToListView(
     _In_ PPH_PERFMON_CONTEXT Context,
     _In_ PWSTR CounterName
     )
@@ -175,7 +175,7 @@ static VOID AddCounterToListView(
     PhAddItemList(Context->CountersListEdited, entry);
 }
 
-static VOID LoadCountersToListView(
+VOID LoadCountersToListView(
     _In_ PPH_PERFMON_CONTEXT Context,
     _In_ PPH_LIST Source
     )
@@ -193,7 +193,7 @@ static VOID LoadCountersToListView(
     }
 }
 
-static INT_PTR CALLBACK OptionsDlgProc(
+INT_PTR CALLBACK OptionsDlgProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,

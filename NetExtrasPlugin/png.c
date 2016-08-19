@@ -295,7 +295,9 @@ CountryResourceTable[] =
     { L"ZW", ZW_PNG }
 };
 
-static INT LookupResourceCode(_In_ PPH_STRING Name)
+INT LookupResourceCode(
+    _In_ PPH_STRING Name
+    )
 {
     for (INT i = 0; i < ARRAYSIZE(CountryResourceTable); i++)
     {

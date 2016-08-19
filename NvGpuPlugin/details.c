@@ -22,7 +22,7 @@
 
 #include "main.h"
 
-static VOID NvUpdateDetails(
+VOID NvUpdateDetails(
     _Inout_ PPH_NVGPU_SYSINFO_CONTEXT Context
     )
 {
@@ -48,7 +48,7 @@ static VOID NvUpdateDetails(
     SetDlgItemText(Context->DetailsHandle, IDC_EDIT13, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryFoundry()))->Buffer);  
 }
 
-static INT_PTR CALLBACK DetailsDlgProc(
+INT_PTR CALLBACK DetailsDlgProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,

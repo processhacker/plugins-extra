@@ -24,7 +24,7 @@
 
 PH_CALLBACK_DECLARE(DbgLoggedCallback);
 
-static VOID DbgFreeLogEntry(
+VOID DbgFreeLogEntry(
     _Inout_ PDEBUG_LOG_ENTRY Entry
     )
 {
@@ -35,7 +35,7 @@ static VOID DbgFreeLogEntry(
     PhFree(Entry);
 }
 
-static VOID DbgAddLogEntry(
+VOID DbgAddLogEntry(
     _Inout_ PPH_DBGEVENTS_CONTEXT Context,
     _In_ PDEBUG_LOG_ENTRY Entry
     )
@@ -65,7 +65,7 @@ VOID DbgClearLogEntries(
     PhClearList(Context->LogMessageList);
 }
 
-static VOID DbgShowErrorMessage(
+VOID DbgShowErrorMessage(
     _Inout_ PPH_DBGEVENTS_CONTEXT Context,
     _In_ PWSTR Type
     )
@@ -80,7 +80,7 @@ static VOID DbgShowErrorMessage(
     }
 }
 
-static VOID DbgFormatObjectName(
+VOID DbgFormatObjectName(
     _In_ BOOLEAN LocalName,
     _In_ PWSTR OriginalName,
     _Out_ PUNICODE_STRING ObjectName
@@ -110,7 +110,7 @@ static VOID DbgFormatObjectName(
     }
 }
 
-static VOID DbgProcessLogMessageEntry(
+VOID DbgProcessLogMessageEntry(
     _Inout_ PPH_DBGEVENTS_CONTEXT Context,
     _In_ BOOLEAN GlobalEvents
     )
@@ -186,7 +186,7 @@ static VOID DbgProcessLogMessageEntry(
     DbgAddLogEntry(Context, entry);
 }
 
-static NTSTATUS DbgEventsLocalThread(
+NTSTATUS DbgEventsLocalThread(
     _In_ PVOID Parameter
     )
 {
@@ -217,7 +217,7 @@ static NTSTATUS DbgEventsLocalThread(
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS DbgEventsGlobalThread(
+NTSTATUS DbgEventsGlobalThread(
     _In_ PVOID Parameter
     )
 {

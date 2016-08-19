@@ -42,7 +42,7 @@ static WCHAR *GraphTypeStrings[] =
     L"Physical Memory History"
 };
 
-static PWSTR GraphTypeGetTypeString(
+PWSTR GraphTypeGetTypeString(
     _In_ ULONG SidType
     )
 {
@@ -61,7 +61,7 @@ static PWSTR GraphTypeGetTypeString(
     return L"None";
 }
 
-static ULONG GraphTypeGetTypeInteger(
+ULONG GraphTypeGetTypeInteger(
     _In_ PWSTR SidType
     )
 {
@@ -80,7 +80,7 @@ static ULONG GraphTypeGetTypeInteger(
     return 0;
 }
 
-static INT_PTR CALLBACK OptionsDlgProc(
+INT_PTR CALLBACK OptionsDlgProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,

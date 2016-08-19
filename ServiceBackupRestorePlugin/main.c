@@ -29,7 +29,7 @@ static PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
 static PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
 static PH_CALLBACK_REGISTRATION ServiceMenuInitializingCallbackRegistration;
 
-static VOID NTAPI LoadCallback(
+VOID NTAPI LoadCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -49,7 +49,7 @@ static VOID NTAPI LoadCallback(
     }
 }
 
-static VOID NTAPI UnloadCallback(
+VOID NTAPI UnloadCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -57,7 +57,7 @@ static VOID NTAPI UnloadCallback(
     NOTHING;
 }
 
-static VOID NTAPI ShowOptionsCallback(
+VOID NTAPI ShowOptionsCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -98,7 +98,7 @@ VOID NTAPI MenuItemCallback(
     }
 }
 
-static VOID NTAPI ServiceMenuInitializingCallback(
+VOID NTAPI ServiceMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )

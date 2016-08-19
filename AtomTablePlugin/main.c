@@ -39,7 +39,7 @@ static HWND ListViewWndHandle;
 static PH_LAYOUT_MANAGER LayoutManager;
 static PPH_PLUGIN PluginInstance;
 
-static NTSTATUS PhEnumAtomTable(
+NTSTATUS PhEnumAtomTable(
     _Out_ PATOM_TABLE_INFORMATION* AtomTable
     )
 {
@@ -69,7 +69,7 @@ static NTSTATUS PhEnumAtomTable(
     return status;
 }
 
-static NTSTATUS PhQueryAtomTableEntry(
+NTSTATUS PhQueryAtomTableEntry(
     _In_ RTL_ATOM Atom,
     _Out_ PATOM_BASIC_INFORMATION* AtomInfo
     )
@@ -100,7 +100,7 @@ static NTSTATUS PhQueryAtomTableEntry(
     return status;
 }
 
-static VOID LoadAtomTable(VOID)
+VOID LoadAtomTable(VOID)
 {
     PATOM_TABLE_INFORMATION atomTable = NULL;
 
@@ -156,7 +156,7 @@ static VOID LoadAtomTable(VOID)
     PhFree(atomTable);
 }
 
-static PPH_STRING PhGetSelectedListViewItemText(
+PPH_STRING PhGetSelectedListViewItemText(
     _In_ HWND hWnd
     )
 {
@@ -184,7 +184,7 @@ static PPH_STRING PhGetSelectedListViewItemText(
     return NULL;
 }
 
-static VOID ShowStatusMenu(
+VOID ShowStatusMenu(
     _In_ HWND hwndDlg
     )
 {
@@ -285,7 +285,7 @@ static VOID ShowStatusMenu(
     }
 }
 
-static INT_PTR CALLBACK MainWindowDlgProc(
+INT_PTR CALLBACK MainWindowDlgProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -360,7 +360,7 @@ static INT_PTR CALLBACK MainWindowDlgProc(
     return FALSE;
 }
 
-static VOID NTAPI MainMenuInitializingCallback(
+VOID NTAPI MainMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -373,7 +373,7 @@ static VOID NTAPI MainMenuInitializingCallback(
     PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ATOM_TABLE_MENUITEM, L"Global Atom Table", NULL), -1);
 }
 
-static VOID NTAPI MenuItemCallback(
+VOID NTAPI MenuItemCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )

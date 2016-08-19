@@ -45,8 +45,7 @@ PPH_STRING PerfCounterLabelYFunction(
     }
 }
 
-
-static VOID NTAPI ProcessesUpdatedHandler(
+VOID NTAPI ProcessesUpdatedHandler(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -59,7 +58,7 @@ static VOID NTAPI ProcessesUpdatedHandler(
     }
 }
 
-static VOID PerfCounterUpdateGraphs(
+VOID PerfCounterUpdateGraphs(
     _Inout_ PPH_PERFMON_SYSINFO_CONTEXT Context
     )
 {
@@ -71,7 +70,7 @@ static VOID PerfCounterUpdateGraphs(
     InvalidateRect(Context->GraphHandle, NULL, FALSE);
 }
 
-static INT_PTR CALLBACK PerfCounterDialogProc(
+INT_PTR CALLBACK PerfCounterDialogProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -239,7 +238,7 @@ static INT_PTR CALLBACK PerfCounterDialogProc(
     return FALSE;
 }
 
-static BOOLEAN PerfCounterSectionCallback(
+BOOLEAN PerfCounterSectionCallback(
     _In_ PPH_SYSINFO_SECTION Section,
     _In_ PH_SYSINFO_SECTION_MESSAGE Message,
     _In_opt_ PVOID Parameter1,

@@ -36,7 +36,7 @@ static PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
 static PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
 static PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
 
-static VOID EnumDnsCacheTable(
+VOID EnumDnsCacheTable(
     _In_ HWND hwndDlg
     )
 {
@@ -138,7 +138,7 @@ static VOID EnumDnsCacheTable(
     }
 }
 
-static PPH_STRING PhGetSelectedListViewItemText(
+PPH_STRING PhGetSelectedListViewItemText(
     _In_ HWND hWnd
     )
 {
@@ -166,7 +166,7 @@ static PPH_STRING PhGetSelectedListViewItemText(
     return NULL;
 }
 
-static VOID ShowStatusMenu(
+VOID ShowStatusMenu(
     _In_ HWND hwndDlg
     )
 {
@@ -233,7 +233,7 @@ static VOID ShowStatusMenu(
     }
 }
 
-static INT_PTR CALLBACK DnsCacheDlgProc(
+INT_PTR CALLBACK DnsCacheDlgProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -345,7 +345,7 @@ static INT_PTR CALLBACK DnsCacheDlgProc(
     return FALSE;
 }
 
-static VOID NTAPI MainMenuInitializingCallback(
+VOID NTAPI MainMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -358,7 +358,7 @@ static VOID NTAPI MainMenuInitializingCallback(
     PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, DNSCACHE_MENUITEM, L"DNS Resolver Cache", NULL), -1);
 }
 
-static VOID NTAPI MenuItemCallback(
+VOID NTAPI MenuItemCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )

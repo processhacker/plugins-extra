@@ -861,7 +861,7 @@ VOID ShowFwContextMenu(
     PhFree(fwItems);
 }
 
-static VOID NTAPI FwItemAddedHandler(
+VOID NTAPI FwItemAddedHandler(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -872,7 +872,7 @@ static VOID NTAPI FwItemAddedHandler(
     ProcessHacker_Invoke(PhMainWndHandle, OnFwItemAdded, fwItem);
 }
 
-static VOID NTAPI FwItemModifiedHandler(
+VOID NTAPI FwItemModifiedHandler(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -880,7 +880,7 @@ static VOID NTAPI FwItemModifiedHandler(
     ProcessHacker_Invoke(PhMainWndHandle, OnFwItemModified, (PFW_EVENT_ITEM)Parameter);
 }
 
-static VOID NTAPI FwItemRemovedHandler(
+VOID NTAPI FwItemRemovedHandler(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -888,7 +888,7 @@ static VOID NTAPI FwItemRemovedHandler(
     ProcessHacker_Invoke(PhMainWndHandle, OnFwItemRemoved, (PFW_EVENT_ITEM)Parameter);
 }
 
-static VOID NTAPI FwItemsUpdatedHandler(
+VOID NTAPI FwItemsUpdatedHandler(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -896,7 +896,7 @@ static VOID NTAPI FwItemsUpdatedHandler(
     ProcessHacker_Invoke(PhMainWndHandle, OnFwItemsUpdated, NULL);
 }
 
-static VOID NTAPI OnFwItemAdded(
+VOID NTAPI OnFwItemAdded(
     _In_ PVOID Parameter
     )
 {
@@ -913,7 +913,7 @@ static VOID NTAPI OnFwItemAdded(
     PhDereferenceObject(fwItem);
 }
 
-static VOID NTAPI OnFwItemModified(
+VOID NTAPI OnFwItemModified(
     _In_ PVOID Parameter
     )
 {
@@ -922,7 +922,7 @@ static VOID NTAPI OnFwItemModified(
     UpdateFwNode(fwNode);
 }
 
-static VOID NTAPI OnFwItemRemoved(
+VOID NTAPI OnFwItemRemoved(
     _In_ PVOID Parameter
     )
 {
@@ -937,7 +937,7 @@ static VOID NTAPI OnFwItemRemoved(
     RemoveFwNode(fwNode);
 }
 
-static VOID NTAPI OnFwItemsUpdated(
+VOID NTAPI OnFwItemsUpdated(
     _In_ PVOID Parameter
     )
 {
