@@ -37,8 +37,9 @@ static HANDLE FwEngineHandle = NULL;
 static HANDLE FwEventHandle = NULL;
 static HANDLE FwEnumHandle = NULL;
 static _FwpmNetEventSubscribe1 FwpmNetEventSubscribe1_I = NULL;
+static _FwpmNetEventSubscribe2 FwpmNetEventSubscribe2_I = NULL;
 
-static VOID NTAPI FwObjectTypeDeleteProcedure(
+VOID NTAPI FwObjectTypeDeleteProcedure(
     _In_ PVOID Object,
     _In_ ULONG Flags
     )
@@ -63,7 +64,7 @@ PFW_EVENT_ITEM EtCreateFirewallEntryItem(
     return diskItem;
 }
 
-static VOID CALLBACK DropEventCallback(
+VOID CALLBACK DropEventCallback(
     _Inout_ PVOID FwContext,
     _In_ const FWPM_NET_EVENT* FwEvent
     )
@@ -625,7 +626,7 @@ static VOID CALLBACK DropEventCallback(
     PhInvokeCallback(&FwItemsUpdatedEvent, NULL);
 }
 
-static VOID NTAPI ProcessesUpdatedCallback(
+VOID NTAPI ProcessesUpdatedCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
@@ -657,8 +658,10 @@ BOOLEAN StartFwMonitor(
     FWPM_NET_EVENT_SUBSCRIPTION subscription = { 0 };
     FWPM_NET_EVENT_ENUM_TEMPLATE eventTemplate = { 0 };
 
-    
-    FwpmNetEventSubscribe1_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe1");
+    if (!(FwpmNetEventSubscribe2_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe2")))
+    {
+        FwpmNetEventSubscribe1_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe1");
+    }
    
     FwNodeList = PhCreateList(100);
     FwObjectType = PhCreateObjectType(L"FwObject", 0, FwObjectTypeDeleteProcedure);
@@ -726,9 +729,9 @@ BOOLEAN StartFwMonitor(
     subscription.enumTemplate = &eventTemplate;
 
     // Subscribe to the events
-    if (FwpmNetEventSubscribe1_I)
+    if (FwpmNetEventSubscribe2_I)
     {
-        if (FwpmNetEventSubscribe1_I(
+        if (FwpmNetEventSubscribe2_I(
             FwEngineHandle,
             &subscription,
             DropEventCallback,
@@ -739,7 +742,20 @@ BOOLEAN StartFwMonitor(
             return FALSE;
         }
     }
-    else
+    else if (FwpmNetEventSubscribe1_I)
+    {
+        if (FwpmNetEventSubscribe1_I(
+            FwEngineHandle,
+            &subscription,
+            (FWPM_NET_EVENT_CALLBACK1)DropEventCallback, // TODO: Use correct function.
+            NULL,
+            &FwEventHandle
+            ) != ERROR_SUCCESS)
+        {
+            return FALSE;
+        }
+    }
+    else if (FwpmNetEventSubscribe0)
     {
         if (FwpmNetEventSubscribe0(
             FwEngineHandle,
@@ -751,6 +767,10 @@ BOOLEAN StartFwMonitor(
         {
             return FALSE;
         }
+    }
+    else
+    {
+        return FALSE;
     }
 
     PhRegisterCallback(

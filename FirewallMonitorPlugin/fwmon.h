@@ -102,4 +102,12 @@ typedef ULONG (WINAPI* _FwpmNetEventSubscribe1)(
    _Out_ HANDLE* eventsHandle
    );
 
+typedef ULONG (WINAPI* _FwpmNetEventSubscribe2)(
+   _In_ HANDLE engineHandle,
+   _In_ const FWPM_NET_EVENT_SUBSCRIPTION0* subscription,
+   _In_ FWPM_NET_EVENT_CALLBACK2 callback,
+   _In_opt_ void* context,
+   _Out_ HANDLE* eventsHandle
+   );
+
 #endif
