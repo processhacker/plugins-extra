@@ -22,6 +22,8 @@
 
 #include "main.h"
 
+static _SHAutoComplete SHAutoComplete_I = NULL;
+
 NTSTATUS RunAsTrustedInstallerThread(
     _In_ PVOID Parameter
     )
@@ -66,7 +68,25 @@ INT_PTR CALLBACK RunAsTrustedInstallerDlgProc(
     {
     case WM_INITDIALOG:
         {
+            HMODULE shlwapiHandle;
+
             PhRegisterDialog(hwndDlg);
+
+            if (!SHAutoComplete_I)
+            {
+                if (shlwapiHandle = LoadLibrary(L"shlwapi.dll"))
+                {
+                    SHAutoComplete_I = PhGetProcedureAddress(shlwapiHandle, "SHAutoComplete", 0);
+                }
+            }
+
+            if (SHAutoComplete_I)
+            {
+                SHAutoComplete_I(
+                    GetDlgItem(hwndDlg, IDC_PROGRAM),
+                    SHACF_AUTOAPPEND_FORCE_ON | SHACF_AUTOSUGGEST_FORCE_ON | SHACF_URLALL | SHACF_FILESYS_ONLY
+                    );
+            }
 
             SendMessage(hwndDlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(hwndDlg, IDC_PROGRAM), TRUE);
         }
