@@ -26,16 +26,14 @@ NTSTATUS RunAsCreateProcessThread(
     _In_ PVOID Parameter
     )
 {
-    static PH_STRINGREF processName = PH_STRINGREF_INIT(L"TrustedInstaller.exe");
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     BOOLEAN success = FALSE;
-    SERVICE_STATUS serviceStatus = { 0 };
+    ULONG bytesNeeded = 0;
+    SERVICE_STATUS_PROCESS serviceStatus = { 0 };
     SC_HANDLE serviceHandle = NULL;
-    PVOID processes = NULL;
-    PSYSTEM_PROCESS_INFORMATION process = NULL;
     HANDLE processHandle = NULL;
     HANDLE tokenHandle = NULL;
-    PTOKEN_USER user = NULL;
+    PTOKEN_USER tokenUser = NULL;
     PPH_STRING userName = NULL;
     PPH_STRING program = Parameter;
 
@@ -47,7 +45,13 @@ NTSTATUS RunAsCreateProcessThread(
             __leave;
         }
 
-        if (!QueryServiceStatus(serviceHandle, &serviceStatus))
+        if (!QueryServiceStatusEx(
+            serviceHandle, 
+            SC_STATUS_PROCESS_INFO, 
+            (PBYTE)&serviceStatus, 
+            sizeof(SERVICE_STATUS_PROCESS), 
+            &bytesNeeded
+            ))
         {
             status = PhGetLastWin32ErrorAsNtStatus();
             __leave;
@@ -65,7 +69,13 @@ NTSTATUS RunAsCreateProcessThread(
 
             do
             {
-                if (QueryServiceStatus(serviceHandle, &serviceStatus))
+                if (QueryServiceStatusEx(
+                    serviceHandle, 
+                    SC_STATUS_PROCESS_INFO, 
+                    (PBYTE)&serviceStatus, 
+                    sizeof(SERVICE_STATUS_PROCESS), 
+                    &bytesNeeded
+                    ))
                 {
                     if (serviceStatus.dwCurrentState == SERVICE_RUNNING)
                     {
@@ -86,22 +96,10 @@ NTSTATUS RunAsCreateProcessThread(
             __leave;
         }
 
-        if (!NT_SUCCESS(status = PhEnumProcesses(&processes)))
-        {
-            __leave;
-        }
-        
-        if (!(process = PhFindProcessInformationByImageName(processes, &processName)))
-        {
-            // The system could not find the instance specified.
-            status = STATUS_FLT_INSTANCE_NOT_FOUND;
-            __leave;
-        }
-
         if (!NT_SUCCESS(status = PhOpenProcess(
             &processHandle,
             ProcessQueryAccess,
-            process->UniqueProcessId
+            UlongToHandle(serviceStatus.dwProcessId)
             )))
         {
             __leave;
@@ -116,12 +114,12 @@ NTSTATUS RunAsCreateProcessThread(
             __leave;
         }
 
-        if (!NT_SUCCESS(status = PhGetTokenUser(tokenHandle, &user)))
+        if (!NT_SUCCESS(status = PhGetTokenUser(tokenHandle, &tokenUser)))
         {
             __leave;
         }
 
-        if (!(userName = PhGetSidFullName(user->User.Sid, TRUE, NULL)))
+        if (!(userName = PhGetSidFullName(tokenUser->User.Sid, TRUE, NULL)))
         {
             // the SID structure is not valid.
             status = STATUS_INVALID_SID;
@@ -134,7 +132,7 @@ NTSTATUS RunAsCreateProcessThread(
             userName->Buffer,
             L"",
             LOGON32_LOGON_SERVICE,
-            process->UniqueProcessId,
+            UlongToHandle(serviceStatus.dwProcessId),
             NtCurrentPeb()->SessionId,
             NULL,
             FALSE
@@ -152,9 +150,9 @@ NTSTATUS RunAsCreateProcessThread(
             PhDereferenceObject(userName);
         }
 
-        if (user)
+        if (tokenUser)
         {
-            PhFree(user);
+            PhFree(tokenUser);
         }
 
         if (tokenHandle)
@@ -165,11 +163,6 @@ NTSTATUS RunAsCreateProcessThread(
         if (processHandle)
         {
             NtClose(processHandle);
-        }
-
-        if (processes)
-        {
-            PhFree(processes);
         }
 
         if (serviceHandle)
