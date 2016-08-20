@@ -95,6 +95,8 @@ INT_PTR CALLBACK RotViewDlgProc(
     if (uMsg == WM_INITDIALOG)
     {
         context = (PROT_WINDOW_CONTEXT)PhAllocate(sizeof(ROT_WINDOW_CONTEXT));
+        memset(context, 0, sizeof(ROT_WINDOW_CONTEXT));
+
         SetProp(hwndDlg, L"Context", (HANDLE)context);
     }
     else
