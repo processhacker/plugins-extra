@@ -279,9 +279,9 @@ NTSTATUS Ph2TerminateProcess(
 {
     NTSTATUS status;
 
-    if (KphIsConnected())
+    if (Kph2IsConnected())
     {
-        status = KphTerminateProcess(
+        status = Kph2TerminateProcess(
             ProcessHandle,
             ExitStatus
             );
