@@ -37,15 +37,7 @@ VOID MenuItemCallback(
     {
     case RUNAS_MENU_ITEM:
         {
-            if (!PhGetOwnTokenAttributes().Elevated)
-            {
-                PhShowInformation(menuItem->OwnerWindow, L"This option requires elevation.");
-                break;
-            }
-            else
-            {
-                ShowRunAsDialog(menuItem->OwnerWindow);
-            }
+            ShowRunAsDialog(menuItem->OwnerWindow);
         }
         break;
     }
@@ -69,7 +61,13 @@ VOID NTAPI MainMenuInitializingCallback(
         return;
  
     indexOfMenuItem = PhIndexOfEMenuItem(menuInfo->Menu, runAsMenuItem);
-    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, RUNAS_MENU_ITEM, L"Run as trusted installer...", NULL), indexOfMenuItem + 1);
+    runAsMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, RUNAS_MENU_ITEM, L"Run as trusted installer...", NULL);
+    PhInsertEMenuItem(menuInfo->Menu, runAsMenuItem, indexOfMenuItem + 1);
+
+    if (!PhGetOwnTokenAttributes().Elevated)
+    {
+        runAsMenuItem->Flags |= PH_EMENU_DISABLED;
+    }
 }
 
 LOGICAL DllMain(

@@ -69,12 +69,6 @@ VOID NTAPI MenuItemCallback(
     {
     case BOOT_ENTRIES_MENUITEM:
         {
-            if (!PhGetOwnTokenAttributes().Elevated)
-            {
-                PhShowInformation(menuItem->OwnerWindow, L"This option requires elevation.");
-                break;
-            }
-
             DialogBox(
                 PluginInstance->DllBase,
                 MAKEINTRESOURCE(IDD_BOOT),
@@ -92,11 +86,18 @@ VOID NTAPI MainMenuInitializingCallback(
     )
 {
     PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
+    PPH_EMENU_ITEM bootMenuItem;
 
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
 
-    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, BOOT_ENTRIES_MENUITEM, L"Boot Entries", NULL), -1);
+    bootMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, BOOT_ENTRIES_MENUITEM, L"Boot Entries", NULL);
+    PhInsertEMenuItem(menuInfo->Menu, bootMenuItem, -1);
+
+    if (!PhGetOwnTokenAttributes().Elevated)
+    {
+        bootMenuItem->Flags |= PH_EMENU_DISABLED;
+    }
 }
 
 LOGICAL DllMain(
