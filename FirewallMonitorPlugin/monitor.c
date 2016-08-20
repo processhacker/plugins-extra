@@ -494,10 +494,8 @@ VOID CALLBACK DropEventCallback(
 
     if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_USER_ID_SET) != 0)
     {
-        if (RtlValidSid(FwEvent->header.userId))
-        {
-            fwEventItem->UserNameString = PhGetSidFullName(FwEvent->header.userId, TRUE, NULL);
-        }
+        //if (RtlValidSid(FwEvent->header.userId))
+        fwEventItem->UserNameString = PhGetSidFullName(FwEvent->header.userId, TRUE, NULL);
     }
 
     if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_IP_PROTOCOL_SET))

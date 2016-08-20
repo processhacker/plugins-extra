@@ -197,12 +197,12 @@ VOID InitializeFwTreeList(
     SendMessage(TreeNew_GetTooltips(FwTreeNewHandle), TTM_SETDELAYTIME, TTDT_AUTOPOP, 0x7fff);
 
     TreeNew_SetCallback(hwnd, FwTreeNewCallback, NULL);
-    TreeNew_SetRedraw(hwnd, FALSE);
-
+    TreeNew_SetRedraw(hwnd, FALSE);   
+    
     PhAddTreeNewColumn(hwnd, FWTNC_PROCESSBASENAME, TRUE, L"Name", 100, PH_ALIGN_LEFT, MAXINT, DT_PATH_ELLIPSIS);
-    PhAddTreeNewColumn(hwnd, FWTNC_PROCESSFILENAME, FALSE, L"File Path", 80, PH_ALIGN_LEFT, MAXINT, DT_PATH_ELLIPSIS);    
-    PhAddTreeNewColumn(hwnd, FWTNC_DIRECTION, TRUE, L"Direction", 40, PH_ALIGN_LEFT, MAXINT, 0);
     PhAddTreeNewColumn(hwnd, FWTNC_ACTION, TRUE, L"Action", 70, PH_ALIGN_LEFT, MAXINT, 0);
+    PhAddTreeNewColumn(hwnd, FWTNC_DIRECTION, TRUE, L"Direction", 40, PH_ALIGN_LEFT, MAXINT, 0);
+    PhAddTreeNewColumn(hwnd, FWTNC_PROCESSFILENAME, FALSE, L"File Path", 80, PH_ALIGN_LEFT, MAXINT, DT_PATH_ELLIPSIS);    
     PhAddTreeNewColumn(hwnd, FWTNC_PROTOCOL, TRUE, L"Protocol", 60, PH_ALIGN_LEFT, MAXINT, 0);
     PhAddTreeNewColumnEx(hwnd, FWTNC_LOCALADDRESS, TRUE, L"Local Address", 220, PH_ALIGN_RIGHT, MAXINT, DT_RIGHT, TRUE);
     PhAddTreeNewColumnEx(hwnd, FWTNC_LOCALPORT, TRUE, L"Local Port", 50, PH_ALIGN_LEFT, MAXINT, DT_LEFT, TRUE);
@@ -217,7 +217,7 @@ VOID InitializeFwTreeList(
     TreeNew_SetRedraw(hwnd, TRUE);
     TreeNew_SetSort(hwnd, FWTNC_INDEX, DescendingSortOrder);
 
-    LoadSettingsFwTreeList();
+    //LoadSettingsFwTreeList();
  
     PhInitializeTreeNewFilterSupport(&FilterSupport, hwnd, FwNodeList);
 
