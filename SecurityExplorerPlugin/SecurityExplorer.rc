@@ -16,10 +16,8 @@
 // English (Australia) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENA)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_AUS
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -105,6 +103,30 @@ BEGIN
     PUSHBUTTON      "Security",IDC_ACCOUNT_SECURITY,376,53,50,14
 END
 
+IDD_SESSIONS DIALOGEX 0, 0, 309, 178
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Sessions"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_SESSIONS,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,295,164
+END
+
+IDD_USERS DIALOGEX 0, 0, 309, 178
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Users"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_SESSIONS,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,295,164
+END
+
+IDD_GROUPS DIALOGEX 0, 0, 309, 178
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Groups"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_SESSIONS,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,295,164
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -112,7 +134,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_LSA, DIALOG
     BEGIN
@@ -121,8 +143,53 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 304
     END
+
+    IDD_SESSIONS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 302
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 171
+    END
+
+    IDD_USERS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 302
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 171
+    END
+
+    IDD_GROUPS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 302
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 171
+    END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_SESSIONS AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_USERS AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_GROUPS AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // English (Australia) resources
 /////////////////////////////////////////////////////////////////////////////

@@ -24,6 +24,15 @@
     <ClCompile Include="support.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sessions.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="users.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="groups.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="explorer.h">

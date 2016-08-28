@@ -65,8 +65,11 @@
   </ImportGroup>
   <ItemGroup>
     <ClCompile Include="explorer.c" />
+    <ClCompile Include="groups.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="sessions.c" />
     <ClCompile Include="support.c" />
+    <ClCompile Include="users.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="explorer.h" />

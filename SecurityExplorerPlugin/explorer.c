@@ -1,23 +1,38 @@
+/*
+ * Process Hacker Extra Plugins -
+ *   LSA Security Explorer Plugin
+ *
+ * Copyright (C) 2013 wj32
+ * Copyright (C) 2015-2016 dmex
+ *
+ * This file is part of Process Hacker.
+ *
+ * Process Hacker is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Process Hacker is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Process Hacker.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "explorer.h"
 
-INT_PTR CALLBACK SxLsaDlgProc(
-    _In_ HWND hwndDlg,
-    _In_ UINT uMsg,
-    _In_ WPARAM wParam,
-    _In_ LPARAM lParam
-    );
-
-HWND AccountsLv;
+HWND AccountsLv = NULL;
 PPH_LIST AccountsList = NULL;
-HWND PrivilegesLv;
-
-PSID SelectedAccount;
+HWND PrivilegesLv = NULL;
+PSID SelectedAccount = NULL;
 
 VOID SxShowExplorer()
 {
     PROPSHEETHEADER propSheetHeader = { sizeof(propSheetHeader) };
     PROPSHEETPAGE propSheetPage;
-    HPROPSHEETPAGE pages[1];
+    HPROPSHEETPAGE pages[4];
 
     propSheetHeader.dwFlags =
         PSH_NOAPPLYNOW |
@@ -37,16 +52,31 @@ VOID SxShowExplorer()
     propSheetPage.pfnDlgProc = SxLsaDlgProc;
     pages[propSheetHeader.nPages++] = CreatePropertySheetPage(&propSheetPage);
 
-    PropertySheet(&propSheetHeader);
-}
+    // Sessions page
+    memset(&propSheetPage, 0, sizeof(PROPSHEETPAGE));
+    propSheetPage.dwSize = sizeof(PROPSHEETPAGE);
+    propSheetPage.hInstance = PluginInstance->DllBase;
+    propSheetPage.pszTemplate = MAKEINTRESOURCE(IDD_SESSIONS);
+    propSheetPage.pfnDlgProc = SxSessionsDlgProc;
+    pages[propSheetHeader.nPages++] = CreatePropertySheetPage(&propSheetPage);
 
-NTSTATUS SxpOpenLsaPolicy(
-    _Out_ PHANDLE Handle,
-    _In_ ACCESS_MASK DesiredAccess,
-    _In_opt_ PVOID Context
-    )
-{
-    return PhOpenLsaPolicy(Handle, DesiredAccess, NULL);
+    // Users page
+    memset(&propSheetPage, 0, sizeof(PROPSHEETPAGE));
+    propSheetPage.dwSize = sizeof(PROPSHEETPAGE);
+    propSheetPage.hInstance = PluginInstance->DllBase;
+    propSheetPage.pszTemplate = MAKEINTRESOURCE(IDD_USERS);
+    propSheetPage.pfnDlgProc = SxUsersDlgProc;
+    pages[propSheetHeader.nPages++] = CreatePropertySheetPage(&propSheetPage);
+
+    // Groups page
+    memset(&propSheetPage, 0, sizeof(PROPSHEETPAGE));
+    propSheetPage.dwSize = sizeof(PROPSHEETPAGE);
+    propSheetPage.hInstance = PluginInstance->DllBase;
+    propSheetPage.pszTemplate = MAKEINTRESOURCE(IDD_GROUPS);
+    propSheetPage.pfnDlgProc = SxGroupsDlgProc;
+    pages[propSheetHeader.nPages++] = CreatePropertySheetPage(&propSheetPage);
+
+    PropertySheet(&propSheetHeader);
 }
 
 VOID SxpFreeAccounts()
@@ -98,15 +128,11 @@ VOID SxpRefreshAccounts()
                 sid = PhAllocateCopy(accounts[i].Sid, RtlLengthSid(accounts[i].Sid));
                 PhAddItemList(AccountsList, sid);
 
-                name = PhGetSidFullName(accounts[i].Sid, TRUE, NULL);
-                PhAutoDereferenceObject(name);
-
+                name = PH_AUTO(PhGetSidFullName(sid, TRUE, NULL));
                 lvItemIndex = PhAddListViewItem(AccountsLv, MAXINT, PhGetStringOrDefault(name, L"(unknown)"), sid);
 
-                sidString = PhSidToStringSid(accounts[i].Sid);
-                PhAutoDereferenceObject(sidString);
-
-                PhSetListViewSubItem(AccountsLv, lvItemIndex, 1, sidString->Buffer);
+                sidString = PH_AUTO(PhSidToStringSid(sid));
+                PhSetListViewSubItem(AccountsLv, lvItemIndex, 1, PhGetStringOrDefault(sidString, L"(unknown)"));
             }
 
             LsaFreeMemory(accounts);
@@ -164,23 +190,347 @@ VOID SxpRefreshPrivileges()
     ExtendedListView_SortItems(PrivilegesLv);
 }
 
-NTSTATUS SxpOpenSelectedLsaAccount(
-    _Out_ PHANDLE Handle,
-    _In_ ACCESS_MASK DesiredAccess,
-    _In_opt_ PVOID Context
+VOID SxpRefreshSessions(
+    _In_ HWND ListViewHandle
+    )
+{
+    ULONG logonSessionCount = 0;
+    PLUID logonSessionList = NULL;
+
+    if (AccountsList)
+    {
+        SxpFreeAccounts();
+    }
+    else
+    {
+        AccountsList = PhCreateList(40);
+    }
+
+    ListView_DeleteAllItems(ListViewHandle);
+
+    if (NT_SUCCESS(LsaEnumerateLogonSessions(
+        &logonSessionCount,
+        &logonSessionList
+        )))
+    {
+        for (ULONG i = 0; i < logonSessionCount; i++)
+        {
+            PSECURITY_LOGON_SESSION_DATA logonSessionData;
+
+            if (NT_SUCCESS(LsaGetLogonSessionData(&logonSessionList[i], &logonSessionData)))
+            {
+                WCHAR logonSessionLuid[PH_PTR_STR_LEN_1] = L"Unknown";
+
+                if (RtlValidSid(logonSessionData->Sid))
+                {
+                    INT lvItemIndex;
+                    PSID sid = NULL;
+                    PPH_STRING name;
+                    PPH_STRING sidString;
+
+                    sid = PhAllocateCopy(logonSessionData->Sid, RtlLengthSid(logonSessionData->Sid));
+                    PhAddItemList(AccountsList, sid);
+
+                    PhPrintPointer(logonSessionLuid, UlongToPtr(logonSessionData->LogonId.LowPart));
+                    lvItemIndex = PhAddListViewItem(ListViewHandle, MAXINT, logonSessionLuid, sid);
+
+                    name = PH_AUTO(PhGetSidFullName(sid, TRUE, NULL));
+                    PhSetListViewSubItem(ListViewHandle, lvItemIndex, 1, PhGetStringOrDefault(name, L"(unknown)"));
+
+                    sidString = PH_AUTO(PhSidToStringSid(sid));
+                    PhSetListViewSubItem(ListViewHandle, lvItemIndex, 2, PhGetStringOrDefault(sidString, L"(unknown)"));
+                }
+                else
+                {
+                    PhPrintPointer(logonSessionLuid, UlongToPtr(logonSessionData->LogonId.LowPart));
+                    PhAddListViewItem(ListViewHandle, MAXINT, logonSessionLuid, NULL);
+                }
+
+                LsaFreeReturnBuffer(logonSessionData);
+            }
+        }
+
+        LsaFreeReturnBuffer(logonSessionList);
+    }
+
+    ExtendedListView_SortItems(ListViewHandle);
+}
+
+VOID SxpRefreshUsers(
+    _In_ HWND ListViewHandle
     )
 {
     NTSTATUS status;
-    LSA_HANDLE policyHandle;
+    LSA_HANDLE policyHandle = NULL;
+    SAM_HANDLE serverHandle = NULL;
+    SAM_HANDLE domainHandle = NULL;
+    SAM_HANDLE userHandle = NULL;
+    SAM_ENUMERATE_HANDLE enumContext = 0;
+    ULONG enumBufferLength = 0;
+    PSAM_RID_ENUMERATION enumBuffer = NULL;
+    PPOLICY_ACCOUNT_DOMAIN_INFO policyDomainInfo = NULL;
 
-    if (NT_SUCCESS(status = PhOpenLsaPolicy(&policyHandle, POLICY_LOOKUP_NAMES, NULL)))
+    __try
     {
-        status = LsaOpenAccount(policyHandle, SelectedAccount, DesiredAccess, Handle);
-        LsaClose(policyHandle);
-    }
+        if (!NT_SUCCESS(status = PhOpenLsaPolicy(
+            &policyHandle,
+            POLICY_VIEW_LOCAL_INFORMATION,
+            NULL
+            )))
+        {
+            __leave;
+        }
 
-    return status;
+        if (!NT_SUCCESS(status = LsaQueryInformationPolicy(
+            policyHandle,
+            PolicyAccountDomainInformation,
+            &policyDomainInfo
+            )))
+        {
+            __leave;
+        }
+
+        if (!NT_SUCCESS(status = SamConnect(
+            NULL,
+            &serverHandle,
+            SAM_SERVER_CONNECT | SAM_SERVER_LOOKUP_DOMAIN,
+            NULL
+            )))
+        {
+            __leave;
+        }
+
+        if (!NT_SUCCESS(status = SamOpenDomain(
+            serverHandle,
+            DOMAIN_LIST_ACCOUNTS | DOMAIN_LOOKUP,
+            policyDomainInfo->DomainSid,
+            &domainHandle
+            )))
+        {
+            __leave;
+        }
+
+        if (!NT_SUCCESS(status = SamEnumerateUsersInDomain(
+            domainHandle,
+            &enumContext,
+            0, // USER_ACCOUNT_TYPE_MASK
+            &enumBuffer,
+            -1,
+            &enumBufferLength
+            )))
+        {
+            __leave;
+        }
+
+        for (ULONG i = 0; i < enumBufferLength; i++)
+        {
+            PSID userSid = NULL;
+            PUSER_ALL_INFORMATION userInfo = NULL;
+            
+            if (!NT_SUCCESS(status = SamOpenUser(
+                domainHandle,
+                USER_ALL_ACCESS,
+                enumBuffer[i].RelativeId,
+                &userHandle
+                )))
+            {
+                continue;
+            }
+
+            if (!NT_SUCCESS(status = SamQueryInformationUser(
+                userHandle,
+                UserAllInformation,
+                &userInfo
+                )))
+            {
+                SamCloseHandle(userHandle);
+                continue;
+            }
+
+            if (NT_SUCCESS(status = SamRidToSid(
+                userHandle,
+                enumBuffer[i].RelativeId,
+                &userSid
+                )))
+            {
+                INT lvItemIndex;
+                PSID sid;
+                PPH_STRING name;
+                PPH_STRING sidString;
+
+                sid = PhAllocateCopy(userSid, RtlLengthSid(userSid));
+                PhAddItemList(AccountsList, sid);
+
+                name = PH_AUTO(PhGetSidFullName(sid, TRUE, NULL));
+                lvItemIndex = PhAddListViewItem(ListViewHandle, MAXINT, PhGetStringOrDefault(name, L"(unknown)"), UlongToPtr(enumBuffer[i].RelativeId));
+
+                sidString = PH_AUTO(PhSidToStringSid(sid));
+                PhSetListViewSubItem(ListViewHandle, lvItemIndex, 1, PhGetStringOrDefault(sidString, L"(unknown)"));
+            }
+
+            SamCloseHandle(userHandle);
+            SamFreeMemory(userInfo);
+        }
+    }
+    __finally
+    {
+        if (enumBuffer)
+        {
+            SamFreeMemory(enumBuffer);
+        }
+
+        if (domainHandle)
+        {
+            SamCloseHandle(domainHandle);
+        }
+
+        if (serverHandle)
+        {
+            SamCloseHandle(serverHandle);
+        }
+
+        if (policyDomainInfo)
+        {
+            LsaFreeMemory(policyDomainInfo);
+        }
+
+        if (policyHandle)
+        {
+            LsaClose(policyHandle);
+        }
+    }
 }
+
+VOID SxpRefreshGroups(
+    _In_ HWND ListViewHandle
+    )
+{
+    NTSTATUS status;
+    LSA_HANDLE policyHandle = NULL;
+    SAM_HANDLE serverHandle = NULL;
+    SAM_HANDLE domainHandle = NULL;
+    SAM_HANDLE groupHandle = NULL;
+    SAM_ENUMERATE_HANDLE enumContext = 0;
+    ULONG enumBufferLength = 0;
+    PSAM_RID_ENUMERATION enumBuffer = NULL;
+    PPOLICY_ACCOUNT_DOMAIN_INFO policyDomainInfo = NULL;
+
+    __try
+    {
+        if (!NT_SUCCESS(status = PhOpenLsaPolicy(
+            &policyHandle,
+            POLICY_VIEW_LOCAL_INFORMATION,
+            NULL
+            )))
+        {
+            __leave;
+        }
+
+        if (!NT_SUCCESS(status = LsaQueryInformationPolicy(
+            policyHandle,
+            PolicyAccountDomainInformation,
+            &policyDomainInfo
+            )))
+        {
+            __leave;
+        }
+
+        if (!NT_SUCCESS(status = SamConnect(
+            NULL,
+            &serverHandle,
+            SAM_SERVER_CONNECT | SAM_SERVER_LOOKUP_DOMAIN,
+            NULL
+            )))
+        {
+            __leave;
+        }
+
+        if (!NT_SUCCESS(status = SamOpenDomain(
+            serverHandle,
+            DOMAIN_LIST_ACCOUNTS | DOMAIN_LOOKUP,
+            policyDomainInfo->DomainSid,
+            &domainHandle
+            )))
+        {
+            __leave;
+        }
+
+        if (!NT_SUCCESS(status = SamEnumerateGroupsInDomain(
+            domainHandle,
+            &enumContext,
+            &enumBuffer,
+            -1,
+            &enumBufferLength
+            )))
+        {
+            __leave;
+        }
+
+        for (ULONG i = 0; i < enumBufferLength; i++)
+        {
+            PGROUP_GENERAL_INFORMATION groupInfo = NULL;
+            
+            if (!NT_SUCCESS(status = SamOpenGroup(
+                domainHandle,
+                GROUP_ALL_ACCESS,
+                enumBuffer[i].RelativeId,
+                &groupHandle
+                )))
+            {
+                continue;
+            }
+
+            if (NT_SUCCESS(status = SamQueryInformationGroup(
+                groupHandle,
+                GroupGeneralInformation,
+                &groupInfo
+                )))
+            {
+                INT lvItemIndex;
+                PPH_STRING groupName;
+                PPH_STRING groupComment;
+
+                groupName = PH_AUTO(PhCreateStringFromUnicodeString(&groupInfo->Name));
+                groupComment = PH_AUTO(PhCreateStringFromUnicodeString(&groupInfo->AdminComment));
+
+                lvItemIndex = PhAddListViewItem(ListViewHandle, MAXINT, PhGetStringOrDefault(groupName, L"(unknown)"), NULL);
+                PhSetListViewSubItem(ListViewHandle, lvItemIndex, 1, PhGetStringOrDefault(groupComment, L"(unknown)"));
+
+                SamFreeMemory(groupInfo);
+            }
+
+            SamCloseHandle(groupHandle);
+        }
+    }
+    __finally
+    {
+        if (enumBuffer)
+        {
+            SamFreeMemory(enumBuffer);
+        }
+
+        if (domainHandle)
+        {
+            SamCloseHandle(domainHandle);
+        }
+
+        if (serverHandle)
+        {
+            SamCloseHandle(serverHandle);
+        }
+
+        if (policyDomainInfo)
+        {
+            LsaFreeMemory(policyDomainInfo);
+        }
+
+        if (policyHandle)
+        {
+            LsaClose(policyHandle);
+        }
+    }
+}
+
 
 INT_PTR CALLBACK SxLsaDlgProc(
     _In_ HWND hwndDlg,
@@ -193,6 +543,8 @@ INT_PTR CALLBACK SxLsaDlgProc(
     {
     case WM_INITDIALOG:
         {
+            PhCenterWindow(GetParent(hwndDlg), GetParent(GetParent(hwndDlg)));
+
             AccountsLv = GetDlgItem(hwndDlg, IDC_ACCOUNTS);
             PrivilegesLv = GetDlgItem(hwndDlg, IDC_PRIVILEGES);
 
@@ -307,7 +659,7 @@ INT_PTR CALLBACK SxLsaDlgProc(
 
                         PhEditSecurity(
                             hwndDlg,
-                            name->Buffer,
+                            PhGetStringOrDefault(name, L"(unknown)"),
                             SxStdGetObjectSecurity,
                             SxStdSetObjectSecurity,
                             &stdObjectSecurity,

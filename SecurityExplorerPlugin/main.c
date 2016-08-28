@@ -1,4 +1,26 @@
-#define SX_MAIN_PRIVATE
+/*
+ * Process Hacker Extra Plugins -
+ *   LSA Security Explorer Plugin
+ *
+ * Copyright (C) 2013 wj32
+ * Copyright (C) 2015-2016 dmex
+ *
+ * This file is part of Process Hacker.
+ *
+ * Process Hacker is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Process Hacker is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Process Hacker.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "explorer.h"
 
 PPH_PLUGIN PluginInstance;
@@ -23,10 +45,8 @@ VOID NTAPI MenuItemCallback(
 
     switch (menuItem->Id)
     {
-    case 1:
-        {
-            SxShowExplorer();
-        }
+    case 1: 
+        SxShowExplorer();
         break;
     }
 }
@@ -51,13 +71,13 @@ LOGICAL DllMain(
         {
             PPH_PLUGIN_INFORMATION info;
 
-            PluginInstance = PhRegisterPlugin(L"ProcessHacker.SecurityExplorer", Instance, &info);
+            PluginInstance = PhRegisterPlugin(L"dmex.SecurityExplorer", Instance, &info);
             
             if (!PluginInstance)
                 return FALSE;
 
             info->DisplayName = L"Security Explorer";
-            info->Author = L"wj32";
+            info->Author = L"dmex, wj32";
             info->Description = L"Manages LSA and SAM objects.";
             info->HasOptions = FALSE;
 
