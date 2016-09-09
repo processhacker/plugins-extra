@@ -982,15 +982,24 @@ BOOLEAN NTAPI FwSearchFilterCallback(
 
     if (PhIsNullOrEmptyString(ToolStatusInterface->GetSearchboxText()))
         return TRUE;
+    
+    if (fwNode->EventItem->ProcessNameString)
+    {
+        if (wordMatch(&fwNode->EventItem->ProcessNameString->sr))
+            return TRUE;
+    }
 
-    if (wordMatch(&fwNode->EventItem->ProcessNameString->sr))
-        return TRUE;
+    if (fwNode->EventItem->LocalAddressString)
+    {
+        if (wordMatch(&fwNode->EventItem->LocalAddressString->sr))
+            return TRUE;
+    }
 
-    if (wordMatch(&fwNode->EventItem->LocalAddressString->sr))
-        return TRUE;
-
-    if (wordMatch(&fwNode->EventItem->RemoteAddressString->sr))
-        return TRUE;
+    if (fwNode->EventItem->RemoteAddressString)
+    {
+        if (wordMatch(&fwNode->EventItem->RemoteAddressString->sr))
+            return TRUE;
+    }
 
     return FALSE;
 }
