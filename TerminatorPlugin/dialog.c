@@ -2,6 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Terminator Plugin
  *
+ * Copyright (C) 2009-2016 wj32
  * Copyright (C) 2016 dmex
  *
  * This file is part of Process Hacker.
@@ -134,16 +135,19 @@ VOID ShutdownAndDeleteKph2(
     VOID
     )
 {
+    NTSTATUS status;
+
     if (Kph2IsConnected())
     {
-        NTSTATUS status;
-
         if (!NT_SUCCESS(status = Kph2Disconnect()))
         {
             PhShowStatus(NULL, L"Unable to disconnect KProcessHacker2", status, 0);
         }
+    }
 
-        if (!NT_SUCCESS(status = Kph2Uninstall(KPH_DEVICE_SHORT_NAME)))
+    if (!NT_SUCCESS(status = Kph2Uninstall(KPH_DEVICE_SHORT_NAME)))
+    {
+        if (WIN32_FROM_NTSTATUS(status) != ERROR_SERVICE_DOES_NOT_EXIST)
         {
             PhShowStatus(NULL, L"Unable to uninstall KProcessHacker2", status, 0);
         }
@@ -348,7 +352,7 @@ VOID PhShowProcessTerminatorDialog(
     DialogBoxParam(
         PluginInstance->DllBase,
         MAKEINTRESOURCE(IDD_TERMINATOR),
-        ParentWindowHandle,
+        NULL,
         PhpProcessTerminatorDlgProc,
         (LPARAM)ProcessItem
         );

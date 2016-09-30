@@ -25,32 +25,14 @@
 #include "phapi.h"
 #include "kph2user.h"
 
-typedef NTSTATUS (NTAPI *_NtGetNextProcess)(
-    _In_ HANDLE ProcessHandle,
-    _In_ ACCESS_MASK DesiredAccess,
-    _In_ ULONG HandleAttributes,
-    _In_ ULONG Flags,
-    _Out_ PHANDLE NewProcessHandle
-    );
-
-typedef NTSTATUS (NTAPI *_NtGetNextThread)(
-    _In_ HANDLE ProcessHandle,
-    _In_ HANDLE ThreadHandle,
-    _In_ ACCESS_MASK DesiredAccess,
-    _In_ ULONG HandleAttributes,
-    _In_ ULONG Flags,
-    _Out_ PHANDLE NewThreadHandle
-    );
-
 static PVOID GetExitProcessFunction(
     VOID
     )
 {
-    // Vista and above export.
     if (WindowsVersion >= WINDOWS_VISTA)
         return PhGetModuleProcAddress(L"ntdll.dll", "RtlExitUserProcess");
-    else
-        return PhGetModuleProcAddress(L"kernel32.dll", "ExitProcess");
+
+    return PhGetModuleProcAddress(L"kernel32.dll", "ExitProcess");
 }
 
 NTSTATUS NTAPI TerminatorTP1(
@@ -220,15 +202,9 @@ NTSTATUS NTAPI TerminatorTP1a(
     )
 {
     NTSTATUS status;
-    _NtGetNextProcess ntGetNextProcess;
     HANDLE processHandle = NtCurrentProcess();
 
-    ntGetNextProcess = PhGetModuleProcAddress(L"ntdll.dll", "NtGetNextProcess");
-
-    if (!ntGetNextProcess)
-        return STATUS_NOT_SUPPORTED;
-
-    if (!NT_SUCCESS(status = ntGetNextProcess(
+    if (!NT_SUCCESS(status = NtGetNextProcess(
         NtCurrentProcess(),
         ProcessQueryAccess | PROCESS_TERMINATE,
         0,
@@ -253,7 +229,7 @@ NTSTATUS NTAPI TerminatorTP1a(
             }
         }
 
-        if (NT_SUCCESS(status = ntGetNextProcess(
+        if (NT_SUCCESS(status = NtGetNextProcess(
             processHandle,
             ProcessQueryAccess | PROCESS_TERMINATE,
             0,
@@ -279,14 +255,8 @@ NTSTATUS NTAPI TerminatorTT1a(
     )
 {
     NTSTATUS status;
-    _NtGetNextThread ntGetNextThread;
     HANDLE processHandle;
     HANDLE threadHandle;
-
-    ntGetNextThread = PhGetModuleProcAddress(L"ntdll.dll", "NtGetNextThread");
-
-    if (!ntGetNextThread)
-        return STATUS_NOT_SUPPORTED;
 
     if (NT_SUCCESS(status = Ph2OpenProcess(
         &processHandle,
@@ -294,7 +264,7 @@ NTSTATUS NTAPI TerminatorTT1a(
         ProcessId
         )))
     {
-        if (!NT_SUCCESS(status = ntGetNextThread(
+        if (!NT_SUCCESS(status = NtGetNextThread(
             processHandle,
             NULL,
             THREAD_TERMINATE,
@@ -313,7 +283,7 @@ NTSTATUS NTAPI TerminatorTT1a(
 
             Ph2TerminateThread(threadHandle, STATUS_SUCCESS);
 
-            if (NT_SUCCESS(ntGetNextThread(
+            if (NT_SUCCESS(NtGetNextThread(
                 processHandle,
                 threadHandle,
                 THREAD_TERMINATE,
