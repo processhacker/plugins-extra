@@ -26,7 +26,7 @@
 PPH_PLUGIN PluginInstance;
 PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
 PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
-PH_CALLBACK_REGISTRATION MainWindowShowingCallbackRegistration;
+PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
 
 VOID NTAPI LoadCallback(
     _In_opt_ PVOID Parameter,
@@ -51,12 +51,17 @@ VOID NTAPI MenuItemCallback(
     }
 }
 
-VOID NTAPI MainWindowShowingCallback(
+VOID NTAPI MainMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
 {
-    PhPluginAddMenuItem(PluginInstance, PH_MENU_ITEM_LOCATION_TOOLS, L"Pagefiles", 1, L"Security Explorer", NULL);
+    PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
+
+    if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
+        return;
+
+    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, 1, L"Security Explorer", NULL), -1);
 }
 
 LOGICAL DllMain(
@@ -94,10 +99,10 @@ LOGICAL DllMain(
                 &PluginMenuItemCallbackRegistration
                 );
             PhRegisterCallback(
-                PhGetGeneralCallback(GeneralCallbackMainWindowShowing),
-                MainWindowShowingCallback,
+                PhGetGeneralCallback(GeneralCallbackMainMenuInitializing),
+                MainMenuInitializingCallback,
                 NULL,
-                &MainWindowShowingCallbackRegistration
+                &MainMenuInitializingCallbackRegistration
                 );
         }
         break;
