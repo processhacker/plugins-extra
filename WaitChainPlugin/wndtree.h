@@ -50,7 +50,9 @@ typedef struct _WCT_ROOT_NODE
     PPH_LIST Children;
     BOOLEAN HasChildren;
 
-    WAITCHAIN_NODE_INFO WctInfo;
+    BOOLEAN Alertable;
+    WCT_OBJECT_TYPE ObjectType;
+    WCT_OBJECT_STATUS ObjectStatus;
     PPH_STRING TimeoutString;
     PPH_STRING ProcessIdString;
     PPH_STRING ThreadIdString;

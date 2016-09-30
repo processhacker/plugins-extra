@@ -37,16 +37,13 @@ BOOLEAN WaitChainRegisterCallbacks(
     PCOGETCALLSTATE coGetCallStateCallback = NULL;
     PCOGETACTIVATIONSTATE coGetActivationStateCallback = NULL;
 
-    Context->Ole32ModuleHandle = LoadLibrary(L"ole32.dll");
-    if (!Context->Ole32ModuleHandle)
+    if (!(Context->Ole32ModuleHandle = LoadLibrary(L"ole32.dll")))
         return FALSE;
 
-    coGetCallStateCallback = PhGetProcedureAddress(Context->Ole32ModuleHandle, "CoGetCallState", 0);
-    if (!coGetCallStateCallback)
+    if (!(coGetCallStateCallback = PhGetProcedureAddress(Context->Ole32ModuleHandle, "CoGetCallState", 0)))
         return FALSE;
 
-    coGetActivationStateCallback = PhGetProcedureAddress(Context->Ole32ModuleHandle, "CoGetActivationState", 0);
-    if (!coGetActivationStateCallback)
+    if (!(coGetActivationStateCallback = PhGetProcedureAddress(Context->Ole32ModuleHandle, "CoGetActivationState", 0)))
         return FALSE;
 
     RegisterWaitChainCOMCallback(coGetCallStateCallback, coGetActivationStateCallback);
@@ -83,8 +80,6 @@ VOID WaitChainCheckThread(
     if (nodeInfoLength > WCT_MAX_NODE_COUNT)
         nodeInfoLength = WCT_MAX_NODE_COUNT;
 
-    TreeNew_SetRedraw(Context->TreeNewHandle, FALSE);
-    TreeNew_NodesStructured(Context->TreeNewHandle);
 
     for (ULONG i = 0; i < nodeInfoLength; i++)
     {
@@ -94,7 +89,9 @@ VOID WaitChainCheckThread(
         {
             rootNode = WeAddWindowNode(&Context->TreeContext);
 
-            rootNode->WctInfo = *wctNode;
+            rootNode->ObjectType = wctNode->ObjectType;
+            rootNode->ObjectStatus = wctNode->ObjectStatus;
+            rootNode->Alertable = wctNode->LockObject.Alertable;
             rootNode->ThreadId = UlongToHandle(wctNode->ThreadObject.ThreadId);
             rootNode->ProcessId = UlongToHandle(wctNode->ThreadObject.ProcessId);
             rootNode->ThreadIdString = PhFormatString(L"%lu", wctNode->ThreadObject.ThreadId);
@@ -138,9 +135,6 @@ VOID WaitChainCheckThread(
             WctAddChildWindowNode(&Context->TreeContext, rootNode, wctNode, isDeadLocked);
         }
     }
-
-    TreeNew_SetRedraw(Context->TreeNewHandle, TRUE);
-    TreeNew_NodesStructured(Context->TreeNewHandle);
 }
 
 NTSTATUS WaitChainCallbackThread(
@@ -154,36 +148,47 @@ NTSTATUS WaitChainCallbackThread(
         return NTSTATUS_FROM_WIN32(GetLastError());
 
     // Synchronous WCT session
-    context->WctSessionHandle = OpenThreadWaitChainSession(0, NULL);
-
-    if (context->WctSessionHandle == NULL)
+    if (!(context->WctSessionHandle = OpenThreadWaitChainSession(0, NULL)))
         return NTSTATUS_FROM_WIN32(GetLastError());
 
+    //TreeNew_SetRedraw(context->TreeNewHandle, FALSE);
+    
     if (context->IsProcessItem)
     {
-        PVOID processes = NULL;
-        PSYSTEM_PROCESS_INFORMATION process = NULL;
+        NTSTATUS status;
+        HANDLE threadHandle;
+        HANDLE newThreadHandle;
+        THREAD_BASIC_INFORMATION basicInfo;
 
-        if (!NT_SUCCESS(status = PhEnumProcesses(&processes)))
+        status = NtGetNextThread(
+            context->ProcessItem->QueryHandle, 
+            NULL, 
+            ThreadQueryAccess,
+            0, 
+            0, 
+            &threadHandle
+            );
+
+        while (NT_SUCCESS(status))
         {
-            PhFree(processes);
-            return status;
-        }
-
-        process = PH_FIRST_PROCESS(processes);
-
-        do
-        {
-            if (process->UniqueProcessId == context->ProcessItem->ProcessId)
+            if (NT_SUCCESS(PhGetThreadBasicInformation(threadHandle, &basicInfo)))
             {
-                for (ULONG i = 0; i < process->NumberOfThreads; i++)
-                {
-                    WaitChainCheckThread(context, process->Threads[i].ClientId.UniqueThread);
-                }
+                WaitChainCheckThread(context, basicInfo.ClientId.UniqueThread);
             }
-        } while (process = PH_NEXT_PROCESS(process));
 
-        PhFree(processes);
+            status = NtGetNextThread(
+                context->ProcessItem->QueryHandle, 
+                threadHandle, 
+                ThreadQueryAccess, 
+                0, 
+                0, 
+                &newThreadHandle
+                );
+
+            NtClose(threadHandle);
+
+            threadHandle = newThreadHandle;
+        }
     }
     else
     {
@@ -199,6 +204,9 @@ NTSTATUS WaitChainCallbackThread(
     {
         FreeLibrary(context->Ole32ModuleHandle);
     }
+
+    //TreeNew_SetRedraw(context->TreeNewHandle, TRUE);
+    TreeNew_NodesStructured(context->TreeNewHandle);
 
     return status;
 }
@@ -417,8 +425,10 @@ VOID NTAPI ProcessMenuInitializingCallback(
     {
         PhInsertEMenuItem(miscMenuItem, menuItem = PhPluginCreateEMenuItem(PluginInstance, 0, IDD_WCT_MENUITEM, L"Wait Chain Traversal", context), -1);
 
-        // Disable menu if current process selected.
-        if (processItem == NULL || processItem->ProcessId == NtCurrentProcessId())
+        if (!processItem || !processItem->QueryHandle || processItem->ProcessId == NtCurrentProcessId())
+            menuItem->Flags |= PH_EMENU_DISABLED;
+
+        if (!PhGetOwnTokenAttributes().Elevated)
             menuItem->Flags |= PH_EMENU_DISABLED;
     }
     else

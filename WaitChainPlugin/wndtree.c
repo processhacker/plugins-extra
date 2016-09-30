@@ -22,19 +22,6 @@
 
 #include "main.h"
 
-BOOLEAN WepWindowNodeHashtableEqualFunction(
-    _In_ PVOID Entry1,
-    _In_ PVOID Entry2
-    );
-
-ULONG WepWindowNodeHashtableHashFunction(
-    _In_ PVOID Entry
-    );
-
-VOID WepDestroyWindowNode(
-    _In_ PWCT_ROOT_NODE WindowNode
-    );
-
 BOOLEAN NTAPI WepWindowTreeNewCallback(
     _In_ HWND hwnd,
     _In_ PH_TREENEW_MESSAGE Message,
@@ -42,6 +29,51 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
     _In_opt_ PVOID Parameter2,
     _In_opt_ PVOID Context
     );
+
+BOOLEAN WepWindowNodeHashtableEqualFunction(
+    _In_ PVOID Entry1,
+    _In_ PVOID Entry2
+    )
+{
+    PWCT_ROOT_NODE windowNode1 = *(PWCT_ROOT_NODE *)Entry1;
+    PWCT_ROOT_NODE windowNode2 = *(PWCT_ROOT_NODE *)Entry2;
+
+    return windowNode1->Node.Index == windowNode2->Node.Index;
+}
+
+ULONG WepWindowNodeHashtableHashFunction(
+    _In_ PVOID Entry
+    )
+{
+    return (*(PWCT_ROOT_NODE*)Entry)->Node.Index;
+}
+
+VOID WepDestroyWindowNode(
+    _In_ PWCT_ROOT_NODE WindowNode
+    )
+{
+    PhDereferenceObject(WindowNode->Children);
+
+    if (WindowNode->TimeoutString)
+        PhDereferenceObject(WindowNode->TimeoutString);
+
+    if (WindowNode->ProcessIdString)
+        PhDereferenceObject(WindowNode->ProcessIdString);
+
+    if (WindowNode->ThreadIdString)
+        PhDereferenceObject(WindowNode->ThreadIdString);
+
+    if (WindowNode->WaitTimeString)
+        PhDereferenceObject(WindowNode->WaitTimeString);
+
+    if (WindowNode->ContextSwitchesString)
+        PhDereferenceObject(WindowNode->ContextSwitchesString);
+
+    if (WindowNode->ObjectNameString)
+        PhDereferenceObject(WindowNode->ObjectNameString);
+
+    PhFree(WindowNode);
+}
 
 VOID WtcInitializeWindowTree(
     _In_ HWND ParentWindowHandle,
@@ -108,24 +140,6 @@ VOID WtcDeleteWindowTree(
     PhDereferenceObject(Context->NodeRootList);
 }
 
-BOOLEAN WepWindowNodeHashtableEqualFunction(
-    _In_ PVOID Entry1,
-    _In_ PVOID Entry2
-    )
-{
-    PWCT_ROOT_NODE windowNode1 = *(PWCT_ROOT_NODE *)Entry1;
-    PWCT_ROOT_NODE windowNode2 = *(PWCT_ROOT_NODE *)Entry2;
-
-    return windowNode1->Node.Index == windowNode2->Node.Index;
-}
-
-ULONG WepWindowNodeHashtableHashFunction(
-    _In_ PVOID Entry
-    )
-{
-    return (*(PWCT_ROOT_NODE*)Entry)->Node.Index;
-}
-
 PWCT_ROOT_NODE WeAddWindowNode(
     _Inout_ PWCT_TREE_CONTEXT Context
     )
@@ -145,7 +159,7 @@ PWCT_ROOT_NODE WeAddWindowNode(
     PhAddEntryHashtable(Context->NodeHashtable, &windowNode);
     PhAddItemList(Context->NodeList, windowNode);
 
-    TreeNew_NodesStructured(Context->TreeNewHandle);
+    //TreeNew_NodesStructured(Context->TreeNewHandle);
 
     return windowNode;
 }
@@ -161,9 +175,10 @@ VOID WctAddChildWindowNode(
 
     childNode = WeAddWindowNode(Context);
 
-    childNode->WctInfo = *WctNode;
     childNode->IsDeadLocked = TRUE;
-
+    childNode->ObjectType = WctNode->ObjectType;
+    childNode->ObjectStatus = WctNode->ObjectStatus;
+    childNode->Alertable = WctNode->LockObject.Alertable;
     childNode->ThreadId = UlongToHandle(WctNode->ThreadObject.ThreadId);
     childNode->ProcessIdString = PhFormatString(L"%lu", WctNode->ThreadObject.ProcessId);
     childNode->ThreadIdString = PhFormatString(L"%lu", WctNode->ThreadObject.ThreadId);
@@ -250,20 +265,7 @@ VOID WeRemoveWindowNode(
     TreeNew_NodesStructured(Context->TreeNewHandle);
 }
 
-VOID WepDestroyWindowNode(
-    _In_ PWCT_ROOT_NODE WindowNode
-    )
-{
-    PhDereferenceObject(WindowNode->Children);
 
-    //if (WindowNode->TypeString)
-    //    PhDereferenceObject(WindowNode->TypeString);
-
-    //if (WindowNode->ThreadString)
-    //    PhDereferenceObject(WindowNode->ThreadString);
-
-    PhFree(WindowNode);
-}
 
 BOOLEAN NTAPI WepWindowTreeNewCallback(
     _In_ HWND hwnd,
@@ -331,7 +333,7 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
             {
             case TREE_COLUMN_ITEM_TYPE:
                 {
-                    switch (node->WctInfo.ObjectType)
+                    switch (node->ObjectType)
                     {
                     case WctCriticalSectionType:
                         PhInitializeStringRef(&getCellText->Text, L"CriticalSection");
@@ -376,7 +378,7 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
                 break;
             case TREE_COLUMN_ITEM_STATUS:
                 {
-                    switch (node->WctInfo.ObjectStatus)
+                    switch (node->ObjectStatus)
                     {
                     case WctStatusNoAccess:
                         PhInitializeStringRef(&getCellText->Text, L"No Access");
@@ -421,7 +423,7 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
                 break;
             case TREE_COLUMN_ITEM_ALERTABLE:
                 {
-                    if (node->WctInfo.LockObject.Alertable)
+                    if (node->Alertable)
                     {
                         PhInitializeStringRef(&getCellText->Text, L"true");
                     }
@@ -433,7 +435,7 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
                 break;
             case TREE_COLUMN_ITEM_PROCESSID:
                 {
-                    if (node->WctInfo.ObjectType == WctThreadType)
+                    if (node->ObjectType == WctThreadType)
                     {
                         getCellText->Text = PhGetStringRef(node->ProcessIdString);
                     }
@@ -441,7 +443,7 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
                 break;
             case TREE_COLUMN_ITEM_THREADID:
                 {
-                    if (node->WctInfo.ObjectType == WctThreadType)
+                    if (node->ObjectType == WctThreadType)
                     {
                         getCellText->Text = PhGetStringRef(node->ThreadIdString);
                     }
@@ -449,7 +451,7 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
                 break;
             case TREE_COLUMN_ITEM_WAITTIME:
                 {
-                    if (node->WctInfo.ObjectType == WctThreadType)
+                    if (node->ObjectType == WctThreadType)
                     {
                         getCellText->Text = PhGetStringRef(node->WaitTimeString);
                     }
@@ -457,7 +459,7 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
                 break;
             case TREE_COLUMN_ITEM_CONTEXTSWITCH:
                 {
-                    if (node->WctInfo.ObjectType == WctThreadType)
+                    if (node->ObjectType == WctThreadType)
                     {
                         getCellText->Text = PhGetStringRef(node->ContextSwitchesString);
                     }
