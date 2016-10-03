@@ -27,15 +27,14 @@ NTSTATUS RunAsCreateProcessThread(
     )
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-    BOOLEAN success = FALSE;
-    ULONG bytesNeeded = 0;
     SERVICE_STATUS_PROCESS serviceStatus = { 0 };
     SC_HANDLE serviceHandle = NULL;
     HANDLE processHandle = NULL;
     HANDLE tokenHandle = NULL;
     PTOKEN_USER tokenUser = NULL;
     PPH_STRING userName = NULL;
-    PPH_STRING program = Parameter;
+    PPH_STRING commandLine = Parameter;
+    ULONG bytesNeeded = 0;
 
     __try
     {
@@ -59,7 +58,7 @@ NTSTATUS RunAsCreateProcessThread(
 
         if (serviceStatus.dwCurrentState == SERVICE_RUNNING)
         {
-            success = TRUE;
+            status = STATUS_SUCCESS;
         }
         else
         {
@@ -79,7 +78,7 @@ NTSTATUS RunAsCreateProcessThread(
                 {
                     if (serviceStatus.dwCurrentState == SERVICE_RUNNING)
                     {
-                        success = TRUE;
+                        status = STATUS_SUCCESS;
                         break;
                     }
                 }
@@ -89,7 +88,7 @@ NTSTATUS RunAsCreateProcessThread(
             } while (--attempts != 0);
         }
 
-        if (!success)
+        if (!NT_SUCCESS(status))
         {
             // One or more services failed to start.
             status = STATUS_SERVICES_FAILED_AUTOSTART;
@@ -115,9 +114,7 @@ NTSTATUS RunAsCreateProcessThread(
         }
 
         if (!NT_SUCCESS(status = PhGetTokenUser(tokenHandle, &tokenUser)))
-        {
             __leave;
-        }
 
         if (!(userName = PhGetSidFullName(tokenUser->User.Sid, TRUE, NULL)))
         {
@@ -128,8 +125,8 @@ NTSTATUS RunAsCreateProcessThread(
 
         status = PhExecuteRunAsCommand2(
             PhMainWndHandle,
-            program->Buffer,
-            userName->Buffer,
+            PhGetStringOrEmpty(commandLine),
+            PhGetStringOrEmpty(userName),
             L"",
             LOGON32_LOGON_SERVICE,
             UlongToHandle(serviceStatus.dwProcessId),
@@ -140,35 +137,23 @@ NTSTATUS RunAsCreateProcessThread(
     }
     __finally
     {
-        if (program)
-        {
-            PhDereferenceObject(program);
-        }
+        if (commandLine)
+            PhDereferenceObject(commandLine);
 
         if (userName)
-        {
             PhDereferenceObject(userName);
-        }
 
         if (tokenUser)
-        {
             PhFree(tokenUser);
-        }
 
         if (tokenHandle)
-        {
             NtClose(tokenHandle);
-        }
 
         if (processHandle)
-        {
             NtClose(processHandle);
-        }
 
         if (serviceHandle)
-        {
             CloseServiceHandle(serviceHandle);
-        }
     }
 
     return status;
