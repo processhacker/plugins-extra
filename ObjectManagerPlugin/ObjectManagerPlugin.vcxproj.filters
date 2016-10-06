@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{2b1bcc07-58c8-4fab-b0ca-e12640aa17bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{39f9a699-d371-4407-bc65-83c1d81239e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{3c1d37d2-e413-4445-9f1b-a9dc75dd99f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Icons">
+      <UniqueIdentifier>{a8ad9d81-5be8-4204-bd37-050212059cbd}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dialog.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\driver.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="resources\folder.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="resources\key.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="resources\link.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="resources\mutant.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="resources\port.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="resources\section.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="resources\session.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="resources\device.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="resources\event.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="resources\unknown.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
+    <Image Include="resources\dll.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CHANGELOG.txt" />
+  </ItemGroup>
+</Project>
