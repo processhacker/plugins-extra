@@ -104,10 +104,11 @@ VOID LoadAtomTable(VOID)
 {
     PATOM_TABLE_INFORMATION atomTable = NULL;
 
-    ListView_DeleteAllItems(ListViewWndHandle);
-
     if (!NT_SUCCESS(PhEnumAtomTable(&atomTable)))
         return;
+
+    ExtendedListView_SetRedraw(ListViewWndHandle, FALSE);
+    ListView_DeleteAllItems(ListViewWndHandle);
 
     for (ULONG i = 0; i < atomTable->NumberOfAtoms; i++)
     {
@@ -152,6 +153,8 @@ VOID LoadAtomTable(VOID)
 
         PhFree(atomInfo);
     }
+
+    ExtendedListView_SetRedraw(ListViewWndHandle, TRUE);
 
     PhFree(atomTable);
 }
@@ -366,11 +369,18 @@ VOID NTAPI MainMenuInitializingCallback(
     )
 {
     PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
+    PPH_EMENU_ITEM systemMenu;
 
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
 
-    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ATOM_TABLE_MENUITEM, L"Global Atom Table", NULL), -1);
+    if (!(systemMenu = PhFindEMenuItem(menuInfo->Menu, 0, L"System", 0)))
+    {
+        PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, PH_EMENU_SEPARATOR, 0, L"", NULL), -1);
+        PhInsertEMenuItem(menuInfo->Menu, systemMenu = PhPluginCreateEMenuItem(PluginInstance, 0, 0, L"System", NULL), -1);
+    }
+
+    PhInsertEMenuItem(systemMenu, PhPluginCreateEMenuItem(PluginInstance, 0, ATOM_TABLE_MENUITEM, L"Atom Table", NULL), -1);
 }
 
 VOID NTAPI MenuItemCallback(
