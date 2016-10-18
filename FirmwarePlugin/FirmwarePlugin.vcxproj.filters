@@ -4,10 +4,10 @@
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="boot.c">
+    <ClCompile Include="dialog.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dialog.c">
+    <ClCompile Include="efi.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -24,9 +24,9 @@
     <ClInclude Include="Efi\EfiTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="CHANGELOG.txt" />
+    <ClInclude Include="efi_guid_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -40,8 +40,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="BootEntriesPlugin.rc">
+    <ResourceCompile Include="FirmwarePlugin.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CHANGELOG.txt">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

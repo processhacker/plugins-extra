@@ -1,6 +1,6 @@
 /*
  * Process Hacker Extra Plugins -
- *   Boot Entries Plugin
+ *  Firmware Plugin
  *
  * Copyright (C) 2015 dmex
  *
@@ -34,19 +34,12 @@ VOID NTAPI LoadCallback(
     _In_opt_ PVOID Context
     )
 {
-    PVOID ntdll;
+    HANDLE tokenHandle;
 
-    if (ntdll = PhGetDllHandle(L"ntdll.dll"))
+    if (NT_SUCCESS(NtOpenProcessToken(NtCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &tokenHandle)))
     {
-        NtAddBootEntry_I = PhGetProcedureAddress(ntdll, "NtAddBootEntry", 0);
-        NtDeleteBootEntry_I = PhGetProcedureAddress(ntdll, "NtDeleteBootEntry", 0);
-        NtModifyBootEntry_I = PhGetProcedureAddress(ntdll, "NtModifyBootEntry", 0);
-        NtEnumerateBootEntries_I = PhGetProcedureAddress(ntdll, "NtEnumerateBootEntries", 0);
-        NtQueryBootEntryOrder_I = PhGetProcedureAddress(ntdll, "NtQueryBootEntryOrder", 0);
-        NtSetBootEntryOrder_I = PhGetProcedureAddress(ntdll, "NtSetBootEntryOrder", 0);
-        NtQueryBootOptions_I = PhGetProcedureAddress(ntdll, "NtQueryBootOptions", 0);
-        NtSetBootOptions_I = PhGetProcedureAddress(ntdll, "NtSetBootOptions", 0);
-        NtTranslateFilePath_I = PhGetProcedureAddress(ntdll, "NtTranslateFilePath", 0);
+        PhSetTokenPrivilege(tokenHandle, SE_SYSTEM_ENVIRONMENT_NAME, NULL, SE_PRIVILEGE_ENABLED);
+        NtClose(tokenHandle);
     }
 }
 
@@ -69,6 +62,12 @@ VOID NTAPI MenuItemCallback(
     {
     case BOOT_ENTRIES_MENUITEM:
         {
+            if (!EfiSupported())
+            {
+                PhShowError(menuItem->OwnerWindow, L"Windows was installed using legacy BIOS");
+                return;
+            }
+
             DialogBox(
                 PluginInstance->DllBase,
                 MAKEINTRESOURCE(IDD_BOOT),
@@ -86,13 +85,19 @@ VOID NTAPI MainMenuInitializingCallback(
     )
 {
     PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
+    PPH_EMENU_ITEM systemMenu;
     PPH_EMENU_ITEM bootMenuItem;
 
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
 
-    bootMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, BOOT_ENTRIES_MENUITEM, L"Boot Entries", NULL);
-    PhInsertEMenuItem(menuInfo->Menu, bootMenuItem, -1);
+    if (!(systemMenu = PhFindEMenuItem(menuInfo->Menu, 0, L"System", 0)))
+    {
+        PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, PH_EMENU_SEPARATOR, 0, L"", NULL), -1);
+        PhInsertEMenuItem(menuInfo->Menu, systemMenu = PhPluginCreateEMenuItem(PluginInstance, 0, 0, L"System", NULL), -1);
+    }
+
+    PhInsertEMenuItem(systemMenu, bootMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, BOOT_ENTRIES_MENUITEM, L"Firmware Table", NULL), -1);
 
     if (!PhGetOwnTokenAttributes().Elevated)
     {
@@ -123,9 +128,9 @@ LOGICAL DllMain(
             if (!PluginInstance)
                 return FALSE;
 
-            info->DisplayName = L"Boot Entries";
+            info->DisplayName = L"Firmware Table";
             info->Author = L"dmex";
-            info->Description = L"Plugin for viewing native Boot Entries via the Tools menu.";
+            info->Description = L"Plugin for viewing the UEFI Firmware table via the Tools menu.";
             info->HasOptions = FALSE;
 
             PhRegisterCallback(

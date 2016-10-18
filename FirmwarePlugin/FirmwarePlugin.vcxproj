@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{5FD44960-B8E9-474E-897C-CE149A325675}</ProjectGuid>
-    <RootNamespace>BootEntriesPlugin</RootNamespace>
+    <ProjectGuid>{21B34EB4-4C56-4449-A2C0-BC50B4480D7C}</ProjectGuid>
+    <RootNamespace>FirmwarePlugin</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>BootEntriesPlugin</ProjectName>
+    <ProjectName>FirmwarePlugin</ProjectName>
     <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -64,18 +64,19 @@
     <Import Project="..\ExtraPlugins.props" />
   </ImportGroup>
   <ItemGroup>
-    <ClCompile Include="boot.c" />
+    <ClCompile Include="efi.c" />
     <ClCompile Include="dialog.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Efi\EfiDevicePath.h" />
     <ClInclude Include="Efi\EfiTypes.h" />
+    <ClInclude Include="efi_guid_list.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="BootEntriesPlugin.rc" />
+    <ResourceCompile Include="FirmwarePlugin.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CHANGELOG.txt" />

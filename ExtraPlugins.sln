@@ -30,8 +30,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DbgViewPlugin", "DbgViewPlu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetExtrasPlugin", "NetExtrasPlugin\NetExtrasPlugin.vcxproj", "{B2F55139-7984-498F-98CB-AC25A3E08CCC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BootEntriesPlugin", "BootEntriesPlugin\BootEntriesPlugin.vcxproj", "{5FD44960-B8E9-474E-897C-CE149A325675}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TaskbarExtPlugin", "TaskbarExtPlugin\TaskbarExtPlugin.vcxproj", "{58E266DF-088C-470D-9EC8-403B40042373}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SecurityExplorer", "SecurityExplorerPlugin\SecurityExplorer.vcxproj", "{0DCBC570-B4E3-482A-9872-8BB5678F5E5C}"
@@ -45,6 +43,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TrustedInstallerPlugin", "TrustedInstallerPlugin\TrustedInstallerPlugin.vcxproj", "{652D6556-B8E3-4173-B321-60F623E127E8}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TerminatorPlugin", "TerminatorPlugin\TerminatorPlugin.vcxproj", "{93D93301-3638-4CFA-8F1B-547528023087}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FirmwarePlugin", "FirmwarePlugin\FirmwarePlugin.vcxproj", "{21B34EB4-4C56-4449-A2C0-BC50B4480D7C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PoolMonPlugin", "PoolMonPlugin\PoolMonPlugin.vcxproj", "{34E1194C-61AE-4FAF-A5F9-540DD6DF4872}"
 EndProject
@@ -214,6 +214,14 @@ Global
 		{93D93301-3638-4CFA-8F1B-547528023087}.Release|Win32.Build.0 = Release|Win32
 		{93D93301-3638-4CFA-8F1B-547528023087}.Release|x64.ActiveCfg = Release|x64
 		{93D93301-3638-4CFA-8F1B-547528023087}.Release|x64.Build.0 = Release|x64
+		{21B34EB4-4C56-4449-A2C0-BC50B4480D7C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{21B34EB4-4C56-4449-A2C0-BC50B4480D7C}.Debug|Win32.Build.0 = Debug|Win32
+		{21B34EB4-4C56-4449-A2C0-BC50B4480D7C}.Debug|x64.ActiveCfg = Debug|x64
+		{21B34EB4-4C56-4449-A2C0-BC50B4480D7C}.Debug|x64.Build.0 = Debug|x64
+		{21B34EB4-4C56-4449-A2C0-BC50B4480D7C}.Release|Win32.ActiveCfg = Release|Win32
+		{21B34EB4-4C56-4449-A2C0-BC50B4480D7C}.Release|Win32.Build.0 = Release|Win32
+		{21B34EB4-4C56-4449-A2C0-BC50B4480D7C}.Release|x64.ActiveCfg = Release|x64
+		{21B34EB4-4C56-4449-A2C0-BC50B4480D7C}.Release|x64.Build.0 = Release|x64
 		{34E1194C-61AE-4FAF-A5F9-540DD6DF4872}.Debug|Win32.ActiveCfg = Debug|Win32
 		{34E1194C-61AE-4FAF-A5F9-540DD6DF4872}.Debug|Win32.Build.0 = Debug|Win32
 		{34E1194C-61AE-4FAF-A5F9-540DD6DF4872}.Debug|x64.ActiveCfg = Debug|x64
