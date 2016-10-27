@@ -45,6 +45,12 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
+extern PPH_PLUGIN PluginInstance;
+
+VOID ShowDnsCacheDialog(
+    VOID
+    );
+
 typedef struct _DNS_CACHE_ENTRY
 {
     struct _DNS_CACHE_ENTRY* Next;  // Pointer to next entry
@@ -63,21 +69,7 @@ typedef BOOL (WINAPI* _DnsFlushResolverCache)(
     );
 
 typedef BOOL (WINAPI* _DnsFlushResolverCacheEntry)(
-    _In_ LPCWSTR Name
-    );
-
-typedef DNS_STATUS (WINAPI* _DnsQuery)(
-    _In_ PCTSTR Name,
-    _In_ USHORT Type,
-    _In_ ULONG Options,
-    _Inout_opt_ PVOID Extra,
-    _Out_opt_ PDNS_RECORD* QueryResultsSet,
-    _Out_opt_ PVOID* Reserved
-    );
-
-typedef VOID (WINAPI* _DnsFree)(
-    _Inout_ PVOID Data,
-    _In_ DNS_FREE_TYPE FreeType
+    _In_ PCWSTR Name
     );
 
 #endif

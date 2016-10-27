@@ -23,8 +23,6 @@
 #include "main.h"
 
 static HINSTANCE DnsApiHandle = NULL;
-static _DnsQuery DnsQuery_I = NULL;
-static _DnsFree DnsFree_I = NULL;
 static _DnsGetCacheDataTable DnsGetCacheDataTable_I = NULL;
 static _DnsFlushResolverCache DnsFlushResolverCache_I = NULL;
 static _DnsFlushResolverCacheEntry DnsFlushResolverCacheEntry_I = NULL;
@@ -51,7 +49,7 @@ VOID EnumDnsCacheTable(
         {
             PDNS_RECORD dnsQueryResultPtr = NULL;
 
-            DNS_STATUS dnsStatus = DnsQuery_I(
+            DNS_STATUS dnsStatus = DnsQuery(
                 dnsCacheDataTable->Name,
                 dnsCacheDataTable->Type,
                 DNS_QUERY_NO_WIRE_QUERY | 32768, // Undocumented flags
@@ -123,7 +121,7 @@ VOID EnumDnsCacheTable(
                     dnsRecordPtr = dnsRecordPtr->pNext;
                 }
 
-                DnsFree_I(dnsQueryResultPtr, DnsFreeRecordList);
+                DnsRecordListFree(dnsQueryResultPtr, DnsFreeRecordList);
             }
 
             dnsCacheDataTable = dnsCacheDataTable->Next;
@@ -133,7 +131,7 @@ VOID EnumDnsCacheTable(
     {
         if (dnsCacheDataTable)
         {
-            DnsFree_I(dnsCacheDataTable, DnsFreeRecordList);
+            DnsRecordListFree(dnsCacheDataTable, DnsFreeRecordList);
         }
     }
 }
@@ -266,8 +264,6 @@ INT_PTR CALLBACK DnsCacheDlgProc(
 
             if (DnsApiHandle = LoadLibrary(L"dnsapi.dll"))
             {
-                DnsQuery_I = PhGetProcedureAddress(DnsApiHandle, "DnsQuery_W", 0);
-                DnsFree_I = PhGetProcedureAddress(DnsApiHandle, "DnsFree", 0);
                 DnsGetCacheDataTable_I = PhGetProcedureAddress(DnsApiHandle, "DnsGetCacheDataTable", 0);
                 DnsFlushResolverCache_I = PhGetProcedureAddress(DnsApiHandle, "DnsFlushResolverCache", 0);
                 DnsFlushResolverCacheEntry_I = PhGetProcedureAddress(DnsApiHandle, "DnsFlushResolverCacheEntry_W", 0);
