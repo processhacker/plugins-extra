@@ -129,11 +129,33 @@ VOID NTAPI NetworkItemDeleteCallback(
     PhClearReference(&extension->RemoteCountryCode);
 
     if (extension->CountryIcon)
-    {
         DestroyIcon(extension->CountryIcon);
-    }
 }
 
+VOID NTAPI NetworkNodeCreateCallback(
+    _In_ PVOID Object,
+    _In_ PH_EM_OBJECT_TYPE ObjectType,
+    _In_ PVOID Extension
+    )
+{
+    PPH_NETWORK_NODE networkNode = Object;
+    PNETWORK_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, networkNode->NetworkItem, EmNetworkItemType);
+
+    // Update the country data for this connection
+    if (!extension->CountryValid)
+    {
+        PPH_STRING remoteCountryCode;
+        PPH_STRING remoteCountryName;
+
+        if (LookupCountryCode(networkNode->NetworkItem->RemoteEndpoint.Address, &remoteCountryCode, &remoteCountryName))
+        {
+            PhSwapReference(&extension->RemoteCountryCode, remoteCountryCode);
+            PhSwapReference(&extension->RemoteCountryName, remoteCountryName);
+        }
+
+        extension->CountryValid = TRUE;
+    }
+}
 
 VOID NTAPI TreeNewMessageCallback(
     _In_opt_ PVOID Parameter,
@@ -177,21 +199,6 @@ VOID NTAPI TreeNewMessageCallback(
             // Check if this is the country column
             if (message->SubId != NETWORK_COLUMN_ID_REMOTE_COUNTRY)
                 break;
-
-            // Update the country data for this connection
-            if (!extension->CountryValid)
-            {
-                PPH_STRING remoteCountryCode = NULL;
-                PPH_STRING remoteCountryName = NULL;
-
-                if (LookupCountryCode(networkNode->NetworkItem->RemoteEndpoint.Address, &remoteCountryCode, &remoteCountryName))
-                {
-                    PhSwapReference(&extension->RemoteCountryCode, remoteCountryCode);
-                    PhSwapReference(&extension->RemoteCountryName, remoteCountryName);
-                }
-
-                extension->CountryValid = TRUE;
-            }
 
             // Check if there's something to draw
             if (rect.right - rect.left <= 1)
@@ -320,6 +327,13 @@ LOGICAL DllMain(
                 sizeof(NETWORK_EXTENSION),
                 NetworkItemCreateCallback,
                 NetworkItemDeleteCallback
+                );
+            PhPluginSetObjectExtension(
+                PluginInstance,
+                EmNetworkNodeType,
+                sizeof(NETWORK_EXTENSION),
+                NetworkNodeCreateCallback,
+                NULL
                 );
         }
         break;

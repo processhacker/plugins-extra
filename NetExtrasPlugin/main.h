@@ -24,7 +24,7 @@
 #define _EXTRA_H_
 
 #define PLUGIN_NAME L"dmex.NetworkExtrasPlugin"
-#define DATABASE_PATH L"plugins\\maxminddb\\GeoLite2-Country.mmdb"
+#define DATABASE_PATH L"plugins\\plugindata\\GeoLite2-Country.mmdb"
 
 #define CINTERFACE
 #define COBJMACROS
