@@ -127,6 +127,7 @@ VOID NTAPI NetworkItemDeleteCallback(
     PhClearReference(&extension->LocalServiceName);
     PhClearReference(&extension->RemoteServiceName);
     PhClearReference(&extension->RemoteCountryCode);
+    PhClearReference(&extension->RemoteCountryName);
 
     if (extension->CountryIcon)
         DestroyIcon(extension->CountryIcon);
@@ -247,7 +248,8 @@ VOID NTAPI TreeNewMessageCallback(
                         11,
                         0,
                         NULL,
-                        DI_NORMAL);
+                        DI_NORMAL
+                        );
 
                     rect.left += 16 + 2;
                 }
@@ -257,7 +259,8 @@ VOID NTAPI TreeNewMessageCallback(
                     extension->RemoteCountryName->Buffer,
                     (INT)extension->RemoteCountryName->Length / 2,
                     &rect,
-                    DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+                    DT_LEFT | DT_VCENTER | DT_SINGLELINE
+                    );
             }
 
             if (!GeoDbLoaded)
@@ -267,7 +270,8 @@ VOID NTAPI TreeNewMessageCallback(
                     L"Geoip database error.",
                     -1,
                     &rect,
-                    DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+                    DT_LEFT | DT_VCENTER | DT_SINGLELINE
+                    );
             }
         }
         break;
