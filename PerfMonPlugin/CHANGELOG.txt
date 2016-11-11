@@ -1,2 +1,5 @@
+1.1
+ * Fixed system information graphs
+
 1.0
  * Initial release

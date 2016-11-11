@@ -169,7 +169,7 @@ INT_PTR CALLBACK PerfCounterDialogProc(
 
                         drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y | PH_GRAPH_LABEL_MAX_Y;
                         context->SysinfoSection->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
-                        PhGraphStateGetDrawInfo(&context->GraphState, getDrawInfo, context->HistoryBuffer.Count);
+                        PhGraphStateGetDrawInfo(&context->GraphState, getDrawInfo, context->Entry->HistoryBuffer.Count);
 
                         if (!context->GraphState.Valid)
                         {
@@ -177,7 +177,7 @@ INT_PTR CALLBACK PerfCounterDialogProc(
 
                             for (ULONG i = 0; i < drawInfo->LineDataCount; i++)
                             {
-                                context->GraphState.Data1[i] = (FLOAT)PhGetItemCircularBuffer_ULONG64(&context->HistoryBuffer, i);
+                                context->GraphState.Data1[i] = (FLOAT)PhGetItemCircularBuffer_ULONG64(&context->Entry->HistoryBuffer, i);
 
                                 if (context->GraphState.Data1[i] > max)
                                     max = context->GraphState.Data1[i];
@@ -211,7 +211,7 @@ INT_PTR CALLBACK PerfCounterDialogProc(
                             if (context->GraphState.TooltipIndex != getTooltipText->Index)
                             {
                                 ULONG64 itemUsage = PhGetItemCircularBuffer_ULONG64(
-                                    &context->HistoryBuffer,
+                                    &context->Entry->HistoryBuffer,
                                     getTooltipText->Index
                                     );
 
@@ -250,73 +250,21 @@ BOOLEAN PerfCounterSectionCallback(
     switch (Message)
     {
     case SysInfoCreate:
-        {
-            ULONG counterLength = 0;
-            PDH_STATUS counterStatus = 0;
-            //PPDH_COUNTER_INFO counterInfo;
-
-            PhInitializeCircularBuffer_ULONG64(&context->HistoryBuffer, PhGetIntegerSetting(L"SampleCount"));
-
-            // Create the query handle.
-            if ((counterStatus = PdhOpenQuery(NULL, 0, &context->PerfQueryHandle)) != ERROR_SUCCESS)
-            {
-                PhShowError(NULL, L"PdhOpenQuery failed with status 0x%x.", counterStatus);
-            }
-
-            // Add the selected counter to the query handle.
-            if ((counterStatus = PdhAddCounter(context->PerfQueryHandle, Section->Name.Buffer, 0, &context->PerfCounterHandle)))
-            {
-                PhShowError(NULL, L"PdhAddCounter failed with status 0x%x.", counterStatus);
-            }
-
-            //if ((counterStatus = PdhGetCounterInfo(context->PerfCounterHandle, TRUE, &counterLength, NULL)) == PDH_MORE_DATA)
-            //{
-            //    counterInfo = PhAllocate(counterLength);
-            //    memset(counterInfo, 0, counterLength);
-            //}
-
-            //if ((counterStatus = PdhGetCounterInfo(context->PerfCounterHandle, TRUE, &counterLength, counterInfo)))
-            //{
-            //    PhShowError(NULL, L"PdhGetCounterInfo failed with status 0x%x.", counterStatus);
-            //}
-        }
         return TRUE;
     case SysInfoDestroy:
         {
-            PhDeleteCircularBuffer_ULONG64(&context->HistoryBuffer);
+            //PhDeleteCircularBuffer_ULONG64(&context->Entry->HistoryBuffer);
 
-            // Close the query handle.
-            if (context->PerfQueryHandle)
-            {
-                PdhCloseQuery(context->PerfQueryHandle);
-            }
+            //// Close the query handle.
+            //if (context->Entry->PerfQueryHandle)
+            //{
+            //    PdhCloseQuery(context->Entry->PerfQueryHandle);
+            //}
 
-            PhFree(context);
+            //PhFree(context);
         }
         return TRUE;
     case SysInfoTick:
-        {
-            ULONG counterType = 0;
-            PDH_FMT_COUNTERVALUE displayValue = { 0 };
-
-            // TODO: Handle this on a different thread.
-            PdhCollectQueryData(context->PerfQueryHandle);
-
-            //PdhSetCounterScaleFactor(context->PerfCounterHandle, PDH_MAX_SCALE);
-
-            PdhGetFormattedCounterValue(
-                context->PerfCounterHandle,
-                PDH_FMT_LARGE | PDH_FMT_NOSCALE | PDH_FMT_NOCAP100,
-                &counterType,
-                &displayValue
-                );
-
-            //if (counterType == PERF_COUNTER_COUNTER) {  }
-
-            context->GraphValue = displayValue.largeValue;
-
-            PhAddItemCircularBuffer_ULONG64(&context->HistoryBuffer, displayValue.largeValue);
-        }
         return TRUE;
     case SysInfoCreateDialog:
         {
@@ -334,7 +282,7 @@ BOOLEAN PerfCounterSectionCallback(
 
             drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y | PH_GRAPH_LABEL_MAX_Y;
             Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
-            PhGetDrawInfoGraphBuffers(&Section->GraphState.Buffers, drawInfo, context->HistoryBuffer.Count);
+            PhGetDrawInfoGraphBuffers(&Section->GraphState.Buffers, drawInfo, context->Entry->HistoryBuffer.Count);
 
             if (!Section->GraphState.Valid)
             {
@@ -342,7 +290,7 @@ BOOLEAN PerfCounterSectionCallback(
 
                 for (ULONG i = 0; i < drawInfo->LineDataCount; i++)
                 {
-                    Section->GraphState.Data1[i] = (FLOAT)PhGetItemCircularBuffer_ULONG64(&context->HistoryBuffer, i);
+                    Section->GraphState.Data1[i] = (FLOAT)PhGetItemCircularBuffer_ULONG64(&context->Entry->HistoryBuffer, i);
 
                     if (Section->GraphState.Data1[i] > max)
                         max = Section->GraphState.Data1[i];
@@ -371,7 +319,7 @@ BOOLEAN PerfCounterSectionCallback(
             PPH_SYSINFO_GRAPH_GET_TOOLTIP_TEXT getTooltipText = (PPH_SYSINFO_GRAPH_GET_TOOLTIP_TEXT)Parameter1;
 
             ULONG64 counterValue = PhGetItemCircularBuffer_ULONG64(
-                &context->HistoryBuffer,
+                &context->Entry->HistoryBuffer,
                 getTooltipText->Index
                 );
 
@@ -389,10 +337,7 @@ BOOLEAN PerfCounterSectionCallback(
             PPH_SYSINFO_DRAW_PANEL drawPanel = (PPH_SYSINFO_DRAW_PANEL)Parameter1;
 
             drawPanel->Title = PhCreateString(Section->Name.Buffer);
-            drawPanel->SubTitle = PhFormatString(
-                L"%I64u",
-                context->GraphValue
-                );
+            drawPanel->SubTitle = PhFormatUInt64(context->Entry->HistoryDelta.Value, TRUE);
         }
         return TRUE;
     }
@@ -402,7 +347,7 @@ BOOLEAN PerfCounterSectionCallback(
 
 VOID PerfCounterSysInfoInitializing(
     _In_ PPH_PLUGIN_SYSINFO_POINTERS Pointers,
-    _In_ PPH_STRING CounterName
+    _In_ PDV_DISK_ENTRY Entry
     )
 {
     PH_SYSINFO_SECTION section;
@@ -412,10 +357,12 @@ VOID PerfCounterSysInfoInitializing(
     memset(context, 0, sizeof(PH_PERFMON_SYSINFO_CONTEXT));
     memset(&section, 0, sizeof(PH_SYSINFO_SECTION));
 
+    context->Entry = Entry;
+
     section.Context = context;
     section.Callback = PerfCounterSectionCallback;
 
-    PhInitializeStringRef(&section.Name, CounterName->Buffer);
+    PhInitializeStringRef(&section.Name, PhGetStringOrEmpty(Entry->Id.PerfCounterPath));
 
     context->SysinfoSection = Pointers->CreateSection(&section);
 }

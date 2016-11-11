@@ -22,175 +22,297 @@
 
 #include "perfmon.h"
 
-VOID LoadCounterList(
-    _Inout_ PPH_LIST FilterList,
-    _In_ PPH_STRING String
+INT AddListViewItemGroupId(
+    _In_ HWND ListViewHandle,
+    _In_ INT Index,
+    _In_ PWSTR Text,
+    _In_opt_ PVOID Param
+)
+{
+    LVITEM item;
+
+    memset(&item, 0, sizeof(LVITEM));
+
+    item.mask = LVIF_TEXT;
+    item.iItem = Index;
+    item.iSubItem = 0;
+    item.pszText = Text;
+
+    if (Param)
+    {
+        item.mask |= LVIF_PARAM;
+        item.lParam = (LPARAM)Param;
+    }
+
+    return ListView_InsertItem(ListViewHandle, &item);
+}
+
+VOID PerfMonAddCounter(
+    _In_ PPH_PERFMON_CONTEXT Context,
+    _In_ PPH_STRING CounterPath
     )
 {
-    PH_STRING_BUILDER stringBuilder;
-    PPH_PERFMON_ENTRY entry = NULL;
+    INT lvItemIndex;
+    PERF_COUNTER_ID id;
+    PDV_DISK_ENTRY entry;
 
-    PH_STRINGREF part;
-    PH_STRINGREF remaining = String->sr;
+    InitializeDiskId(&id, CounterPath);
+    entry = CreateDiskEntry(&id);
+    DeleteDiskId(&id);
+
+    entry->UserReference = TRUE;
+
+    lvItemIndex = AddListViewItemGroupId(
+        Context->ListViewHandle,
+        MAXINT,
+        PhGetStringOrEmpty(entry->Id.PerfCounterPath),
+        entry
+        );
+
+    ListView_SetItemState(Context->ListViewHandle, lvItemIndex, ITEM_CHECKED, LVIS_STATEIMAGEMASK);
+}
+
+VOID PerfMonLoadCounters(
+    _In_ PPH_PERFMON_CONTEXT Context
+    )
+{
+    PhAcquireQueuedLockShared(&DiskDrivesListLock);
+    for (ULONG i = 0; i < DiskDrivesList->Count; i++)
+    {
+        INT lvItemIndex;
+        PDV_DISK_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
+
+        if (!entry)
+            continue;
+
+        if (entry->UserReference)
+        {
+            lvItemIndex = AddListViewItemGroupId(
+                Context->ListViewHandle,
+                MAXINT,
+                PhGetStringOrEmpty(entry->Id.PerfCounterPath),
+                entry
+                );
+
+            ListView_SetItemState(Context->ListViewHandle, lvItemIndex, ITEM_CHECKED, LVIS_STATEIMAGEMASK);
+        }
+    }
+
+    PhReleaseQueuedLockShared(&DiskDrivesListLock);
+}
+
+VOID PerfMonLoadList(
+    VOID
+    )
+{
+    PPH_STRING settingsString;
+    PH_STRINGREF remaining;
+
+    settingsString = PhaGetStringSetting(SETTING_NAME_PERFMON_LIST);
+    remaining = settingsString->sr;
 
     while (remaining.Length != 0)
     {
-        entry = (PPH_PERFMON_ENTRY)PhAllocate(sizeof(PH_PERFMON_ENTRY));
-        memset(entry, 0, sizeof(PH_PERFMON_ENTRY));
+        PH_STRINGREF part;
+        PERF_COUNTER_ID id;
+        PDV_DISK_ENTRY entry;
 
-        PhInitializeStringBuilder(&stringBuilder, 20);
+        if (remaining.Length == 0)
+            break;
+
         PhSplitStringRefAtChar(&remaining, ',', &part, &remaining);
 
-        for (SIZE_T i = 0; i < part.Length / sizeof(WCHAR); i++)
-        {
-            if (part.Buffer[i] == '\\')
-            {
-                if (i != part.Length - 1)
-                {
-                    i++;
-                    PhAppendCharStringBuilder(&stringBuilder, part.Buffer[i]);
-                }
-                else
-                {
-                    // Unescape backslashes - Just ignore chars.
-                    break;
-                }
-            }
-            else
-            {
-                PhAppendCharStringBuilder(&stringBuilder, part.Buffer[i]);
-            }
-        }
+        InitializeDiskId(&id, PhCreateString2(&part));
+        entry = CreateDiskEntry(&id);
+        DeleteDiskId(&id);
 
-        entry->Name = PhCreateString(stringBuilder.String->Buffer);
-
-        PhDeleteStringBuilder(&stringBuilder);
-
-        PhAddItemList(FilterList, entry);
+        entry->UserReference = TRUE;
     }
 }
 
-VOID FreeCounterEntry(
-    _In_ PPH_PERFMON_ENTRY Entry
-    )
-{
-    if (Entry->Name)
-    {
-        PhDereferenceObject(Entry->Name);
-    }
-
-    PhFree(Entry);
-}
-
-VOID ClearCounterList(
-    _Inout_ PPH_LIST FilterList
-    )
-{
-    for (ULONG i = 0; i < FilterList->Count; i++)
-    {
-        FreeCounterEntry((PPH_PERFMON_ENTRY)FilterList->Items[i]);
-    }
-
-    PhClearList(FilterList);
-}
-
-VOID CopyCounterList(
-    _Inout_ PPH_LIST Destination,
-    _In_ PPH_LIST Source
-    )
-{
-    for (ULONG i = 0; i < Source->Count; i++)
-    {
-        PPH_PERFMON_ENTRY entry = (PPH_PERFMON_ENTRY)Source->Items[i];
-        PPH_PERFMON_ENTRY newEntry;
-
-        newEntry = (PPH_PERFMON_ENTRY)PhAllocate(sizeof(PH_PERFMON_ENTRY));
-        memset(newEntry, 0, sizeof(PH_PERFMON_ENTRY));
-
-        PhReferenceObject(entry->Name);
-        newEntry->Name = entry->Name;
-
-        PhAddItemList(Destination, newEntry);
-    }
-}
-
-PPH_STRING SaveCounterList(
-    _Inout_ PPH_LIST FilterList
+VOID PerfMonSaveList(
+    VOID
     )
 {
     PH_STRING_BUILDER stringBuilder;
-    WCHAR temp[2];
+    PPH_STRING settingsString;
 
-    PhInitializeStringBuilder(&stringBuilder, 100);
+    PhInitializeStringBuilder(&stringBuilder, 260);
 
-    temp[0] = '\\';
-
-    for (SIZE_T i = 0; i < FilterList->Count; i++)
+    PhAcquireQueuedLockShared(&DiskDrivesListLock);
+    for (ULONG i = 0; i < DiskDrivesList->Count; i++)
     {
-        PPH_PERFMON_ENTRY entry = (PPH_PERFMON_ENTRY)FilterList->Items[i];
+        PDV_DISK_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
 
-        SIZE_T length = entry->Name->Length / 2;
+        if (!entry)
+            continue;
 
-        for (SIZE_T ii = 0; ii < length; ii++)
+        if (entry->UserReference)
         {
-            if (entry->Name->Buffer[ii] == '\\') // escape backslashes
-            {
-                temp[1] = entry->Name->Buffer[ii];
-                PhAppendStringBuilderEx(&stringBuilder, temp, 4);
-            }
-            else
-            {
-                PhAppendCharStringBuilder(&stringBuilder, entry->Name->Buffer[ii]);
-            }
+            PhAppendFormatStringBuilder(&stringBuilder, L"%s,", PhGetStringOrEmpty(entry->Id.PerfCounterPath));
         }
 
-        PhAppendCharStringBuilder(&stringBuilder, ',');
+        PhDereferenceObjectDeferDelete(entry);
     }
+    PhReleaseQueuedLockShared(&DiskDrivesListLock);
 
     if (stringBuilder.String->Length != 0)
         PhRemoveEndStringBuilder(&stringBuilder, 1);
 
-    return PhFinalStringBuilderString(&stringBuilder);
+    settingsString = PH_AUTO(PhFinalStringBuilderString(&stringBuilder));
+    PhSetStringSetting2(SETTING_NAME_PERFMON_LIST, &settingsString->sr);
 }
 
-VOID AddCounterToListView(
-    _In_ PPH_PERFMON_CONTEXT Context,
-    _In_ PWSTR CounterName
+BOOLEAN PerfMonFindEntry(
+    _In_ PPERF_COUNTER_ID Id,
+    _In_ BOOLEAN RemoveUserReference
     )
 {
-    PPH_PERFMON_ENTRY entry;
+    BOOLEAN found = FALSE;
 
-    entry = (PPH_PERFMON_ENTRY)PhAllocate(sizeof(PH_PERFMON_ENTRY));
-    memset(entry, 0, sizeof(PH_PERFMON_ENTRY));
+    PhAcquireQueuedLockShared(&DiskDrivesListLock);
 
-    entry->Name = PhCreateString(CounterName);
-
-    PhAddListViewItem(
-        Context->ListViewHandle,
-        MAXINT,
-        entry->Name->Buffer,
-        entry
-        );
-
-    PhAddItemList(Context->CountersListEdited, entry);
-}
-
-VOID LoadCountersToListView(
-    _In_ PPH_PERFMON_CONTEXT Context,
-    _In_ PPH_LIST Source
-    )
-{
-    for (ULONG i = 0; i < Source->Count; i++)
+    for (ULONG i = 0; i < DiskDrivesList->Count; i++)
     {
-        PPH_PERFMON_ENTRY entry = (PPH_PERFMON_ENTRY)Source->Items[i];
+        PDV_DISK_ENTRY currentEntry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
 
-        PhAddListViewItem(
-            Context->ListViewHandle,
-            MAXINT,
-            entry->Name->Buffer,
-            entry
-            );
+        if (!currentEntry)
+            continue;
+
+        found = EquivalentDiskId(&currentEntry->Id, Id);
+
+        if (found)
+        {
+            if (RemoveUserReference)
+            {
+                if (currentEntry->UserReference)
+                {
+                    PhDereferenceObjectDeferDelete(currentEntry);
+                    currentEntry->UserReference = FALSE;
+                }
+            }
+
+            PhDereferenceObjectDeferDelete(currentEntry);
+            break;
+        }
+        else
+        {
+            PhDereferenceObjectDeferDelete(currentEntry);
+        }
     }
+
+    PhReleaseQueuedLockShared(&DiskDrivesListLock);
+
+    return found;
+}
+
+VOID PerfMonShowCounters(
+    _In_ PPH_PERFMON_CONTEXT Context,
+    _In_ HWND Parent
+    )
+{
+    PDH_STATUS counterStatus = 0;
+    PPH_STRING counterPathString = NULL;
+    PPH_STRING counterWildCardString = NULL;
+    PDH_BROWSE_DLG_CONFIG browseConfig = { 0 };
+    WCHAR counterPathBuffer[PDH_MAX_COUNTER_PATH] = L"";
+
+    browseConfig.bIncludeInstanceIndex = FALSE;
+    browseConfig.bSingleCounterPerAdd = FALSE; // Fix empty CounterPathBuffer
+    browseConfig.bSingleCounterPerDialog = TRUE;
+    browseConfig.bLocalCountersOnly = FALSE;
+    browseConfig.bWildCardInstances = TRUE; // Seems to cause a lot of crashes
+    browseConfig.bHideDetailBox = TRUE;
+    browseConfig.bInitializePath = FALSE;
+    browseConfig.bDisableMachineSelection = FALSE;
+    browseConfig.bIncludeCostlyObjects = FALSE;
+    browseConfig.bShowObjectBrowser = FALSE;
+    browseConfig.hWndOwner = Parent;
+    browseConfig.szReturnPathBuffer = counterPathBuffer;
+    browseConfig.cchReturnPathLength = PDH_MAX_COUNTER_PATH;
+    browseConfig.CallBackStatus = ERROR_SUCCESS;
+    browseConfig.dwDefaultDetailLevel = PERF_DETAIL_WIZARD;
+    browseConfig.szDialogBoxCaption = L"Select a counter to monitor.";
+
+    if ((counterStatus = PdhBrowseCounters(&browseConfig)) != ERROR_SUCCESS)
+    {
+        if (counterStatus != PDH_DIALOG_CANCELLED)
+        {
+            PhShowError(Parent, L"PdhBrowseCounters failed with status 0x%x.", counterStatus);
+        }
+
+        goto CleanupExit;
+    }
+    else if (PhCountStringZ(counterPathBuffer) == 0)
+    {
+        goto CleanupExit;
+    }
+
+    counterPathString = PhCreateString(counterPathBuffer);
+
+    if (PhFindCharInString(counterPathString, 0, '*') != -1) // Check for wildcards
+    {
+        ULONG wildCardLength = 0;
+
+        PdhExpandWildCardPath(
+            NULL,
+            PhGetString(counterPathString),
+            NULL,
+            &wildCardLength,
+            0
+            );
+
+        counterWildCardString = PhCreateStringEx(NULL, wildCardLength * sizeof(WCHAR));
+
+        if ((counterStatus = PdhExpandWildCardPath(
+            NULL,
+            PhGetString(counterPathString),
+            PhGetString(counterWildCardString),
+            &wildCardLength,
+            0
+            )) == ERROR_SUCCESS)
+        {
+            PH_STRINGREF part;
+            PH_STRINGREF remaining = counterWildCardString->sr;
+
+            while (remaining.Length != 0)
+            {
+                if (!PhSplitStringRefAtChar(&remaining, '\0', &part, &remaining))
+                    break;
+                if (remaining.Length == 0)
+                    break;
+
+                if ((counterStatus = PdhValidatePath(part.Buffer)) != ERROR_SUCCESS)
+                {
+                    PhShowError(Parent, L"PdhValidatePath failed with status 0x%x", counterStatus);
+                    goto CleanupExit;
+                }
+
+                PerfMonAddCounter(Context, PhCreateString2(&part));
+            }
+        }
+        else
+        {
+            PhShowError(Parent, L"PdhExpandWildCardPath failed with status 0x%x", counterStatus);
+        }
+    }
+    else
+    {
+        if ((counterStatus = PdhValidatePath(counterPathString->Buffer)) != ERROR_SUCCESS)
+        {
+            PhShowError(Parent, L"PdhValidatePath failed with status 0x%x", counterStatus);
+            goto CleanupExit;
+        }
+
+        PerfMonAddCounter(Context, PhCreateString2(&counterPathString->sr));
+    }
+
+CleanupExit:
+    if (counterWildCardString)
+        PhDereferenceObject(counterWildCardString);
+
+    if (counterPathString)
+        PhDereferenceObject(counterPathString);
 }
 
 INT_PTR CALLBACK OptionsDlgProc(
@@ -213,17 +335,9 @@ INT_PTR CALLBACK OptionsDlgProc(
     {
         context = (PPH_PERFMON_CONTEXT)GetProp(hwndDlg, L"Context");
 
-        if (uMsg == WM_NCDESTROY)
+        if (uMsg == WM_DESTROY)
         {
-            PPH_STRING string;
-
-            ClearCounterList(CountersList);
-            CopyCounterList(CountersList, context->CountersListEdited);
-            PhDereferenceObject(context->CountersListEdited);
-
-            string = SaveCounterList(CountersList);
-            PhSetStringSetting2(SETTING_NAME_PERFMON_LIST, &string->sr);
-            PhDereferenceObject(string);
+            PerfMonSaveList();
 
             RemoveProp(hwndDlg, L"Context");
             PhFree(context);
@@ -237,17 +351,15 @@ INT_PTR CALLBACK OptionsDlgProc(
     {
     case WM_INITDIALOG:
         {
-            context->CountersListEdited = PhCreateList(2);
             context->ListViewHandle = GetDlgItem(hwndDlg, IDC_PERFCOUNTER_LISTVIEW);
-
+ 
             PhSetListViewStyle(context->ListViewHandle, FALSE, TRUE);
+            ListView_SetExtendedListViewStyleEx(context->ListViewHandle, LVS_EX_CHECKBOXES, LVS_EX_CHECKBOXES);
             PhSetControlTheme(context->ListViewHandle, L"explorer");
             PhAddListViewColumn(context->ListViewHandle, 0, 0, 0, LVCFMT_LEFT, 420, L"Counter");
             PhSetExtendedListView(context->ListViewHandle);
 
-            ClearCounterList(context->CountersListEdited);
-            CopyCounterList(context->CountersListEdited, CountersList);
-            LoadCountersToListView(context, context->CountersListEdited);
+            PerfMonLoadCounters(context);
         }
         break;
     case WM_COMMAND:
@@ -255,155 +367,74 @@ INT_PTR CALLBACK OptionsDlgProc(
             switch (LOWORD(wParam))
             {
             case IDC_ADD_BUTTON:
-                {
-                    PDH_STATUS counterStatus = 0;
-                    PPH_STRING counterPathString = NULL;
-                    PPH_STRING counterWildCardString = NULL;
-                    PDH_BROWSE_DLG_CONFIG browseConfig = { 0 };
-                    WCHAR counterPathBuffer[PDH_MAX_COUNTER_PATH] = L"";
-
-                    browseConfig.bIncludeInstanceIndex = FALSE;
-                    browseConfig.bSingleCounterPerAdd = FALSE;// Fix empty CounterPathBuffer
-                    browseConfig.bSingleCounterPerDialog = TRUE;
-                    browseConfig.bLocalCountersOnly = FALSE;
-                    browseConfig.bWildCardInstances = TRUE; // Seems to cause a lot of crashes
-                    browseConfig.bHideDetailBox = TRUE;
-                    browseConfig.bInitializePath = FALSE;
-                    browseConfig.bDisableMachineSelection = FALSE;
-                    browseConfig.bIncludeCostlyObjects = FALSE;
-                    browseConfig.bShowObjectBrowser = FALSE;
-                    browseConfig.hWndOwner = hwndDlg;
-                    browseConfig.szReturnPathBuffer = counterPathBuffer;
-                    browseConfig.cchReturnPathLength = PDH_MAX_COUNTER_PATH;
-                    browseConfig.CallBackStatus = ERROR_SUCCESS;
-                    browseConfig.dwDefaultDetailLevel = PERF_DETAIL_WIZARD;
-                    browseConfig.szDialogBoxCaption = L"Select a counter to monitor.";
-
-                    __try
-                    {
-                        // Display the counter browser window.
-                        if ((counterStatus = PdhBrowseCounters(&browseConfig)) != ERROR_SUCCESS)
-                        {
-                            if (counterStatus != PDH_DIALOG_CANCELLED)
-                            {
-                                PhShowError(hwndDlg, L"PdhBrowseCounters failed with status 0x%x.", counterStatus);
-                            }
-
-                            __leave;
-                        }
-                        else if (PhCountStringZ(counterPathBuffer) == 0)
-                        {
-                            // This gets called when pressing the X on the BrowseCounters dialog.
-                            __leave;
-                        }
-
-                        counterPathString = PhCreateString(counterPathBuffer);
-
-                        // Check if we need to expand any wildcards...
-                        if (PhFindCharInString(counterPathString, 0, '*') != -1)
-                        {
-                            ULONG counterWildCardLength = 0;
-
-                            // Query WildCard buffer length...
-                            PdhExpandWildCardPath(
-                                NULL,
-                                counterPathString->Buffer,
-                                NULL,
-                                &counterWildCardLength,
-                                0
-                                );
-
-                            counterWildCardString = PhCreateStringEx(NULL, counterWildCardLength * sizeof(WCHAR));
-
-                            if ((counterStatus = PdhExpandWildCardPath(
-                                NULL,
-                                counterPathString->Buffer,
-                                counterWildCardString->Buffer,
-                                &counterWildCardLength,
-                                0
-                                )) == ERROR_SUCCESS)
-                            {
-                                PH_STRINGREF part;
-                                PH_STRINGREF remaining = counterWildCardString->sr;
-
-                                while (remaining.Length != 0)
-                                {
-                                    // Split the results
-                                    if (!PhSplitStringRefAtChar(&remaining, '\0', &part, &remaining))
-                                        break;
-                                    if (remaining.Length == 0)
-                                        break;
-
-                                    if ((counterStatus = PdhValidatePath(part.Buffer)) != ERROR_SUCCESS)
-                                    {
-                                        PhShowError(hwndDlg, L"PdhValidatePath failed with status 0x%x.", counterStatus);
-                                        __leave;
-                                    }
-
-                                    AddCounterToListView(context, part.Buffer);
-                                }
-                            }
-                            else
-                            {
-                                PhShowError(hwndDlg, L"PdhExpandWildCardPath failed with status 0x%x.", counterStatus);
-                            }
-                        }
-                        else
-                        {
-                            if ((counterStatus = PdhValidatePath(counterPathString->Buffer)) != ERROR_SUCCESS)
-                            {
-                                PhShowError(hwndDlg, L"PdhValidatePath failed with status 0x%x.", counterStatus);
-                                __leave;
-                            }
-
-                            AddCounterToListView(context, counterPathString->Buffer);
-                        }
-                    }
-                    __finally
-                    {
-                        if (counterWildCardString)
-                            PhDereferenceObject(counterWildCardString);
-
-                        if (counterPathString)
-                            PhDereferenceObject(counterPathString);
-                    }
-                }
-                break;
-            case IDC_REMOVE_BUTTON:
-                {
-                    INT itemIndex;
-
-                    // Get the first selected item
-                    itemIndex = ListView_GetNextItem(context->ListViewHandle, -1, LVNI_SELECTED);
-
-                    while (itemIndex != -1)
-                    {
-                        PPH_PERFMON_ENTRY entry;
-
-                        if (PhGetListViewItemParam(context->ListViewHandle, itemIndex, (PVOID *)&entry))
-                        {
-                            ULONG index = PhFindItemList(context->CountersListEdited, entry);
-
-                            if (index != -1)
-                            {
-                                PhRemoveItemList(context->CountersListEdited, index);
-                                PhRemoveListViewItem(context->ListViewHandle, itemIndex);
-                                FreeCounterEntry(entry);
-                            }
-                        }
-
-                        // Get the next selected item
-                        itemIndex = ListView_GetNextItem(context->ListViewHandle, -1, LVNI_SELECTED);
-                    }
-                }
+                PerfMonShowCounters(context, hwndDlg);
                 break;
             case IDCANCEL:
-                EndDialog(hwndDlg, IDCANCEL);
-                break;
             case IDOK:
                 EndDialog(hwndDlg, IDOK);
                 break;
             }
+        }
+        break;
+    case WM_NOTIFY:
+        {
+            LPNMHDR header = (LPNMHDR)lParam;
+
+            if (header->code == LVN_ITEMCHANGED)
+            {
+                LPNM_LISTVIEW listView = (LPNM_LISTVIEW)lParam;
+
+                if (!PhTryAcquireReleaseQueuedLockExclusive(&DiskDrivesListLock))
+                    break;
+
+                if (listView->uChanged & LVIF_STATE)
+                {
+                    switch (listView->uNewState & LVIS_STATEIMAGEMASK)
+                    {
+                    case 0x2000: // checked
+                        {
+                            PPERF_COUNTER_ID param = (PPERF_COUNTER_ID)listView->lParam;
+
+                            if (!PerfMonFindEntry(param, FALSE))
+                            {
+                                PDV_DISK_ENTRY entry;
+
+                                entry = CreateDiskEntry(param);
+                                entry->UserReference = TRUE;
+                            }
+
+                            context->OptionsChanged = TRUE;
+                        }
+                        break;
+                    case 0x1000: // unchecked
+                        {
+                            PPERF_COUNTER_ID param = (PPERF_COUNTER_ID)listView->lParam;
+
+                            if (PerfMonFindEntry(param, TRUE))
+                            {
+                                //entry->UserReference = FALSE;
+                            }
+
+                            context->OptionsChanged = TRUE;
+                        }
+                        break;
+                    }
+                }
+            }
+            //else if (header->code == NM_RCLICK)
+            //{
+            //    PDV_DISK_ID param;
+            //    PPH_STRING deviceInstance;
+
+            //    if (param = PhGetSelectedListViewItemParam(context->ListViewHandle))
+            //    {
+            //        if (deviceInstance = FindDiskDeviceInstance(param->DevicePath))
+            //        {
+            //            ShowDeviceMenu(hwndDlg, deviceInstance);
+            //            PhDereferenceObject(deviceInstance);
+            //        }
+            //    }
+            //}
         }
         break;
     }

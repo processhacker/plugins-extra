@@ -38,7 +38,75 @@
 #include "resource.h"
 
 extern PPH_PLUGIN PluginInstance;
+
 extern PPH_LIST CountersList;
+extern PPH_OBJECT_TYPE DiskDriveEntryType;
+extern PPH_LIST DiskDrivesList;
+extern PH_QUEUED_LOCK DiskDrivesListLock;
+
+typedef struct _PERF_COUNTER_ID
+{
+    PPH_STRING PerfCounterPath;
+} PERF_COUNTER_ID, *PPERF_COUNTER_ID;
+
+typedef struct _DV_DISK_ENTRY
+{
+    PERF_COUNTER_ID Id;
+
+    HQUERY PerfQueryHandle;
+    HCOUNTER PerfCounterHandle;
+
+    ULONG DiskIndex;
+
+    union
+    {
+        BOOLEAN BitField;
+        struct
+        {
+            BOOLEAN UserReference : 1;
+            BOOLEAN HaveFirstSample : 1;
+            BOOLEAN Spare : 6;
+        };
+    };
+
+    PH_UINT64_DELTA HistoryDelta;
+    PH_CIRCULAR_BUFFER_ULONG64 HistoryBuffer;
+} DV_DISK_ENTRY, *PDV_DISK_ENTRY;
+
+
+
+VOID PerfMonInitialize(
+    VOID
+    );
+VOID PerfMonUpdate(
+    VOID
+    );
+VOID InitializeDiskId(
+    _Out_ PPERF_COUNTER_ID Id,
+    _In_ PPH_STRING DevicePath
+    );
+VOID CopyDiskId(
+    _Out_ PPERF_COUNTER_ID Destination,
+    _In_ PPERF_COUNTER_ID Source
+    );
+VOID DeleteDiskId(
+    _Inout_ PPERF_COUNTER_ID Id
+    );
+BOOLEAN EquivalentDiskId(
+    _In_ PPERF_COUNTER_ID Id1,
+    _In_ PPERF_COUNTER_ID Id2
+    );
+PDV_DISK_ENTRY CreateDiskEntry(
+    _In_ PPERF_COUNTER_ID Id
+    );
+
+VOID PerfMonLoadList(
+    VOID
+    );
+VOID PerfMonSaveList(
+    VOID
+    );
+
 
 typedef struct _PH_PERFMON_ENTRY
 {
@@ -47,16 +115,15 @@ typedef struct _PH_PERFMON_ENTRY
 
 typedef struct _PH_PERFMON_CONTEXT
 {
+    BOOLEAN OptionsChanged;
+    BOOLEAN AddedChanged;
     HWND ListViewHandle;
-    PPH_LIST CountersListEdited;
 } PH_PERFMON_CONTEXT, *PPH_PERFMON_CONTEXT;
 
 typedef struct _PH_PERFMON_SYSINFO_CONTEXT
 {
-    HQUERY PerfQueryHandle;
-    HCOUNTER PerfCounterHandle;
+    PDV_DISK_ENTRY Entry;
 
-    ULONG64 GraphValue;
     HWND WindowHandle;
     HWND GraphHandle;
 
@@ -65,13 +132,10 @@ typedef struct _PH_PERFMON_SYSINFO_CONTEXT
     PH_LAYOUT_MANAGER LayoutManager;
     PH_CALLBACK_REGISTRATION ProcessesUpdatedRegistration;
 
-    PH_CIRCULAR_BUFFER_ULONG64 HistoryBuffer;
 } PH_PERFMON_SYSINFO_CONTEXT, *PPH_PERFMON_SYSINFO_CONTEXT;
 
-VOID LoadCounterList(
-    _Inout_ PPH_LIST FilterList,
-    _In_ PPH_STRING String
-    );
+#define ITEM_CHECKED (INDEXTOSTATEIMAGEMASK(2))
+#define ITEM_UNCHECKED (INDEXTOSTATEIMAGEMASK(1))
 
 VOID ShowOptionsDialog(
     _In_ HWND ParentHandle
@@ -79,7 +143,7 @@ VOID ShowOptionsDialog(
 
 VOID PerfCounterSysInfoInitializing(
     _In_ PPH_PLUGIN_SYSINFO_POINTERS Pointers,
-    _In_ PPH_STRING CounterName
+    _In_ PDV_DISK_ENTRY Entry
     );
 
 #endif _ROTHEADER_

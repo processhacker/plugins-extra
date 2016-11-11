@@ -29,6 +29,7 @@
     <ClCompile Include="graph.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="counters.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PerfMonPlugin.rc">

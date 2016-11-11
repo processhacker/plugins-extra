@@ -16,6 +16,7 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENA)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_AUS
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -23,8 +24,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_AUS
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,0
- PRODUCTVERSION 1,0,0,0
+ FILEVERSION 1,1,0,0
+ PRODUCTVERSION 1,1,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -41,12 +42,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Performance counters plugin for Process Hacker"
-            VALUE "FileVersion", "1.0"
+            VALUE "FileVersion", "1.1"
             VALUE "InternalName", "PerfMonPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "PerfMonPlugin.dll"
             VALUE "ProductName", "Performance counters plugin for Process Hacker"
-            VALUE "ProductVersion", "1.0"
+            VALUE "ProductVersion", "1.1"
         END
     END
     BLOCK "VarFileInfo"
@@ -94,8 +95,7 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,252,156,50,14
     CONTROL         "",IDC_PERFCOUNTER_LISTVIEW,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | WS_BORDER | WS_TABSTOP,7,18,295,135
     PUSHBUTTON      "Add",IDC_ADD_BUTTON,7,156,50,14
-    PUSHBUTTON      "Remove",IDC_REMOVE_BUTTON,61,156,50,14
-    LTEXT           "Warning: Performance counters may seriously degrade application performance.",IDC_STATIC,7,7,258,8
+    LTEXT           "Warning: Performance counters degrade application performance.",IDC_STATIC,7,7,213,8
 END
 
 IDD_PERFMON_DIALOG DIALOGEX 0, 0, 269, 130
@@ -130,6 +130,17 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_PERFMON_OPTIONS AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // English (Australia) resources
 /////////////////////////////////////////////////////////////////////////////

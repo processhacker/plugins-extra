@@ -64,6 +64,7 @@
     <Import Project="..\ExtraPlugins.props" />
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="counters.c" />
     <ClCompile Include="graph.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="options.c" />

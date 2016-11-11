@@ -22,25 +22,33 @@
 
 #include "perfmon.h"
 
-PPH_LIST CountersList = NULL;
-PPH_PLUGIN PluginInstance = NULL;
-static PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
-static PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
-static PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
-static PH_CALLBACK_REGISTRATION SystemInformationInitializingCallbackRegistration;
+PPH_OBJECT_TYPE DiskDriveEntryType = NULL;
+PPH_LIST DiskDrivesList = NULL;
+PH_QUEUED_LOCK DiskDrivesListLock = PH_QUEUED_LOCK_INIT;
+
+PPH_LIST CountersList;
+PPH_PLUGIN PluginInstance;
+PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
+PH_CALLBACK_REGISTRATION SystemInformationInitializingCallbackRegistration;
+PH_CALLBACK_REGISTRATION ProcessesUpdatedCallbackRegistration;
+
+VOID NTAPI ProcessesUpdatedCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    PerfMonUpdate();
+}
 
 VOID NTAPI LoadCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     )
 {
-    PPH_STRING string = NULL;
-
-    CountersList = PhCreateList(5);
-
-    string = PhGetStringSetting(SETTING_NAME_PERFMON_LIST);
-    LoadCounterList(CountersList, string);
-    PhDereferenceObject(string);
+    PerfMonInitialize();
+    PerfMonLoadList();
 }
 
 VOID NTAPI UnloadCallback(
@@ -66,12 +74,29 @@ VOID NTAPI SystemInformationInitializingCallback(
 {
     PPH_PLUGIN_SYSINFO_POINTERS pluginEntry = (PPH_PLUGIN_SYSINFO_POINTERS)Parameter;
 
-    for (ULONG i = 0; i < CountersList->Count; i++)
+    PhAcquireQueuedLockShared(&DiskDrivesListLock);
+    for (ULONG i = 0; i < DiskDrivesList->Count; i++)
     {
-        PPH_PERFMON_ENTRY entry = (PPH_PERFMON_ENTRY)CountersList->Items[i];
+        PDV_DISK_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
 
-        PerfCounterSysInfoInitializing(pluginEntry, entry->Name);
+        if (!entry)
+            continue;
+
+        if (entry->UserReference)
+        {
+            PerfCounterSysInfoInitializing(pluginEntry, entry);
+        }
     }
+    PhReleaseQueuedLockShared(&DiskDrivesListLock);
+
+    //PPH_PLUGIN_SYSINFO_POINTERS pluginEntry = (PPH_PLUGIN_SYSINFO_POINTERS)Parameter;
+
+    //for (ULONG i = 0; i < CountersList->Count; i++)
+    //{
+    //    PPH_PERFMON_ENTRY entry = (PPH_PERFMON_ENTRY)CountersList->Items[i];
+
+    //    PerfCounterSysInfoInitializing(pluginEntry, entry->Name);
+    //}
 }
 
 LOGICAL DllMain(
@@ -123,6 +148,13 @@ LOGICAL DllMain(
                 SystemInformationInitializingCallback,
                 NULL,
                 &SystemInformationInitializingCallbackRegistration
+                );
+
+            PhRegisterCallback(
+                &PhProcessesUpdatedEvent,
+                ProcessesUpdatedCallback,
+                NULL,
+                &ProcessesUpdatedCallbackRegistration
                 );
 
             PhAddSettings(settings, ARRAYSIZE(settings));
