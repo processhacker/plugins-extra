@@ -72,13 +72,13 @@ NTSTATUS NTAPI ShowFwRuleProperties(
     _In_ PVOID ThreadParameter
     )
 {
-    //DialogBoxParam(
-    //    PluginInstance->DllBase, 
-    //    MAKEINTRESOURCE(IDD_PROPDIALOG), 
-    //    PhMainWndHandle, 
-    //    OptionsDlgProc,
-    //    (LPARAM)ThreadParameter
-    //    );
+    DialogBoxParam(
+        PluginInstance->DllBase, 
+        MAKEINTRESOURCE(IDD_FWTABLE), 
+        NULL, 
+        OptionsDlgProc,
+        (LPARAM)ThreadParameter
+        );
 
     return STATUS_SUCCESS;
 }

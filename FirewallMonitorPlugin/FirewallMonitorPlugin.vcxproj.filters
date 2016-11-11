@@ -27,6 +27,12 @@
     <ClCompile Include="fwdialog.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fw.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dialog.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="CHANGELOG.txt" />
@@ -44,6 +50,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="fwtabp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="wf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

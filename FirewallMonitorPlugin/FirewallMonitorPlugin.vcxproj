@@ -64,7 +64,45 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\ExtraPlugins.props" />
   </ImportGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Link>
+      <AdditionalDependencies>include\firewallapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>firewallapi.dll%(DelayLoadDLLs)</DelayLoadDLLs>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Link>
+      <AdditionalDependencies>include\firewallapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>firewallapi.dll%(DelayLoadDLLs)</DelayLoadDLLs>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Link>
+      <AdditionalDependencies>include\firewallapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>firewallapi.dll%(DelayLoadDLLs)</DelayLoadDLLs>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Link>
+      <AdditionalDependencies>include\firewallapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>firewallapi.dll%(DelayLoadDLLs)</DelayLoadDLLs>
+    </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="dialog.c" />
+    <ClCompile Include="fw.c" />
     <ClCompile Include="fwdialog.c" />
     <ClCompile Include="fwtab.c" />
     <ClCompile Include="main.c" />
@@ -80,6 +118,7 @@
     <ClInclude Include="fwtabp.h" />
     <ClInclude Include="fwmon.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="wf.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

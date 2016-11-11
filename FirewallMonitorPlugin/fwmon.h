@@ -2,19 +2,25 @@
 #define FWMON_H
 
 #include <phdk.h>
+#include <winsock2.h>
+#include <fwpmu.h>
+#include <fwpsu.h>
+#include <ws2tcpip.h>
+#include <shellapi.h>
+#include <shlwapi.h>
 
 #include "resource.h"
 
-#include <Winsock2.h>
-#include <fwpmu.h>
-#include <fwpsu.h>
-#include <Ws2tcpip.h>
-
 #pragma comment(lib, "fwpuclnt.lib")
 #pragma comment(lib, "iphlpapi.lib")
-#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "shell32.lib")
+#pragma comment(lib, "shlwapi.lib")
 
 #define PLUGIN_NAME L"dmex.FirewallMonitor"
+#define SETTING_NAME_WINDOW_POSITION (PLUGIN_NAME L".WindowPosition")
+#define SETTING_NAME_WINDOW_SIZE (PLUGIN_NAME L".WindowSize")
+#define SETTING_NAME_LISTVIEW_COLUMNS (PLUGIN_NAME L".ListViewColumns")
 #define SETTING_NAME_FW_TREE_LIST_COLUMNS (PLUGIN_NAME L".TreeListColumns")
 #define SETTING_NAME_FW_TREE_LIST_SORT (PLUGIN_NAME L".TreeListSort")
 
@@ -22,29 +28,36 @@ extern PPH_PLUGIN PluginInstance;
 extern BOOLEAN FwEnabled;
 extern PPH_LIST FwNodeList;
 
+typedef struct _BOOT_WINDOW_CONTEXT
+{
+    HWND ListViewHandle;
+    PH_LAYOUT_MANAGER LayoutManager;
+} BOOT_WINDOW_CONTEXT, *PBOOT_WINDOW_CONTEXT;
+
 typedef struct _FW_EVENT_ITEM
 {
     UINT16 LocalPort;
     UINT16 RemotePort;
     ULONG Index;
-    PPH_STRING IndexString;
 
     LARGE_INTEGER AddedTime;
 
     PPH_STRING TimeString;
     PPH_STRING UserNameString;
     PH_STRINGREF ProtocalString;
+    PPH_STRING ProcessFileNameString;
     PPH_STRING ProcessNameString;
     PPH_STRING ProcessBaseString;
-    PH_STRINGREF DirectionString;
 
     PPH_STRING LocalPortString;
     PPH_STRING LocalAddressString;
     PPH_STRING RemotePortString;
     PPH_STRING RemoteAddressString;
 
-    //HICON Icon;
-    PH_STRINGREF FwRuleActionString;
+    HICON Icon;
+    BOOLEAN Loopback;
+    UINT32 FwRuleEventDirection;
+    FWPM_NET_EVENT_TYPE FwRuleEventType;
     PPH_STRING FwRuleNameString;
     PPH_STRING FwRuleDescriptionString;
     PPH_STRING FwRuleLayerNameString;
@@ -89,10 +102,13 @@ VOID InitializeFwTab(VOID);
 VOID LoadSettingsFwTreeList(VOID);
 VOID SaveSettingsFwTreeList(VOID);
 
+VOID ShowFwDialog(
+    VOID
+);
+
 NTSTATUS NTAPI ShowFwRuleProperties(
     _In_ PVOID ThreadParameter
     );
-
 
 typedef ULONG (WINAPI* _FwpmNetEventSubscribe1)(
    _In_ HANDLE engineHandle,
@@ -109,5 +125,6 @@ typedef ULONG (WINAPI* _FwpmNetEventSubscribe2)(
    _In_opt_ void* context,
    _Out_ HANDLE* eventsHandle
    );
+
 
 #endif
