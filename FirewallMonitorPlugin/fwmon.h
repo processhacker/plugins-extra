@@ -8,6 +8,7 @@
 #include <ws2tcpip.h>
 #include <shellapi.h>
 #include <shlwapi.h>
+#include <windowsx.h>
 
 #include "resource.h"
 
@@ -31,7 +32,15 @@ extern PPH_LIST FwNodeList;
 typedef struct _BOOT_WINDOW_CONTEXT
 {
     HWND ListViewHandle;
+    HWND SearchHandle;
+
     PH_LAYOUT_MANAGER LayoutManager;
+
+    HFONT NormalFontHandle;
+    HFONT BoldFontHandle;
+
+    HWND PluginMenuActive;
+    UINT PluginMenuActiveId;
 } BOOT_WINDOW_CONTEXT, *PBOOT_WINDOW_CONTEXT;
 
 typedef struct _FW_EVENT_ITEM

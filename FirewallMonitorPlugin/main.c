@@ -100,7 +100,7 @@ VOID NTAPI MainMenuInitializingCallback(
         PhInsertEMenuItem(menuInfo->Menu, systemMenu = PhPluginCreateEMenuItem(PluginInstance, 0, 0, L"System", NULL), -1);
     }
 
-    PhInsertEMenuItem(systemMenu, bootMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, 1, L"Firewall", NULL), -1);
+    PhInsertEMenuItem(systemMenu, bootMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, 1, L"Firewall Table", NULL), -1);
 
     if (!PhGetOwnTokenAttributes().Elevated)
     {

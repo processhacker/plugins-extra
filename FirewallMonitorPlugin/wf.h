@@ -1410,60 +1410,41 @@ typedef struct _tag_FW_QUERY
     FW_RULE_STATUS Status;
 } FW_QUERY, *PFW_QUERY;
 
-//uuid(6b5bdd1e-528c-422c-af8c-a4079be4fe48)
 //version(1.0)
 
-//fw_free(PVOID)
-//fw_allocate(size_t size)
-
-NTSYSCALLAPI
-ULONG
-NTAPI
-FWOpenPolicyStore(
+typedef ULONG (NTAPI *_FWOpenPolicyStore)(
     _In_ USHORT BinaryVersion,
-    _In_ PWCHAR wszMachineOrGPO,
+    _In_ PWCHAR MachineOrGPO,
     _In_ FW_STORE_TYPE StoreType,
     _In_ FW_POLICY_ACCESS_RIGHT AccessRight,
-    _In_ FW_POLICY_STORE_FLAGS dwFlags,
-    _Out_ PFW_POLICY_STORE_HANDLE phPolicy
+    _In_ FW_POLICY_STORE_FLAGS Flags,
+    _Out_ FW_POLICY_STORE_HANDLE *Policy
     );
 
-NTSYSCALLAPI
-ULONG
-NTAPI
-FWClosePolicyStore(
+typedef ULONG (NTAPI *_FWClosePolicyStore)(
     _Inout_ PFW_POLICY_STORE_HANDLE phPolicyStore
     );
 
-NTSYSCALLAPI
-ULONG
-NTAPI
-FWRestoreDefaults(
-    _In_ const PWCHAR wszMachineOrGPO
+typedef ULONG (NTAPI *_FWRestoreDefaults)(
+    _In_ PWCHAR MachineOrGPO
     );
 
-NTSYSCALLAPI
-ULONG
-NTAPI
-FWGetGlobalConfig(
+typedef ULONG (NTAPI *_FWGetGlobalConfig)(
     _In_ USHORT wBinaryVersion, 
     _In_ PWCHAR wszMachineOrGPO,
     _In_ FW_STORE_TYPE StoreType, 
     _In_ FW_GLOBAL_CONFIG configId, 
     _In_ FW_CONFIG_FLAGS dwFlags, 
-    __inout PUCHAR pBuffer, 
-    __out ULONG pdwBufSize
+    _Inout_ PUCHAR pBuffer,
+    _Out_ ULONG pdwBufSize
     );
 
-NTSYSCALLAPI
-ULONG
-NTAPI
-FWSetGlobalConfig(
+typedef ULONG (NTAPI *_FWSetGlobalConfig)(
     _In_ USHORT wBinaryVersion, 
-    _In_ __nullterminated PWCHAR wszMachineOrGPO, 
+    _In_ PWCHAR wszMachineOrGPO, 
     _In_ FW_STORE_TYPE StoreType, 
     _In_ FW_GLOBAL_CONFIG configId, 
-    __inout PUCHAR lpBuffer, 
+    _Inout_ PUCHAR lpBuffer, 
     _In_ ULONG dwBufSize
     );
 
@@ -1498,10 +1479,7 @@ FWDeleteAllFirewallRules(
     _In_ FW_POLICY_STORE_HANDLE hPolicyStore
     );
 
-NTSYSCALLAPI
-ULONG
-NTAPI
-FWEnumFirewallRules(
+typedef ULONG (NTAPI *_FWEnumFirewallRules)(
     _In_ FW_POLICY_STORE_HANDLE hPolicyStore,
     _In_ FW_RULE_STATUS_CLASS dwFilteredByStatus,
     _In_ FW_PROFILE_TYPE dwProfileFilter,
@@ -2014,10 +1992,7 @@ FWFreeAdapters(
     _In_ PFW_ADAPTER pAdapters
     );
 
-NTSYSCALLAPI
-ULONG
-NTAPI
-FWFreeFirewallRules(
+typedef ULONG (NTAPI *_FWFreeFirewallRules)(
     _In_ PFW_RULE pFwRules
     );
 
@@ -2028,10 +2003,7 @@ FWFreeNetworks(
     _In_ PFW_NETWORK pNetworks
     );
 
-NTSYSCALLAPI
-ULONG
-NTAPI
-FWStatusMessageFromStatusCode(
+typedef ULONG (NTAPI *_FWStatusMessageFromStatusCode)(
     _In_ FW_RULE_STATUS StatusCode, 
     __out_ecount(pcchMsg) __typefix(PWCHAR) PWCHAR pszMsg, 
     __out PULONG pcchMsg

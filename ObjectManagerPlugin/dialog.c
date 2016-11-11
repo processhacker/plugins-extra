@@ -505,8 +505,8 @@ INT_PTR CALLBACK WinObjDlgProc(
             PhSetExtendedListView(context->ListViewHandle);
             ListView_SetImageList(context->ListViewHandle, context->ListImageList, LVSIL_SMALL);
             
-            PhAddListViewColumn(context->ListViewHandle, 0, 0, 0, LVCFMT_LEFT, 400, L"Name");
-            PhAddListViewColumn(context->ListViewHandle, 1, 1, 1, LVCFMT_LEFT, 100, L"Type");
+            PhAddListViewColumn(context->ListViewHandle, 0, 0, 0, LVCFMT_LEFT, 620, L"Name");
+            PhAddListViewColumn(context->ListViewHandle, 1, 1, 1, LVCFMT_LEFT, 150, L"Type");
 
             ExtendedListView_SetSortFast(context->ListViewHandle, TRUE);
             ExtendedListView_SetCompareFunction(context->ListViewHandle, 0, WinObjNameCompareFunction);

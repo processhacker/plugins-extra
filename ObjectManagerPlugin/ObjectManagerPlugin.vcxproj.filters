@@ -69,7 +69,9 @@
     <Image Include="resources\unknown.ico">
       <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="resources\dll.ico" />
+    <Image Include="resources\dll.ico">
+      <Filter>Resource Files\Icons</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="CHANGELOG.txt" />

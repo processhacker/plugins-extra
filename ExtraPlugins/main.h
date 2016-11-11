@@ -57,7 +57,8 @@
 #define SETTING_NAME_WINDOW_SIZE (SETTING_PREFIX L".WindowSize")
 #define SETTING_NAME_LAST_CHECK (SETTING_PREFIX L".LastUpdateCheckTime")
 
-#define ID_SEARCH_CLEAR (WM_APP + 5001)
+#define ID_SEARCH_CLEAR (WM_APP + 8001)
+#define ID_UPDATE_COUNT (WM_APP + 8002)
 
 #define MAKE_VERSION_ULONGLONG(major, minor, build, revision) \
     (((ULONGLONG)(major) << 48) | \
@@ -383,6 +384,11 @@ HBITMAP LoadImageFromResources(
     _In_ UINT Height,
     _In_ PCWSTR Name,
     _In_ BOOLEAN RGBAImage
+    );
+
+LRESULT SysButtonCustomDraw(
+    _In_ PWCT_CONTEXT Context,
+    _In_ LPARAM lParam
     );
 
 #endif

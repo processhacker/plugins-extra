@@ -568,6 +568,23 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
             }
         }
         break;
+    case ID_UPDATE_COUNT:
+        {
+            ULONG count = 0;
+
+            for (ULONG i = 0; i < context->TreeContext.NodeList->Count; i++)
+            {
+                PPLUGIN_NODE windowNode = context->TreeContext.NodeList->Items[i];
+
+                if (windowNode->State == PLUGIN_STATE_UPDATE)
+                {
+                    count++;
+                }
+            }
+
+            SetWindowText(GetDlgItem(hwndDlg, IDC_UPDATES), PhGetString(PhaFormatString(L"Updates (%lu)", count)));
+        }
+        break;
     }
 
     return FALSE;

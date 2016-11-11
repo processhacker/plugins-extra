@@ -103,7 +103,7 @@ LOGICAL DllMain(
             PH_SETTING_CREATE settings[] =
             {
                 { IntegerPairSettingType, SETTING_NAME_WINDOW_POSITION, L"100,100" },
-                { ScalableIntegerPairSettingType, SETTING_NAME_WINDOW_SIZE, L"@96|520,290" },
+                { ScalableIntegerPairSettingType, SETTING_NAME_WINDOW_SIZE, L"@96|1065,627" },
                 { StringSettingType, SETTING_NAME_COLUMNS, L"" }
             };
 

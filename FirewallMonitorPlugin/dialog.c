@@ -23,28 +23,28 @@
 #include "fwmon.h"
 #include "wf.h"
 
-VOID ChangeNotificationThread()
-{
-    HANDLE eventWaitHandle = 0;
-    HANDLE zero = 0;
-
-    //eventWaitHandle = CreateEvent(NULL, TRUE, FALSE, NULL);
-    if (NT_SUCCESS(NtCreateEvent(&eventWaitHandle, EVENT_ALL_ACCESS, NULL, SynchronizationEvent, FALSE)))
-    {
-        if (FWChangeNotificationCreate(eventWaitHandle, &zero) == ERROR_SUCCESS)
-        {
-
-        }
-
-        if (zero)
-        {
-            FWChangeNotificationDestroy(zero);
-        }
-
-        NtClose(eventWaitHandle);
-    }
-}
-
+//VOID ChangeNotificationThread(
+//    VOID
+//    )
+//{
+//    HANDLE eventWaitHandle;
+//    HANDLE zero = NULL;
+//
+//    if (NT_SUCCESS(NtCreateEvent(&eventWaitHandle, EVENT_ALL_ACCESS, NULL, SynchronizationEvent, FALSE)))
+//    {
+//        if (FWChangeNotificationCreate(eventWaitHandle, &zero) == ERROR_SUCCESS)
+//        {
+//
+//        }
+//
+//        if (zero)
+//        {
+//            FWChangeNotificationDestroy(zero);
+//        }
+//
+//        NtClose(eventWaitHandle);
+//    }
+//}
 
 BOOLEAN CALLBACK WfAddRules(
     _In_ PFW_RULE FwRule, 
@@ -241,6 +241,73 @@ INT NTAPI FirmwareNameCompareFunction(
     return PhCompareStringZ(PhGetStringOrEmpty(item1), PhGetStringOrEmpty(item2), TRUE);
 }
 
+
+LRESULT SysButtonCustomDraw(
+    _In_ PBOOT_WINDOW_CONTEXT Context,
+    _In_ LPARAM lParam
+    )
+{
+    LPNMTVCUSTOMDRAW drawInfo = (LPNMTVCUSTOMDRAW)lParam;
+    BOOLEAN isGrayed = (drawInfo->nmcd.uItemState & CDIS_GRAYED) == CDIS_GRAYED;
+    BOOLEAN isChecked = (drawInfo->nmcd.uItemState & CDIS_CHECKED) == CDIS_CHECKED;
+    BOOLEAN isDisabled = (drawInfo->nmcd.uItemState & CDIS_DISABLED) == CDIS_DISABLED;
+    BOOLEAN isSelected = (drawInfo->nmcd.uItemState & CDIS_SELECTED) == CDIS_SELECTED;
+    BOOLEAN isHighlighted = (drawInfo->nmcd.uItemState & CDIS_HOT) == CDIS_HOT;
+    BOOLEAN isFocused = (drawInfo->nmcd.uItemState & CDIS_FOCUS) == CDIS_FOCUS;
+
+    if (drawInfo->nmcd.dwDrawStage == CDDS_PREPAINT)
+    {
+        HPEN PenActive = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
+        HPEN PenNormal = CreatePen(PS_SOLID, 1, RGB(0, 0xff, 0));
+        HBRUSH BrushNormal = GetSysColorBrush(COLOR_3DFACE);
+        HBRUSH BrushSelected = CreateSolidBrush(RGB(0xff, 0xff, 0xff));
+        HBRUSH BrushPushed = CreateSolidBrush(RGB(153, 209, 255));
+
+        PPH_STRING windowText = PH_AUTO(PhGetWindowText(drawInfo->nmcd.hdr.hwndFrom));
+
+        SetBkMode(drawInfo->nmcd.hdc, TRANSPARENT);
+
+        if (isHighlighted || Context->PluginMenuActiveId == drawInfo->nmcd.hdr.idFrom)
+        {
+            FillRect(drawInfo->nmcd.hdc, &drawInfo->nmcd.rc, BrushNormal);
+
+            SelectObject(drawInfo->nmcd.hdc, PenActive);
+            SelectObject(drawInfo->nmcd.hdc, Context->BoldFontHandle);
+        }
+        else if (isSelected)
+        {
+            FillRect(drawInfo->nmcd.hdc, &drawInfo->nmcd.rc, BrushPushed);
+           
+            SelectObject(drawInfo->nmcd.hdc, PenActive);
+            SelectObject(drawInfo->nmcd.hdc, Context->BoldFontHandle);
+        }
+        else
+        {
+            FillRect(drawInfo->nmcd.hdc, &drawInfo->nmcd.rc, BrushNormal);
+        }
+
+        DrawText(
+            drawInfo->nmcd.hdc,
+            windowText->Buffer,
+            (ULONG)windowText->Length / 2,
+            &drawInfo->nmcd.rc,
+            DT_CENTER | DT_VCENTER | DT_END_ELLIPSIS | DT_SINGLELINE
+            );
+
+        MoveToEx(drawInfo->nmcd.hdc, drawInfo->nmcd.rc.left, drawInfo->nmcd.rc.bottom, 0);
+        LineTo(drawInfo->nmcd.hdc, drawInfo->nmcd.rc.right, drawInfo->nmcd.rc.bottom);
+
+        DeletePen(PenNormal);
+        DeletePen(PenActive);
+        DeleteBrush(BrushNormal);
+        DeleteBrush(BrushSelected);
+        DeleteBrush(BrushPushed);
+        return CDRF_SKIPDEFAULT;
+    }
+
+    return CDRF_DODEFAULT;
+}
+
 INT_PTR CALLBACK FwEntriesDlgProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
@@ -279,28 +346,71 @@ INT_PTR CALLBACK FwEntriesDlgProc(
     {
     case WM_INITDIALOG:
         {
+            LOGFONT logFont;
+
+            //context->DialogHandle = hwndDlg;
+            context->PluginMenuActiveId = IDC_INBOUND;
+            context->PluginMenuActive = GetDlgItem(hwndDlg, IDC_INBOUND);
             context->ListViewHandle = GetDlgItem(hwndDlg, IDC_LIST1);
+            context->SearchHandle = GetDlgItem(hwndDlg, IDC_SEARCHBOX);
+
+            //CreateSearchControl(hwndDlg, context->SearchHandle, ID_SEARCH_CLEAR);
+
+            if (SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(LOGFONT), &logFont, 0))
+            {
+                context->NormalFontHandle = CreateFont(
+                    -PhMultiplyDivideSigned(-14, PhGlobalDpi, 72),
+                    0,
+                    0,
+                    0,
+                    FW_NORMAL,
+                    FALSE,
+                    FALSE,
+                    FALSE,
+                    ANSI_CHARSET,
+                    OUT_DEFAULT_PRECIS,
+                    CLIP_DEFAULT_PRECIS,
+                    CLEARTYPE_QUALITY | ANTIALIASED_QUALITY,
+                    DEFAULT_PITCH,
+                    logFont.lfFaceName
+                    );
+
+                context->BoldFontHandle = CreateFont(
+                    -PhMultiplyDivideSigned(-16, PhGlobalDpi, 72),
+                    0,
+                    0,
+                    0,
+                    FW_BOLD,
+                    FALSE,
+                    FALSE,
+                    FALSE,
+                    ANSI_CHARSET,
+                    OUT_DEFAULT_PRECIS,
+                    CLIP_DEFAULT_PRECIS,
+                    CLEARTYPE_QUALITY | ANTIALIASED_QUALITY,
+                    DEFAULT_PITCH,
+                    logFont.lfFaceName
+                    );
+            }
 
             PhCenterWindow(hwndDlg, PhMainWndHandle);
-            PhRegisterDialog(hwndDlg);
 
             PhSetListViewStyle(context->ListViewHandle, FALSE, TRUE);
             PhSetControlTheme(context->ListViewHandle, L"explorer");
-            PhAddListViewColumn(context->ListViewHandle, 0, 0, 0, LVCFMT_LEFT, 200, L"Name");
-            PhAddListViewColumn(context->ListViewHandle, 1, 1, 1, LVCFMT_LEFT, 140, L"Attributes");
-            PhAddListViewColumn(context->ListViewHandle, 2, 2, 2, LVCFMT_LEFT, 140, L"Guid Name");
+            PhAddListViewColumn(context->ListViewHandle, 0, 0, 0, LVCFMT_LEFT, 450, L"Name");
+            PhAddListViewColumn(context->ListViewHandle, 1, 1, 1, LVCFMT_LEFT, 440, L"Attributes");
+            PhAddListViewColumn(context->ListViewHandle, 2, 2, 2, LVCFMT_LEFT, 80, L"Type");
             PhSetExtendedListView(context->ListViewHandle);
 
             //ExtendedListView_SetSortFast(context->ListViewHandle, TRUE);
             ListView_SetImageList(context->ListViewHandle, ImageList_Create(20, 20, ILC_COLOR32 | ILC_MASK, 0, 1), LVSIL_SMALL);
             ExtendedListView_SetCompareFunction(context->ListViewHandle, 0, FirmwareNameCompareFunction);
             ExtendedListView_SetCompareFunction(context->ListViewHandle, 1, FirmwareNameCompareFunction);
-            PhLoadListViewColumnsFromSetting(SETTING_NAME_LISTVIEW_COLUMNS, context->ListViewHandle);
+            //PhLoadListViewColumnsFromSetting(SETTING_NAME_LISTVIEW_COLUMNS, context->ListViewHandle);
 
             PhInitializeLayoutManager(&context->LayoutManager, hwndDlg);
+            PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDC_SEARCHBOX), NULL, PH_ANCHOR_TOP | PH_ANCHOR_RIGHT);
             PhAddLayoutItem(&context->LayoutManager, context->ListViewHandle, NULL, PH_ANCHOR_ALL);
-            //PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDC_BOOT_REFRESH), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_LEFT);
-            PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDOK), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_RIGHT);
             PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
             
             EnumerateEnvironmentValues(context);
@@ -330,6 +440,15 @@ INT_PTR CALLBACK FwEntriesDlgProc(
                 {
                     if (hdr->hwndFrom == context->ListViewHandle)
                         ShowBootEntryMenu(context, hwndDlg);
+                }
+                break;
+            case NM_CUSTOMDRAW:
+                {
+                    if (hdr->idFrom == IDC_INBOUND || hdr->idFrom == IDC_OUTBOUND)
+                    {
+                        SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, SysButtonCustomDraw(context, lParam));
+                        return TRUE;
+                    }
                 }
                 break;
             }

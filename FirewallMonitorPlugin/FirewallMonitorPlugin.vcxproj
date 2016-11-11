@@ -65,37 +65,25 @@
     <Import Project="..\ExtraPlugins.props" />
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Link>
-      <AdditionalDependencies>include\firewallapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>firewallapi.dll%(DelayLoadDLLs)</DelayLoadDLLs>
-    </Link>
+    <Link />
     <ClCompile>
       <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <Link>
-      <AdditionalDependencies>include\firewallapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>firewallapi.dll%(DelayLoadDLLs)</DelayLoadDLLs>
-    </Link>
+    <Link />
     <ClCompile>
       <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <Link>
-      <AdditionalDependencies>include\firewallapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>firewallapi.dll%(DelayLoadDLLs)</DelayLoadDLLs>
-    </Link>
+    <Link />
     <ClCompile>
       <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Link>
-      <AdditionalDependencies>include\firewallapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>firewallapi.dll%(DelayLoadDLLs)</DelayLoadDLLs>
-    </Link>
+    <Link />
     <ClCompile>
       <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>

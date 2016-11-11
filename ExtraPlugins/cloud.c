@@ -419,26 +419,7 @@ CleanupExit:
     TreeNew_NodesStructured(context->TreeNewHandle);
     TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
 
-
-    if (context->DialogHandle)
-    {
-        ULONG count = 0;
-
-        for (ULONG i = 0; i < context->TreeContext.NodeList->Count; i++)
-        {
-            PPLUGIN_NODE windowNode = context->TreeContext.NodeList->Items[i];
-
-            if (windowNode->State == PLUGIN_STATE_UPDATE)
-            {
-                count++;
-            }
-        }
-
-        if (count != 0)
-        {
-            SetWindowText(GetDlgItem(context->DialogHandle, IDC_UPDATES), PhFormatString(L"Updates (%u)", count)->Buffer);
-        }
-    }
+    PostMessage(context->DialogHandle, ID_UPDATE_COUNT, 0, 0);
 
     return STATUS_SUCCESS;
 }

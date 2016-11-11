@@ -3,6 +3,13 @@
 
 BOOLEAN IsFwApiInitialized = FALSE;
 HMODULE FwApiLibraryHandle = NULL;
+
+_FWStatusMessageFromStatusCode FWStatusMessageFromStatusCode_I;
+_FWOpenPolicyStore FWOpenPolicyStore_I;
+_FWClosePolicyStore FWClosePolicyStore_I;
+_FWEnumFirewallRules FWEnumFirewallRules_I;
+_FWFreeFirewallRules FWFreeFirewallRules_I;
+
 FW_POLICY_STORE_HANDLE PolicyStoreHandles[4];
 #define MAIN_POLICY_STORE PolicyStoreHandles[0]
 #define GPRSOP_POLICY_STORE PolicyStoreHandles[1]
@@ -38,7 +45,17 @@ BOOLEAN InitializeFirewallApi(
     VOID
     )
 {
-    FWOpenPolicyStore(
+    FwApiLibraryHandle = LoadLibrary(L"FirewallAPI.dll");
+
+    FWStatusMessageFromStatusCode_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWStatusMessageFromStatusCode", 0);
+    FWOpenPolicyStore_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWOpenPolicyStore", 0);
+    FWClosePolicyStore_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWClosePolicyStore", 0);
+    FWEnumFirewallRules_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWEnumFirewallRules", 0);
+    FWFreeFirewallRules_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWFreeFirewallRules", 0);
+
+
+
+    FWOpenPolicyStore_I(
         FW_REDSTONE_BINARY_VERSION,
         NULL,
         FW_STORE_TYPE_LOCAL,
@@ -46,7 +63,7 @@ BOOLEAN InitializeFirewallApi(
         FW_POLICY_STORE_FLAGS_NONE,
         &PolicyStoreHandles[0]
         );
-    FWOpenPolicyStore(
+    FWOpenPolicyStore_I(
         FW_REDSTONE_BINARY_VERSION,
         NULL,
         FW_STORE_TYPE_GP_RSOP,
@@ -54,7 +71,7 @@ BOOLEAN InitializeFirewallApi(
         FW_POLICY_STORE_FLAGS_NONE,
         &PolicyStoreHandles[1]
         );
-    FWOpenPolicyStore(
+    FWOpenPolicyStore_I(
         FW_REDSTONE_BINARY_VERSION,
         NULL,
         FW_STORE_TYPE_DYNAMIC,
@@ -62,7 +79,7 @@ BOOLEAN InitializeFirewallApi(
         FW_POLICY_STORE_FLAGS_NONE,
         &PolicyStoreHandles[2]
         );
-    FWOpenPolicyStore(
+    FWOpenPolicyStore_I(
         FW_REDSTONE_BINARY_VERSION,
         NULL,
         FW_STORE_TYPE_DEFAULTS,
@@ -78,10 +95,9 @@ VOID FreeFirewallApi(
     VOID
     )
 {
-    for (ULONG i = 0; i < ARRAYSIZE(PolicyStoreHandles); i++)
+    //for (ULONG i = 0; i < ARRAYSIZE(PolicyStoreHandles); i++)
     {
-        if (FWClosePolicyStore)
-            FWClosePolicyStore(PolicyStoreHandles[i]);
+        //FWClosePolicyStore(PolicyStoreHandles[i]);
     }
 
     IsFwApiInitialized = FALSE;
@@ -103,7 +119,7 @@ VOID FwStatusMessageFromStatusCode(
 {
     ULONG statusLength = 0;
 
-    FWStatusMessageFromStatusCode(code, NULL, &statusLength);
+    FWStatusMessageFromStatusCode_I(code, NULL, &statusLength);
 }
 
 VOID EnumerateFirewallRules(
@@ -138,8 +154,8 @@ VOID EnumerateFirewallRules(
     //FW_PROFILE_TYPE_CURRENT
     //result = FWEnumFirewallRules_I(DYNAMIC_POLICY_STORE, wFilteredByStatus, FW_PROFILE_TYPE_CURRENT, wFlags, &NumRules, &pRule);
 
-    result = FWEnumFirewallRules(
-        DYNAMIC_POLICY_STORE,
+    result = FWEnumFirewallRules_I(
+        storeHandle,
         FW_RULE_STATUS_CLASS_OK,
         Type, 
         FW_ENUM_RULES_FLAG_INCLUDE_METADATA | FW_ENUM_RULES_FLAG_RESOLVE_NAME | FW_ENUM_RULES_FLAG_RESOLVE_DESCRIPTION | FW_ENUM_RULES_FLAG_RESOLVE_APPLICATION, 
@@ -166,6 +182,6 @@ VOID EnumerateFirewallRules(
             }
         }
 
-        FWFreeFirewallRules(pRules);
+        FWFreeFirewallRules_I(pRules);
     }
 }
