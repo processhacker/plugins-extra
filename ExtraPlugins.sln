@@ -50,6 +50,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PoolMonPlugin", "PoolMonPlu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObjectManagerPlugin", "ObjectManagerPlugin\ObjectManagerPlugin.vcxproj", "{DADA7017-0A25-4E97-BC21-D7FE3DE2EBF3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExtraPlugins", "ExtraPlugins\ExtraPlugins.vcxproj", "{96549A3E-D1BD-470E-A5B3-A64803C4DEF5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -238,6 +240,14 @@ Global
 		{DADA7017-0A25-4E97-BC21-D7FE3DE2EBF3}.Release|Win32.Build.0 = Release|Win32
 		{DADA7017-0A25-4E97-BC21-D7FE3DE2EBF3}.Release|x64.ActiveCfg = Release|x64
 		{DADA7017-0A25-4E97-BC21-D7FE3DE2EBF3}.Release|x64.Build.0 = Release|x64
+		{96549A3E-D1BD-470E-A5B3-A64803C4DEF5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{96549A3E-D1BD-470E-A5B3-A64803C4DEF5}.Debug|Win32.Build.0 = Debug|Win32
+		{96549A3E-D1BD-470E-A5B3-A64803C4DEF5}.Debug|x64.ActiveCfg = Debug|x64
+		{96549A3E-D1BD-470E-A5B3-A64803C4DEF5}.Debug|x64.Build.0 = Debug|x64
+		{96549A3E-D1BD-470E-A5B3-A64803C4DEF5}.Release|Win32.ActiveCfg = Release|Win32
+		{96549A3E-D1BD-470E-A5B3-A64803C4DEF5}.Release|Win32.Build.0 = Release|Win32
+		{96549A3E-D1BD-470E-A5B3-A64803C4DEF5}.Release|x64.ActiveCfg = Release|x64
+		{96549A3E-D1BD-470E-A5B3-A64803C4DEF5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

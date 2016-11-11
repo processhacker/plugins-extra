@@ -1,0 +1,191 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (Australia) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENA)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_AUS
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000904b0"
+        BEGIN
+            VALUE "CompanyName", "dmex"
+            VALUE "FileDescription", "Extra plugins for Process Hacker"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "ExtraPlugins"
+            VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
+            VALUE "OriginalFilename", "ExtraPlugins.dll"
+            VALUE "ProductName", "Extra plugins for Process Hacker"
+            VALUE "ProductVersion", "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x9, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_PLUGINS_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 637
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 309
+    END
+
+    IDD_PLUGIN, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 284
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 264
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""winres.h""\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_PLUGINS_DIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_PLUGIN AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_PLUGINS_DIALOG DIALOGEX 0, 0, 639, 313
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Plugin Manager"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Installed",IDC_INSTALLED,2,2,65,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Browse",IDC_BROWSE,73,2,64,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Updates",IDC_UPDATES,143,2,65,14,NOT WS_TABSTOP
+    LTEXT           "Changes may require a restart to take effect.",IDC_INSTRUCTION,217,2,154,8,NOT WS_VISIBLE
+    EDITTEXT        IDC_SEARCHBOX,483,2,153,14,ES_AUTOHSCROLL,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_PLUGINTREE,"PhTreeNew",WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP | 0xa,2,18,635,274,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Close",IDOK,587,295,50,14
+    PUSHBUTTON      "Disabled Plugins",IDC_DISABLED,2,295,59,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Clean up",IDC_CLEANUP,66,295,60,14
+END
+
+IDD_PLUGIN DIALOGEX 0, 0, 291, 271
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Plugin",IDC_STATIC,7,7,277,257
+    LTEXT           "Name:",IDC_STATIC,10,18,22,8
+    EDITTEXT        IDC_NAME,66,18,104,12,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
+    LTEXT           "Author:",IDC_STATIC,10,30,26,8
+    EDITTEXT        IDC_AUTHOR,66,30,109,12,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
+    CONTROL         "<a>Open</a>",IDC_OPENURL,"SysLink",WS_TABSTOP,7,43,277,10
+    LTEXT           "Version:",IDC_STATIC,183,18,27,8
+    EDITTEXT        IDC_VERSION,215,18,59,12,ES_RIGHT | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
+    EDITTEXT        IDC_DESCRIPTION,7,56,277,190,ES_MULTILINE | ES_READONLY
+    PUSHBUTTON      "Disable",IDC_DISABLE,113,250,50,14
+    PUSHBUTTON      "Options...",IDC_OPTIONS,17,250,50,14
+    DEFPUSHBUTTON   "Close",IDOK,234,251,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_SEARCH_ACTIVE_BMP   BITMAP                  "resources\\active_search.bmp"
+
+IDB_SEARCH_INACTIVE_BMP BITMAP                  "resources\\inactive_search.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// PNG
+//
+
+IDB_SEARCH_ACTIVE       PNG                     "resources\\active_search.png"
+
+IDB_SEARCH_INACTIVE     PNG                     "resources\\inactive_search.png"
+
+#endif    // English (Australia) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
