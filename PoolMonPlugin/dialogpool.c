@@ -34,7 +34,10 @@ VOID UpdatePoolTagTable(
     ULONG i;
     
     if (!NT_SUCCESS(EnumPoolTagTable(&poolTagTable)))
+    {
+        PhDereferenceObject(Context);
         return;
+    }
     
     for (i = 0; i < poolTagTable->Count; i++)
     {
@@ -82,6 +85,7 @@ VOID UpdatePoolTagTable(
     }
 
     TreeNew_NodesStructured(Context->TreeNewHandle);
+    PhDereferenceObject(Context);
 
     PhFree(poolTagTable);
 }
@@ -165,8 +169,8 @@ VOID NTAPI ProcessesUpdatedCallback(
     if (context->ProcessesUpdatedCount < 2)
         return;
  
+    PhReferenceObject(context);
     UpdatePoolTagTable(Context);
-    //PhQueueItemWorkQueue(PhGetGlobalWorkQueue(), (PUSER_THREAD_START_ROUTINE)UpdatePoolTagTable, Context);
 }
 
 INT_PTR CALLBACK PoolMonDlgProc(
@@ -180,7 +184,7 @@ INT_PTR CALLBACK PoolMonDlgProc(
 
     if (uMsg == WM_INITDIALOG)
     {
-        context = PhAllocate(sizeof(POOLTAG_CONTEXT));
+        context = PhCreateAlloc(sizeof(POOLTAG_CONTEXT));
         memset(context, 0, sizeof(POOLTAG_CONTEXT));
 
         SetProp(hwndDlg, L"Context", (HANDLE)context);
@@ -190,7 +194,10 @@ INT_PTR CALLBACK PoolMonDlgProc(
         context = (PPOOLTAG_CONTEXT)GetProp(hwndDlg, L"Context");
 
         if (uMsg == WM_DESTROY)
+        {
             RemoveProp(hwndDlg, L"Context");
+            PhDereferenceObject(context);
+        }
     }
 
     if (!context)
@@ -224,7 +231,10 @@ INT_PTR CALLBACK PoolMonDlgProc(
                 );
 
             LoadPoolTagDatabase(context);
+
+            PhReferenceObject(context);
             UpdatePoolTagTable(context);
+            TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_DESCRIPTION, TN_AUTOSIZE_REMAINING_SPACE);
 
             PhRegisterCallback(
                 &PhProcessesUpdatedEvent,
@@ -236,6 +246,7 @@ INT_PTR CALLBACK PoolMonDlgProc(
         break;
     case WM_SIZE:
         PhLayoutManagerLayout(&context->LayoutManager);
+        TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_DESCRIPTION, TN_AUTOSIZE_REMAINING_SPACE);
         break;
     case WM_DESTROY:
         {

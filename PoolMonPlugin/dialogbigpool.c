@@ -34,20 +34,20 @@ VOID UpdateBigPoolTable(
     
     for (i = 0; i < bigPoolTable->Count; i++)
     {
-        SYSTEM_BIGPOOL_ENTRY poolTagInfo;
         INT itemIndex;
-        WCHAR logonSessionLuid[PH_PTR_STR_LEN_1] = L"";
+        SYSTEM_BIGPOOL_ENTRY poolTagInfo;
+        WCHAR virtualAddressString[PH_PTR_STR_LEN_1] = L"";
 
         poolTagInfo = bigPoolTable->AllocatedInfo[i];
 
         if (poolTagInfo.TagUlong != Context->TagUlong)
             continue;
 
-        PhPrintPointer(logonSessionLuid, poolTagInfo.VirtualAddress);
+        PhPrintPointer(virtualAddressString, poolTagInfo.VirtualAddress);
         itemIndex = PhAddListViewItem(
             Context->ListviewHandle,
             MAXINT,
-            logonSessionLuid,
+            virtualAddressString,
             NULL
             );
 

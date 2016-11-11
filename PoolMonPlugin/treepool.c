@@ -134,8 +134,6 @@ PPOOLTAG_ROOT_NODE PmAddPoolTagNode(
     if (Context->FilterSupport.FilterList)
         poolTagNode->Node.Visible = PhApplyTreeNewFiltersToNode(&Context->FilterSupport, &poolTagNode->Node);
 
-    //TreeNew_NodesStructured(Context->TreeNewHandle);
-
     return poolTagNode;
 }
 
@@ -188,7 +186,7 @@ VOID PmUpdatePoolTagNode(
 {
     memset(PoolTagNode->TextCache, 0, sizeof(PH_STRINGREF) * TREE_COLUMN_ITEM_MAXIMUM);
 
-    //PhInvalidateTreeNewNode(&PoolTagNode->Node, TN_CACHE_COLOR);
+    PhInvalidateTreeNewNode(&PoolTagNode->Node, TN_CACHE_COLOR);
     //TreeNew_NodesStructured(Context->TreeNewHandle);
 }
 
@@ -553,15 +551,15 @@ VOID PmInitializePoolTagTree(
 
     PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_TAG, TRUE, L"Tag Name", 50, PH_ALIGN_LEFT, -2, 0);
     PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_DRIVER, TRUE, L"Driver", 82, PH_ALIGN_LEFT, 0, 0);
-    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_DESCRIPTION, TRUE, L"Description", 80, PH_ALIGN_LEFT, 1, 0);
-    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_PAGEDALLOC, TRUE, L"Paged Allocations", 60, PH_ALIGN_RIGHT, 2, DT_RIGHT);
-    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_PAGEDFREE, TRUE, L"Paged Frees", 60, PH_ALIGN_RIGHT, 3, DT_RIGHT);
-    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_PAGEDCURRENT, TRUE, L"Paged Current", 60, PH_ALIGN_RIGHT, 4, DT_RIGHT);
-    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_PAGEDTOTAL, TRUE, L"Paged Bytes Total", 60, PH_ALIGN_LEFT, 5, 0);
-    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_NONPAGEDALLOC, TRUE, L"Non-paged Allocations", 60, PH_ALIGN_RIGHT, 6, DT_RIGHT);
-    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_NONPAGEDFREE, TRUE, L"Non-paged Frees", 60, PH_ALIGN_RIGHT, 7, DT_RIGHT);
-    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_NONPAGEDCURRENT, TRUE, L"Non-paged Current", 60, PH_ALIGN_RIGHT, 8, DT_RIGHT);
-    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_NONPAGEDTOTAL, TRUE, L"Non-paged Bytes Total", 60, PH_ALIGN_LEFT, 9, 0);
+    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_DESCRIPTION, TRUE, L"Description", 140, PH_ALIGN_LEFT, 1, 0);
+    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_PAGEDALLOC, TRUE, L"Paged Allocations", 80, PH_ALIGN_RIGHT, 2, DT_RIGHT);
+    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_PAGEDFREE, TRUE, L"Paged Frees", 80, PH_ALIGN_RIGHT, 3, DT_RIGHT);
+    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_PAGEDCURRENT, TRUE, L"Paged Current", 80, PH_ALIGN_RIGHT, 4, DT_RIGHT);
+    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_PAGEDTOTAL, TRUE, L"Paged Bytes Total", 80, PH_ALIGN_LEFT, 5, 0);
+    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_NONPAGEDALLOC, TRUE, L"Non-paged Allocations", 80, PH_ALIGN_RIGHT, 6, DT_RIGHT);
+    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_NONPAGEDFREE, TRUE, L"Non-paged Frees", 80, PH_ALIGN_RIGHT, 7, DT_RIGHT);
+    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_NONPAGEDCURRENT, TRUE, L"Non-paged Current", 80, PH_ALIGN_RIGHT, 8, DT_RIGHT);
+    PhAddTreeNewColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_NONPAGEDTOTAL, TRUE, L"Non-paged Bytes Total", 80, PH_ALIGN_LEFT, 9, 0);
 
     TreeNew_SetTriState(Context->TreeNewHandle, TRUE);
     TreeNew_SetSort(Context->TreeNewHandle, TREE_COLUMN_ITEM_NONPAGEDTOTAL, DescendingSortOrder);
