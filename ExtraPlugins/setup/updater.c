@@ -997,9 +997,9 @@ HRESULT CALLBACK TaskDialogBootstrapCallback(
     case TDN_CREATED:
         {
             context->DialogHandle = hwndDlg;
+
             TaskDialogCreateIcons(context);
 
-            // Subclass the Taskdialog
             SetWindowSubclass(hwndDlg, TaskDialogSubclassProc, 0, (ULONG_PTR)context);
 
             switch (context->Action)
@@ -1014,12 +1014,12 @@ HRESULT CALLBACK TaskDialogBootstrapCallback(
                     ShowPluginUninstallDialog(context);
                 }
                 break;
+            case PLUGIN_ACTION_RESTART:
+                {
+                    ShowUninstallRestartDialog(context);
+                }
+                break;
             }
-        }
-        break;
-    case TDN_DESTROYED:
-        {
-
         }
         break;
     }
@@ -1044,6 +1044,27 @@ BOOLEAN ShowInitialDialog(
     TaskDialogIndirect(&config, &result, NULL, NULL);
 
     return result == IDOK;
+}
+
+BOOLEAN ShowUpdateDialog(
+    _In_ HWND Parent,
+    _In_ PLUGIN_ACTION Action
+    )
+{
+    BOOLEAN result;
+    PH_AUTO_POOL autoPool;
+    PPH_UPDATER_CONTEXT context;
+
+    context = CreateUpdateContext(NULL, Action);
+
+    PhInitializeAutoPool(&autoPool);
+
+    result = ShowInitialDialog(Parent, context);
+
+    FreeUpdateContext(context);
+    PhDeleteAutoPool(&autoPool);
+
+    return result;
 }
 
 BOOLEAN StartInitialCheck(

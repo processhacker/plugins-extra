@@ -12,17 +12,12 @@ ULONG PhDisabledPluginsCount(
     disabled = PhGetStringSetting(L"DisabledPlugins");
     remainingPart = disabled->sr;
 
-    while (remainingPart.Length != 0)
+    while (remainingPart.Length)
     {
         PhSplitStringRefAtChar(&remainingPart, '|', &part, &remainingPart);
 
-        if (part.Length != 0)
+        if (part.Length)
         {
-            if (!PhIsPluginLoadedByBaseName(&part))
-            {
-
-            }
-
             count++;
         }
     }

@@ -264,9 +264,10 @@ VOID EnumerateLoadedPlugins(_In_ PWCT_CONTEXT Context);
 
 typedef enum _PLUGIN_ACTION
 {
+    PLUGIN_ACTION_RESTORE,
     PLUGIN_ACTION_INSTALL,
     PLUGIN_ACTION_UNINSTALL,
-    PLUGIN_ACTION_RESTORE
+    PLUGIN_ACTION_RESTART
 } PLUGIN_ACTION;
 
 typedef struct _PH_UPDATER_CONTEXT
@@ -285,6 +286,10 @@ typedef struct _PH_UPDATER_CONTEXT
     PPH_STRING SetupFilePath;
 } PH_UPDATER_CONTEXT, *PPH_UPDATER_CONTEXT;
 
+BOOLEAN ShowUpdateDialog(
+    _In_ HWND Parent,
+    _In_ PLUGIN_ACTION Action
+    );
 
 BOOLEAN StartInitialCheck(
     _In_ HWND Parent,

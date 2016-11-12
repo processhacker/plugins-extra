@@ -600,7 +600,7 @@ CleanupExit:
 
     if (screenHdc)
     {
-        ReleaseDC(NULL, screenHdc);
+        DeleteDC(screenHdc);
     }
 
     if (wicBitmapSource)

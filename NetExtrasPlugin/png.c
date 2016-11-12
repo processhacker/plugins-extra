@@ -459,7 +459,7 @@ HBITMAP LoadImageFromResources(
 
         if (screenHdc)
         {
-            ReleaseDC(NULL, screenHdc);
+            DeleteDC(screenHdc);
         }
 
         if (wicBitmapSource)

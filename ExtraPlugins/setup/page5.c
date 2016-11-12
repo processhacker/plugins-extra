@@ -41,14 +41,6 @@ HRESULT CALLBACK RestartTaskDialogCallbackProc(
 
     switch (uMsg)
     {
-    case TDN_NAVIGATED:
-        {
-            //if (!PhGetOwnTokenAttributes().Elevated)
-            {
-                SendMessage(hwndDlg, TDM_SET_BUTTON_ELEVATION_REQUIRED_STATE, IDYES, TRUE);
-            }
-        }
-        break;
     case TDN_BUTTON_CLICKED:
         {
             if ((INT)wParam == IDYES)
@@ -71,18 +63,12 @@ HRESULT CALLBACK RestartTaskDialogCallbackProc(
                 }
                 else
                 {
-                    context->Node->State = PLUGIN_STATE_RESTART;
-
-                    // Install failed, cancel the shutdown.
+                    // Install failed, cancel the shutdown
                     ProcessHacker_CancelEarlyShutdown(PhMainWndHandle);
                     // Set button text for next action
                     //Button_SetText(GetDlgItem(hwndDlg, IDOK), L"Retry");
                     return S_FALSE;
                 }
-            }
-            else
-            {
-                context->Node->State = PLUGIN_STATE_RESTART;
             }
         }
         break;
@@ -109,29 +95,14 @@ HRESULT CALLBACK FinalTaskDialogCallbackProc(
             {
                 SendMessage(hwndDlg, TDM_SET_BUTTON_ELEVATION_REQUIRED_STATE, IDYES, TRUE);
             }
-
-            //PhQueueItemWorkQueue(PhGetGlobalWorkQueue(), SetupExtractBuild, context);
         }
         break;
     case TDN_BUTTON_CLICKED:
-        {
-            //if ((INT)wParam == IDRETRY)
-            //{
-            //    ShowCheckingForUpdatesDialog(context);
-            //    return S_FALSE;
-            //}
-        }
-        break;
-    case TDN_HYPERLINK_CLICKED:
-        {
-            TaskDialogLinkClicked(context);
-        }
         break;
     }
 
     return S_OK;
 }
-
 
 VOID ShowInstallRestartDialog(
     _In_ PPH_UPDATER_CONTEXT Context
@@ -146,7 +117,7 @@ VOID ShowInstallRestartDialog(
     config.hMainIcon = Context->IconLargeHandle;
 
     config.pszWindowTitle = L"Process Hacker - Plugin Manager";
-    config.pszMainInstruction = L"The plugin has been installed";
+    config.pszMainInstruction = L"Process Hacker needs to restart";
     config.pszContent = L"Changes may require a restart to take effect...";
 
     config.pButtons = TaskDialogButtonArray;
@@ -172,7 +143,7 @@ VOID ShowUninstallRestartDialog(
     config.hMainIcon = Context->IconLargeHandle;
 
     config.pszWindowTitle = L"Process Hacker - Plugin Manager";
-    config.pszMainInstruction = L"The plugin has been uninstalled";
+    config.pszMainInstruction = L"Process Hacker needs to restart";
     config.pszContent = L"Changes may require a restart to take effect...";
 
     config.pButtons = TaskDialogButtonArray;
@@ -184,7 +155,6 @@ VOID ShowUninstallRestartDialog(
 
     SendMessage(Context->DialogHandle, TDM_NAVIGATE_PAGE, 0, (LPARAM)&config);
 }
-
 
 VOID ShowLatestVersionDialog(
     _In_ PPH_UPDATER_CONTEXT Context

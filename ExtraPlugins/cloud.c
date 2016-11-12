@@ -23,7 +23,7 @@
 #include "main.h"
 #include "miniz\miniz.h"
 
-static ULONGLONG ParseVersionString(
+ULONGLONG ParseVersionString(
     _In_ PPH_STRING Version
     )
 {
@@ -44,7 +44,7 @@ static ULONGLONG ParseVersionString(
     return MAKE_VERSION_ULONGLONG(majorInteger, minorInteger, reservedInteger, revisionInteger);
 }
 
-static json_object_ptr json_get_object(
+json_object_ptr json_get_object(
     _In_ json_object_ptr Object, 
     _In_ PCSTR Key
     )
@@ -140,8 +140,17 @@ VOID EnumerateLoadedPlugins(
         IO_STATUS_BLOCK isb;
         FILE_BASIC_INFORMATION basic;
         PPHAPP_PLUGIN pluginInstance;
+        PH_STRINGREF pluginBaseName;
 
         pluginInstance = CONTAINING_RECORD(links, PHAPP_PLUGIN, Links);
+
+        PhInitializeStringRefLongHint(&pluginBaseName, PhGetPluginBaseName(pluginInstance));
+
+        if (PhIsPluginDisabled(&pluginBaseName))
+        {
+            continue;
+        }
+
         memset(&basic, 0, sizeof(FILE_BASIC_INFORMATION));
 
         if (NT_SUCCESS(PhCreateFileWin32(
@@ -154,6 +163,7 @@ VOID EnumerateLoadedPlugins(
             FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
             )))
         {
+
             NtQueryInformationFile(
                 handle,
                 &isb,
@@ -218,15 +228,19 @@ VOID EnumerateLoadedPlugins(
 
         entry->State = PLUGIN_STATE_LOCAL;
         entry->PluginInstance = pluginInstance;
-        entry->InternalName = PhCreateString2(&pluginInstance->Name);
+        entry->InternalName = internalName;
+        entry->Version = PhSubstring(version, 0, version->Length / sizeof(WCHAR) - 4);
+
         entry->Name = PhCreateString(pluginInstance->Information.DisplayName);
         entry->Author = PhCreateString(pluginInstance->Information.Author);
         entry->Description = PhCreateString(pluginInstance->Information.Description);
+
         entry->FilePath = PhCreateString2(&pluginInstance->FileName->sr);
         entry->FileName = PhGetBaseName(entry->FilePath);
 
-        entry->Version = PhSubstring(version, 0, version->Length / sizeof(WCHAR) - 4);
+        OutputDebugString(PhFormatString(L"InternalName: %s\r\n", internalName->Buffer)->Buffer);
 
+    
         SYSTEMTIME utcTime, localTime;
         PhLargeIntegerToSystemTime(&utcTime, &basic.LastWriteTime);
         SystemTimeToTzSpecificLocalTime(NULL, &utcTime, &localTime);
@@ -237,7 +251,6 @@ VOID EnumerateLoadedPlugins(
         entry->AddedTime = PhFormatDateTime(&localTime);
 
         PostMessage(Context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
-
     }
 }
 
@@ -319,12 +332,12 @@ NTSTATUS QueryPluginsCallbackThread(
         SYSTEMTIME time = { 0 };
         SYSTEMTIME localTime = { 0 };
         PH_STRINGREF pluginBaseName;
-
-        jvalue = json_object_array_get_idx(rootJsonObject, i);
+        PPH_STRING pluginDllPath;
 
         entry = PhCreateAlloc(sizeof(PLUGIN_NODE));
         memset(entry, 0, sizeof(PLUGIN_NODE));
-    
+
+        jvalue = json_object_array_get_idx(rootJsonObject, i);
         entry->Id = PhConvertUtf8ToUtf16(json_object_get_string(json_get_object(jvalue, "plugin_id")));
         entry->Visible = PhConvertUtf8ToUtf16(json_object_get_string(json_get_object(jvalue, "plugin_visible")));
         entry->InternalName = PhConvertUtf8ToUtf16(json_object_get_string(json_get_object(jvalue, "plugin_internal_name")));
@@ -363,20 +376,68 @@ NTSTATUS QueryPluginsCallbackThread(
             entry->UpdatedTime = PhFormatDateTime(&localTime);
         }
 
-
-
+        pluginDllPath = PhConcatStrings(3, PhGetString(PhGetApplicationDirectory()), L"Plugins\\", PhGetString(entry->FileName));
         PhInitializeStringRefLongHint(&pluginBaseName, PhGetString(entry->FileName));
-
+   
         if (!PhIsPluginDisabled(&pluginBaseName))
         {
-            if (entry->PluginInstance = (PPHAPP_PLUGIN)PhFindPlugin(PhGetString(entry->InternalName)))
+            if (RtlDoesFileExists_U(PhGetString(pluginDllPath)))
             {
-                PH_IMAGE_VERSION_INFO versionInfo;
-                entry->FilePath = PhCreateString2(&entry->PluginInstance->FileName->sr);
+                ULONG versionSize;
+                PVOID versionInfo;
+                PUSHORT languageInfo;
+                UINT language;
+                UINT bufferSize = 0;
+                PWSTR buffer = NULL;
+                PPH_STRING internalName = NULL;
+                PPH_STRING version = NULL;
 
-                if (PhInitializeImageVersionInfo(&versionInfo, PhGetString(entry->PluginInstance->FileName)))
+                entry->FilePath = PhCreateString2(&pluginDllPath->sr);//entry->PluginInstance->FileName->sr);
+
+                versionSize = GetFileVersionInfoSize(PhGetString(entry->FilePath), NULL);
+                versionInfo = PhAllocate(versionSize);
+                memset(versionInfo, 0, versionSize);
+
+                if (GetFileVersionInfo(PhGetString(entry->FilePath), 0, versionSize, versionInfo))
                 {
-                    ULONGLONG currentVersion = ParseVersionString(versionInfo.FileVersion);
+                    if (VerQueryValue(versionInfo, L"\\", &buffer, &bufferSize))
+                    {
+                        VS_FIXEDFILEINFO* info = (VS_FIXEDFILEINFO*)buffer;
+
+                        if (info->dwSignature == 0xfeef04bd)
+                        {
+                            version = PhFormatString(
+                                L"%lu.%lu.%lu.%lu",
+                                (info->dwFileVersionMS >> 16) & 0xffff,
+                                (info->dwFileVersionMS >> 0) & 0xffff,
+                                (info->dwFileVersionLS >> 16) & 0xffff,
+                                (info->dwFileVersionLS >> 0) & 0xffff
+                                );
+                        }
+                    }
+
+                    if (VerQueryValue(versionInfo, L"\\VarFileInfo\\Translation", &languageInfo, &language))
+                    {
+                        PPH_STRING internalNameString = PhFormatString(
+                            L"\\StringFileInfo\\%04x%04x\\InternalName",
+                            languageInfo[0],
+                            languageInfo[1]
+                            );
+
+                        if (VerQueryValue(versionInfo, PhGetStringOrEmpty(internalNameString), &buffer, &bufferSize))
+                        {
+                            internalName = PhCreateStringEx(buffer, bufferSize * sizeof(WCHAR));
+                        }
+
+                        PhDereferenceObject(internalNameString);
+                    }
+                }
+
+                OutputDebugString(PhFormatString(L"InternalName: %s\r\n", internalName->Buffer)->Buffer);
+
+                if (entry->PluginInstance = (PPHAPP_PLUGIN)PhFindPlugin(PhGetString(internalName)))
+                {
+                    ULONGLONG currentVersion = ParseVersionString(version);
                     ULONGLONG latestVersion = ParseVersionString(entry->Version);
 
                     if (currentVersion == latestVersion)
@@ -391,9 +452,14 @@ NTSTATUS QueryPluginsCallbackThread(
                     {
                         // User is running an older version
                         entry->State = PLUGIN_STATE_UPDATE;
-
                         PostMessage(context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
                     }
+                }
+                else
+                {
+                    // New plugin available for download
+                    entry->State = PLUGIN_STATE_REMOTE;
+                    PostMessage(context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
                 }
             }
             else

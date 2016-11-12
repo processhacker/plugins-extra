@@ -4,8 +4,7 @@
 
 static TASKDIALOG_BUTTON TaskDialogButtonArray[] =
 {
-    { IDYES, L"Uninstall" },
-    { IDCANCEL, L"Close" },
+    { IDYES, L"Uninstall" }
 };
 
 HRESULT CALLBACK TaskDialogUninstallCallbackProc(
@@ -49,7 +48,6 @@ HRESULT CALLBACK TaskDialogUninstallCallbackProc(
                 PhDereferenceObject(fileNameString);
 
                 PostMessage(context->DialogHandle, PH_UPDATENEWER, 0, 0);
-                //ShowUninstallRestartDialog(context);
                 return S_FALSE;
             }
         }
@@ -72,7 +70,7 @@ VOID ShowPluginUninstallDialog(
     config.pszWindowTitle = L"Process Hacker - Plugin Manager";
     config.pszMainInstruction = PhaFormatString(L"Uninstall %s?", PhIsNullOrEmptyString(Context->Node->Name) ? PhGetStringOrEmpty(Context->Node->InternalName) : PhGetStringOrEmpty(Context->Node->Name))->Buffer;
     config.dwFlags = TDF_USE_HICON_MAIN | TDF_ALLOW_DIALOG_CANCELLATION | TDF_CAN_BE_MINIMIZED;
-    //config.dwCommonButtons = TDCBF_CLOSE_BUTTON;
+    config.dwCommonButtons = TDCBF_CLOSE_BUTTON;
     config.hMainIcon = context->IconLargeHandle;
     config.pfCallback = TaskDialogUninstallCallbackProc;
     config.lpCallbackData = (LONG_PTR)Context;

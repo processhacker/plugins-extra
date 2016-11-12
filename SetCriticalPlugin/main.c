@@ -142,7 +142,7 @@ LOGICAL DllMain(
     {
         PPH_PLUGIN_INFORMATION info;
 
-        PluginInstance = PhRegisterPlugin(L"Wj32.SetCriticalPlugin", Instance, &info);
+        PluginInstance = PhRegisterPlugin(L"wj32.SetCriticalPlugin", Instance, &info);
 
         if (!PluginInstance)
             return FALSE;

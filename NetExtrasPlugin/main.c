@@ -231,7 +231,7 @@ VOID NTAPI TreeNewMessageCallback(
                         extension->CountryIcon = CreateIconIndirect(&iconInfo);
 
                         DeleteObject(screenBitmap);
-                        ReleaseDC(NULL, screenDc);
+                        DeleteDC(screenDc);
 
                         DeleteObject(countryBitmap);
                     }

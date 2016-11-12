@@ -62,7 +62,7 @@ static VOID PhBeginBitmap2(
         Context->Header.biBitCount = 32;
         Context->Bitmap = CreateDIBSection(hdc, (BITMAPINFO*)&Context->Header, DIB_RGB_COLORS, &Context->Bits, NULL, 0);
 
-        ReleaseDC(NULL, hdc);
+        DeleteDC(hdc);
 
         Context->Initialized = TRUE;
     }

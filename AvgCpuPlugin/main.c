@@ -290,7 +290,7 @@ LOGICAL DllMain(
     {
         PPH_PLUGIN_INFORMATION info;
 
-        PluginInstance = PhRegisterPlugin(L"Wj32.AvgCpuPlugin", Instance, &info);
+        PluginInstance = PhRegisterPlugin(L"wj32.AvgCpuPlugin", Instance, &info);
 
         if (!PluginInstance)
             return FALSE;

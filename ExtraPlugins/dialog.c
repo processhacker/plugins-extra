@@ -532,6 +532,15 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                                
                                             }
 
+                                            if (existingNode = FindTreeNode(
+                                                &context->TreeContext,
+                                                PLUGIN_STATE_REMOTE,
+                                                selectedNode->InternalName
+                                                ))
+                                            {
+                                                selectedNode->State = PLUGIN_STATE_RESTART;
+                                            }
+
                                             PhApplyTreeNewFilters(context->TreeFilter);
                                             TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
                                         }                           
@@ -587,16 +596,14 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                 baseName = PhGetBaseName(selectedNode->FileName);
              
                                 PhSetPluginDisabled(&baseName->sr, TRUE);
-                                selectedNode->State = PLUGIN_STATE_RESTART;
 
+                                selectedNode->State = PLUGIN_STATE_RESTART;
                                 PhApplyTreeNewFilters(context->TreeFilter);
                                 TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
 
                                 SetWindowText(GetDlgItem(hwndDlg, IDC_DISABLED),
                                     PhGetString(PhaFormatString(L"Disabled Plugins (%lu)", PhDisabledPluginsCount()))
                                     );
-                                //PhpUpdateDisabledPlugin(hwndDlg, PhFindListViewItemByFlags(PluginsLv, -1, LVNI_SELECTED), SelectedPlugin, newDisabledState);
-                                //SetDlgItemText(hwndDlg, IDC_DISABLE, PhpGetPluginDisableButtonText(baseName));
                             }
                             break;
                         case ID_MENU_PROPERTIES:
@@ -614,6 +621,8 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
             case IDCANCEL:
             case IDOK:
                 {
+                    //ShowUpdateDialog(hwndDlg, PLUGIN_ACTION_RESTART);
+
                     DestroyWindow(hwndDlg);
                 }
                 break;

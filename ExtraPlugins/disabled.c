@@ -35,11 +35,11 @@ VOID PhAddDisabledPlugins(
     disabled = PhGetStringSetting(L"DisabledPlugins");
     remainingPart = disabled->sr;
 
-    while (remainingPart.Length != 0)
+    while (remainingPart.Length)
     {
         PhSplitStringRefAtChar(&remainingPart, '|', &part, &remainingPart);
 
-        if (part.Length != 0)
+        if (part.Length)
         {
             displayText = PhCreateString2(&part);
 
@@ -156,19 +156,7 @@ INT_PTR CALLBACK DisabledPluginsDlgProc(
                         {
                             PPH_STRING param = (PPH_STRING)listView->lParam;
 
-
                             PhSetPluginDisabled(&param->sr, FALSE);
-
-                            //INT lvItemIndex = PhFindListViewItemByParam(
-                            //    listView->hdr.hwndFrom,
-                            //    -1,
-                            //    param
-                            //    );
-                            //
-                            //if (lvItemIndex != -1)
-                            //{
-                            //    ListView_DeleteItem(listView->hdr.hwndFrom, lvItemIndex);
-                            //}
 
                             //context->OptionsChanged = TRUE;
                         }
