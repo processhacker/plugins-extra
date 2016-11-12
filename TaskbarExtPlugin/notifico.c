@@ -51,7 +51,7 @@ static VOID PhBeginBitmap2(
     {
         HDC hdc;
 
-        hdc = GetDC(NULL);
+        hdc = CreateIC(L"DISPLAY", NULL, NULL, NULL);
         Context->Hdc = CreateCompatibleDC(hdc);
 
         memset(&Context->Header, 0, sizeof(BITMAPINFOHEADER));

@@ -23,13 +23,14 @@
 #include "main.h"
 
 BOOLEAN WordMatchStringRef(
+    _In_ PWCT_CONTEXT Context,
     _In_ PPH_STRINGREF Text
     )
 {
     PH_STRINGREF part;
     PH_STRINGREF remainingPart;
 
-    remainingPart = SearchboxText->sr;
+    remainingPart = Context->SearchboxText->sr;
 
     while (remainingPart.Length)
     {
@@ -46,13 +47,14 @@ BOOLEAN WordMatchStringRef(
 }
 
 BOOLEAN WordMatchStringZ(
+    _In_ PWCT_CONTEXT Context,
     _In_ PWSTR Text
     )
 {
     PH_STRINGREF text;
 
     PhInitializeStringRef(&text, Text);
-    return WordMatchStringRef(&text);
+    return WordMatchStringRef(Context, &text);
 }
 
 LRESULT SysButtonCustomDraw(
@@ -141,42 +143,42 @@ BOOLEAN ProcessTreeFilterCallback(
     //if (node->Type == PLUGIN_VIEW_REMOTE && node->State == PLUGIN_STATE_INSTALLED)
     //    return FALSE;
 
-    if (PhIsNullOrEmptyString(SearchboxText))
+    if (PhIsNullOrEmptyString(context->SearchboxText))
         return TRUE;
 
     if (!PhIsNullOrEmptyString(node->InternalName))
     {
-        if (WordMatchStringRef(&node->InternalName->sr))
+        if (WordMatchStringRef(context, &node->InternalName->sr))
             return TRUE;
     }
 
     if (!PhIsNullOrEmptyString(node->Id))
     {
-        if (WordMatchStringRef(&node->Id->sr))
+        if (WordMatchStringRef(context, &node->Id->sr))
             return TRUE;
     }
 
     if (!PhIsNullOrEmptyString(node->Name))
     {
-        if (WordMatchStringRef(&node->Name->sr))
+        if (WordMatchStringRef(context, &node->Name->sr))
             return TRUE;
     }
 
     if (!PhIsNullOrEmptyString(node->Version))
     {
-        if (WordMatchStringRef(&node->Version->sr))
+        if (WordMatchStringRef(context, &node->Version->sr))
             return TRUE;
     }
 
     if (!PhIsNullOrEmptyString(node->Author))
     {
-        if (WordMatchStringRef(&node->Author->sr))
+        if (WordMatchStringRef(context, &node->Author->sr))
             return TRUE;
     }
 
     if (!PhIsNullOrEmptyString(node->Description))
     {
-        if (WordMatchStringRef(&node->Description->sr))
+        if (WordMatchStringRef(context, &node->Description->sr))
             return TRUE;
     }
 
@@ -223,12 +225,13 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
     case WM_INITDIALOG:
         {
             LOGFONT logFont;
-
+   
             context->DialogHandle = hwndDlg;
             context->PluginMenuActiveId = IDC_INSTALLED;
             context->PluginMenuActive = GetDlgItem(hwndDlg, IDC_INSTALLED);
             context->TreeNewHandle = GetDlgItem(hwndDlg, IDC_PLUGINTREE);
             context->SearchHandle = GetDlgItem(hwndDlg, IDC_SEARCHBOX);
+            context->SearchboxText = PhReferenceEmptyString();
 
             CreateSearchControl(hwndDlg, context->SearchHandle, ID_SEARCH_CLEAR);
 
@@ -305,12 +308,12 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
 
                     newSearchboxText = PH_AUTO(PhGetWindowText(context->SearchHandle));
 
-                    if (!PhEqualString(SearchboxText, newSearchboxText, FALSE))
+                    if (!PhEqualString(context->SearchboxText, newSearchboxText, FALSE))
                     {
                         // Cache the current search text for our callback.
-                        PhSwapReference(&SearchboxText, newSearchboxText);
+                        PhSwapReference(&context->SearchboxText, newSearchboxText);
 
-                        if (!PhIsNullOrEmptyString(SearchboxText))
+                        if (!PhIsNullOrEmptyString(context->SearchboxText))
                         {
                             // Expand the nodes to ensure that they will be visible to the user.
                         }
@@ -564,15 +567,25 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                 }
                             }
                             break;
-                        case ID_MENU_PROPERTIES:
+                        case ID_MENU_DISABLE:
                             {
-                                if (selectedNode->PluginInstance)
-                                {
-                                    PhInvokeCallback(PhGetPluginCallback((PPH_PLUGIN)selectedNode->PluginInstance, PluginCallbackShowOptions), hwndDlg);
-                                }
+                                //BOOLEAN newDisabledState;
+                                //newDisabledState = !PhIsPluginDisabled(&selectedNode->InternalName->sr);
+                                PPH_STRING baseName;
+
+                                baseName = PhGetBaseName(selectedNode->FilePath);
+             
+                                PhSetPluginDisabled(&baseName->sr, TRUE);
+                                selectedNode->State = PLUGIN_STATE_RESTART;
+
+                                PhApplyTreeNewFilters(context->TreeFilter);
+                                TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+
+                                //PhpUpdateDisabledPlugin(hwndDlg, PhFindListViewItemByFlags(PluginsLv, -1, LVNI_SELECTED), SelectedPlugin, newDisabledState);
+                                //SetDlgItemText(hwndDlg, IDC_DISABLE, PhpGetPluginDisableButtonText(baseName));
                             }
                             break;
-                        case ID_MENU_UNLOAD:
+                        case ID_MENU_PROPERTIES:
                             {
                                 if (selectedNode->PluginInstance)
                                 {

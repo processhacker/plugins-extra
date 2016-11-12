@@ -335,31 +335,25 @@ NTSTATUS QueryPluginsCallbackThread(
                 if (currentVersion == latestVersion)
                 {
                     // User is running the latest version
-                    //PostMessage(context->DialogHandle, PH_UPDATEISCURRENT, 0, 0);
-                    //entry->State = PLUGIN_STATE_LOCAL;
                 }
                 else if (currentVersion > latestVersion)
                 {
                     // User is running a newer version
-                    //PostMessage(context->DialogHandle, PH_UPDATENEWER, 0, 0);
                 }
                 else
                 {
                     // User is running an older version
-                    //PostMessage(context->DialogHandle, PH_UPDATEAVAILABLE, 0, 0);
-
                     entry->State = PLUGIN_STATE_UPDATE;
+
                     PostMessage(context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
                 }
-            }
-            else
-            {
-                //entry->State = PLUGIN_STATE_LOCAL;               
             }
         }
         else
         {
+            // New plugin available for download
             entry->State = PLUGIN_STATE_REMOTE;
+
             PostMessage(context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
         }
     }

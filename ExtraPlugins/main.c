@@ -22,13 +22,39 @@
 
 #include "main.h"
 
-PPH_STRING SearchboxText;
 PPH_PLUGIN PluginInstance;
 PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
 PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
 PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
 
-static BOOLEAN PluginsCleanupDirectoryCallback(
+BOOLEAN LastCleanupExpired(
+    VOID
+    )
+{
+    ULONG64 lastUpdateTimeTicks = 0;
+    LARGE_INTEGER currentUpdateTimeTicks;
+    PPH_STRING lastUpdateTimeString;
+
+    PhQuerySystemTime(&currentUpdateTimeTicks);
+
+    lastUpdateTimeString = PhGetStringSetting(SETTING_NAME_LAST_CLEANUP);
+    PhStringToInteger64(&lastUpdateTimeString->sr, 0, &lastUpdateTimeTicks);
+    PhDereferenceObject(lastUpdateTimeString);
+
+    if (currentUpdateTimeTicks.QuadPart - lastUpdateTimeTicks >= 25 * PH_TICKS_PER_DAY)
+    {
+        PPH_STRING currentUpdateTimeString = PhFormatUInt64(currentUpdateTimeTicks.QuadPart, FALSE);
+
+        PhSetStringSetting2(SETTING_NAME_LAST_CLEANUP, &currentUpdateTimeString->sr);
+
+        PhDereferenceObject(currentUpdateTimeString);     
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+BOOLEAN PluginsCleanupDirectoryCallback(
     _In_ PFILE_DIRECTORY_INFORMATION Information,
     _In_opt_ PVOID Context
     )
@@ -108,6 +134,54 @@ static BOOLEAN PluginsCleanupDirectoryCallback(
     return TRUE;
 }
 
+VOID PluginsCleanup(
+    VOID
+    )
+{
+    static UNICODE_STRING pluginsPattern = RTL_CONSTANT_STRING(L"*");
+    HANDLE pluginsDirectoryHandle;
+    PPH_STRING pluginsDirectory;
+    PPH_STRING PluginsDirectoryPath;
+    
+    pluginsDirectory = PhGetStringSetting(L"PluginsDirectory");
+
+    if (RtlDetermineDosPathNameType_U(PhGetString(pluginsDirectory)) == RtlPathTypeRelative)
+    {
+        PluginsDirectoryPath = PhConcatStrings(
+            4,
+            PhGetString(PhGetApplicationDirectory()),
+            L"\\",
+            PhGetStringOrEmpty(pluginsDirectory),
+            L"\\"
+            );
+        PhDereferenceObject(pluginsDirectory);
+    }
+    else
+    {
+        PluginsDirectoryPath = pluginsDirectory;
+    }
+
+    if (NT_SUCCESS(PhCreateFileWin32(
+        &pluginsDirectoryHandle,
+        PhGetStringOrEmpty(PluginsDirectoryPath),
+        FILE_GENERIC_READ,
+        0,
+        FILE_SHARE_READ,
+        FILE_OPEN,
+        FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
+        )))
+    {
+        PhEnumDirectoryFile(
+            pluginsDirectoryHandle, 
+            &pluginsPattern,
+            PluginsCleanupDirectoryCallback, 
+            PluginsDirectoryPath
+            );
+
+        NtClose(pluginsDirectoryHandle);
+    }
+}
+
 VOID NTAPI LoadCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
@@ -115,49 +189,7 @@ VOID NTAPI LoadCallback(
 {
     PPH_LIST pluginArgvList = Parameter;
 
-    if (!pluginArgvList)
-    {
-        HANDLE pluginsDirectoryHandle;
-        PPH_STRING pluginsDirectory;
-        PPH_STRING PluginsDirectoryPath;
-
-        SearchboxText = PhReferenceEmptyString();
-        pluginsDirectory = PhGetStringSetting(L"PluginsDirectory");
-
-        if (RtlDetermineDosPathNameType_U(pluginsDirectory->Buffer) == RtlPathTypeRelative)
-        {
-            // Not absolute. Make sure it is.
-            PluginsDirectoryPath = PhConcatStrings(
-                4, 
-                PhGetApplicationDirectory()->Buffer, 
-                L"\\", 
-                pluginsDirectory->Buffer, 
-                L"\\"
-                );
-            PhDereferenceObject(pluginsDirectory);
-        }
-        else
-        {
-            PluginsDirectoryPath = pluginsDirectory;
-        }
-
-        if (NT_SUCCESS(PhCreateFileWin32(
-            &pluginsDirectoryHandle,
-            PluginsDirectoryPath->Buffer,
-            FILE_GENERIC_READ,
-            0,
-            FILE_SHARE_READ,
-            FILE_OPEN,
-            FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
-            )))
-        {
-            UNICODE_STRING pattern = RTL_CONSTANT_STRING(L"*");
-
-            PhEnumDirectoryFile(pluginsDirectoryHandle, &pattern, PluginsCleanupDirectoryCallback, PluginsDirectoryPath);
-            NtClose(pluginsDirectoryHandle);
-        }
-    }
-    else
+    if (pluginArgvList)
     {
         for (ULONG i = 0; i < pluginArgvList->Count; i++)
         {
@@ -165,25 +197,23 @@ VOID NTAPI LoadCallback(
 
             if (PhEqualString2(pluginCommandParam, L"INSTALL", TRUE))
             {
-                 //PhShowInformation(NULL, L"INSTALL");
-
-                 //PPH_STRING directory;
-                 //PPH_STRING path;
-                 //
-                 //directory = PH_AUTO(PhGetApplicationDirectory());
-                 //path = PhaCreateString(L"\\plugins");
-                 //path = PH_AUTO(PhConcatStringRef2(&directory->sr, &path->sr));
-                 //
-                 //if (MoveFileWithProgress(
-                 //    L"new.plugin",
-                 //    path->Buffer,
-                 //    NULL,
-                 //    NULL,
-                 //    MOVEFILE_WRITE_THROUGH | MOVEFILE_REPLACE_EXISTING
-                 //    ))
-                 //{
-                 //
-                 //}
+                //PPH_STRING directory;
+                //PPH_STRING path;
+                //
+                //directory = PH_AUTO(PhGetApplicationDirectory());
+                //path = PhaCreateString(L"\\plugins");
+                //path = PH_AUTO(PhConcatStringRef2(&directory->sr, &path->sr));
+                //
+                //if (MoveFileWithProgress(
+                //    L"new.plugin",
+                //    path->Buffer,
+                //    NULL,
+                //    NULL,
+                //    MOVEFILE_WRITE_THROUGH | MOVEFILE_REPLACE_EXISTING
+                //    ))
+                //{
+                //
+                //}
 
                 NtTerminateProcess(NtCurrentProcess(), EXIT_SUCCESS);
             }
@@ -191,6 +221,16 @@ VOID NTAPI LoadCallback(
             {
                 NtTerminateProcess(NtCurrentProcess(), EXIT_SUCCESS);
             }
+        }
+    }
+    else
+    {
+        PluginsCleanup();
+
+        if (LastCleanupExpired())
+        {
+            // Cleanup every plugins settings every 25 days.
+            //PhClearIgnoredSettings();
         }
     }
 }
@@ -242,6 +282,7 @@ LOGICAL DllMain(
             PH_SETTING_CREATE settings[] =
             {
                 { StringSettingType, SETTING_NAME_TREE_LIST_COLUMNS, L"" },
+                { StringSettingType, SETTING_NAME_LAST_CLEANUP, L"" },
                 { IntegerPairSettingType, SETTING_NAME_WINDOW_POSITION, L"100,100" },
                 { ScalableIntegerPairSettingType, SETTING_NAME_WINDOW_SIZE, L"@96|690,540" }
             };

@@ -56,7 +56,7 @@
 #define SETTING_NAME_TREE_LIST_COLUMNS (SETTING_PREFIX L".TreeListColumns")
 #define SETTING_NAME_WINDOW_POSITION (SETTING_PREFIX L".WindowPosition")
 #define SETTING_NAME_WINDOW_SIZE (SETTING_PREFIX L".WindowSize")
-#define SETTING_NAME_LAST_CHECK (SETTING_PREFIX L".LastUpdateCheckTime")
+#define SETTING_NAME_LAST_CLEANUP (SETTING_PREFIX L".LastCleanupCheckTime")
 
 #define ID_SEARCH_CLEAR (WM_APP + 8001)
 #define ID_UPDATE_ADD (WM_APP + 8002)
@@ -69,7 +69,6 @@
     ((ULONGLONG)(revision) <<  0))
 
 extern PPH_PLUGIN PluginInstance;
-extern PPH_STRING SearchboxText;
 
 typedef enum _TREE_PLUGIN_STATE
 {
@@ -223,6 +222,7 @@ typedef struct _WCT_CONTEXT
     HWND SearchHandle;
     HWND TreeNewHandle;
 
+    PPH_STRING SearchboxText;
     HFONT NormalFontHandle;
     HFONT BoldFontHandle;
 
@@ -384,6 +384,17 @@ HBITMAP LoadImageFromResources(
 LRESULT SysButtonCustomDraw(
     _In_ PWCT_CONTEXT Context,
     _In_ LPARAM lParam
+    );
+
+// plugin.c
+
+BOOLEAN PhIsPluginDisabled(
+    _In_ PPH_STRINGREF BaseName
+    );
+
+VOID PhSetPluginDisabled(
+    _In_ PPH_STRINGREF BaseName,
+    _In_ BOOLEAN Disable
     );
 
 #endif

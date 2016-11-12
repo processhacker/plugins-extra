@@ -195,7 +195,7 @@ VOID NcAreaDrawButton(
         FillRect(bufferDc, &bufferRect, Context->BrushNormal);
     }
 
-    if (SearchboxText->Length > 0)
+    if (Edit_GetTextLength(Context->WindowHandle) > 0)
     {
         ImageList_Draw(
             Context->ImageList,
@@ -388,6 +388,7 @@ LRESULT CALLBACK NcAreaWndSubclassProc(
             // Reset the client area margins.
             SendMessage(hWnd, EM_SETMARGINS, EC_LEFTMARGIN, MAKELPARAM(0, 0));
 
+            // Refresh the non-client area.
             SetWindowPos(hWnd, NULL, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
             // Force the edit control to update its non-client area.
@@ -498,25 +499,20 @@ HBITMAP LoadImageFromResources(
     if (FAILED(CoCreateInstance(&CLSID_WICImagingFactory1, NULL, CLSCTX_INPROC_SERVER, &IID_IWICImagingFactory, &wicFactory)))
         goto CleanupExit;
 
-    // Find the resource
     if ((resourceHandleSource = FindResource(PluginInstance->DllBase, Name, L"PNG")) == NULL)
         goto CleanupExit;
 
-    // Get the resource length
     resourceLength = SizeofResource(PluginInstance->DllBase, resourceHandleSource);
 
-    // Load the resource
     if ((resourceHandle = LoadResource(PluginInstance->DllBase, resourceHandleSource)) == NULL)
         goto CleanupExit;
 
     if ((resourceBuffer = (WICInProcPointer)LockResource(resourceHandle)) == NULL)
         goto CleanupExit;
 
-    // Create the Stream
     if (FAILED(IWICImagingFactory_CreateStream(wicFactory, &wicStream)))
         goto CleanupExit;
 
-    // Initialize the Stream from Memory
     if (FAILED(IWICStream_InitializeFromMemory(wicStream, resourceBuffer, resourceLength)))
         goto CleanupExit;
 
@@ -526,19 +522,16 @@ HBITMAP LoadImageFromResources(
     if (FAILED(IWICBitmapDecoder_Initialize(wicDecoder, (IStream*)wicStream, WICDecodeMetadataCacheOnLoad)))
         goto CleanupExit;
 
-    // Get the Frame count
     if (FAILED(IWICBitmapDecoder_GetFrameCount(wicDecoder, &frameCount)) || frameCount < 1)
         goto CleanupExit;
 
-    // Get the Frame
     if (FAILED(IWICBitmapDecoder_GetFrame(wicDecoder, 0, &wicFrame)))
         goto CleanupExit;
 
-    // Get the WicFrame image format
     if (FAILED(IWICBitmapFrameDecode_GetPixelFormat(wicFrame, &pixelFormat)))
         goto CleanupExit;
 
-    // Check if the image format is supported:
+    // Check if the image format is supported
     if (IsEqualGUID(&pixelFormat, RGBAImage ? &GUID_WICPixelFormat32bppPRGBA : &GUID_WICPixelFormat32bppPBGRA))
     {
         wicBitmapSource = (IWICBitmapSource*)wicFrame;
@@ -564,13 +557,11 @@ HBITMAP LoadImageFromResources(
             goto CleanupExit;
         }
 
-        // Convert the image to the correct format:
+        // Convert the image to the correct format
         IWICFormatConverter_QueryInterface(wicFormatConverter, &IID_IWICBitmapSource, &wicBitmapSource);
-
-        // Cleanup the converter.
         IWICFormatConverter_Release(wicFormatConverter);
 
-        // Dispose the old frame now that the converted frame is in wicBitmapSource.
+        // Dispose the old frame now that the converted frame is in wicBitmapSource
         IWICBitmapFrameDecode_Release(wicFrame);
     }
 
@@ -581,7 +572,7 @@ HBITMAP LoadImageFromResources(
     bitmapInfo.bmiHeader.biBitCount = 32;
     bitmapInfo.bmiHeader.biCompression = BI_RGB;
 
-    screenHdc = GetDC(NULL);
+    screenHdc = CreateIC(L"DISPLAY", NULL, NULL, NULL);
     bufferDc = CreateCompatibleDC(screenHdc);
     bitmapHandle = CreateDIBSection(screenHdc, &bitmapInfo, DIB_RGB_COLORS, (PVOID*)&bitmapBuffer, NULL, 0);
 

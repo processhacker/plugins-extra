@@ -220,7 +220,7 @@ VOID NTAPI TreeNewMessageCallback(
 
                     if (countryBitmap = LoadImageFromResources(16, 11, extension->RemoteCountryCode))
                     {
-                        HDC screenDc = GetDC(NULL);
+                        HDC screenDc = CreateIC(L"DISPLAY", NULL, NULL, NULL);
                         HBITMAP screenBitmap = CreateCompatibleBitmap(screenDc, 16, 11);
 
                         ICONINFO iconInfo = { 0 };

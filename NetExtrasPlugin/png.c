@@ -430,7 +430,7 @@ HBITMAP LoadImageFromResources(
         bitmapInfo.bmiHeader.biBitCount = 32;
         bitmapInfo.bmiHeader.biCompression = BI_RGB;
 
-        screenHdc = GetDC(NULL);
+        screenHdc = CreateIC(L"DISPLAY", NULL, NULL, NULL);
         bufferDc = CreateCompatibleDC(screenHdc);
         bitmapHandle = CreateDIBSection(screenHdc, &bitmapInfo, DIB_RGB_COLORS, (PVOID*)&bitmapBuffer, NULL, 0);
 
