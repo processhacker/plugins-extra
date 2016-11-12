@@ -230,16 +230,11 @@ VOID EnumerateLoadedPlugins(
         entry->PluginInstance = pluginInstance;
         entry->InternalName = internalName;
         entry->Version = PhSubstring(version, 0, version->Length / sizeof(WCHAR) - 4);
-
         entry->Name = PhCreateString(pluginInstance->Information.DisplayName);
         entry->Author = PhCreateString(pluginInstance->Information.Author);
         entry->Description = PhCreateString(pluginInstance->Information.Description);
-
         entry->FilePath = PhCreateString2(&pluginInstance->FileName->sr);
         entry->FileName = PhGetBaseName(entry->FilePath);
-
-        OutputDebugString(PhFormatString(L"InternalName: %s\r\n", internalName->Buffer)->Buffer);
-
     
         SYSTEMTIME utcTime, localTime;
         PhLargeIntegerToSystemTime(&utcTime, &basic.LastWriteTime);
@@ -433,9 +428,9 @@ NTSTATUS QueryPluginsCallbackThread(
                     }
                 }
 
-                OutputDebugString(PhFormatString(L"InternalName: %s\r\n", internalName->Buffer)->Buffer);
 
-                if (entry->PluginInstance = (PPHAPP_PLUGIN)PhFindPlugin(PhGetString(internalName)))
+
+                if (entry->PluginInstance = (PPHAPP_PLUGIN)PhFindPlugin(PhGetString(entry->InternalName)))
                 {
                     ULONGLONG currentVersion = ParseVersionString(version);
                     ULONGLONG latestVersion = ParseVersionString(entry->Version);
