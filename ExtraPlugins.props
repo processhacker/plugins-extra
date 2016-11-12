@@ -32,10 +32,12 @@
             <MinimalRebuild>false</MinimalRebuild>
             <MultiProcessorCompilation>true</MultiProcessorCompilation>
             <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+            <StringPooling>true</StringPooling>
         </ClCompile>
         <Link>
             <AdditionalDependencies>ProcessHacker.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
             <GenerateDebugInformation>true</GenerateDebugInformation>
+            <MinimumRequiredVersion>6.01</MinimumRequiredVersion>
             <SubSystem>Windows</SubSystem>
         </Link>
         <BuildLog>
@@ -51,7 +53,6 @@
             <FunctionLevelLinking>false</FunctionLevelLinking>
             <IntrinsicFunctions>false</IntrinsicFunctions>
             <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-            <StringPooling>true</StringPooling>
         </ClCompile>
     </ItemDefinitionGroup>
 
@@ -64,7 +65,6 @@
             <IntrinsicFunctions>true</IntrinsicFunctions>
             <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
             <WholeProgramOptimization>true</WholeProgramOptimization>
-            <StringPooling>true</StringPooling>
             <ControlFlowGuard>Guard</ControlFlowGuard>
         </ClCompile>
         <Link>
@@ -82,7 +82,6 @@
         </ClCompile>
         <Link>
             <AdditionalLibraryDirectories>../../sdk/lib/i386;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-            <MinimumRequiredVersion>6.01</MinimumRequiredVersion>
             <TargetMachine>MachineX86</TargetMachine>
         </Link>
     </ItemDefinitionGroup>
@@ -91,7 +90,6 @@
     <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
         <Link>
             <AdditionalLibraryDirectories>../../sdk/lib/amd64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-            <MinimumRequiredVersion>6.01</MinimumRequiredVersion>
             <TargetMachine>MachineX64</TargetMachine>
         </Link>
     </ItemDefinitionGroup>
