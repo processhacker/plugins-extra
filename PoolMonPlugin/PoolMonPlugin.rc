@@ -43,7 +43,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "NT Pool Table plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "PoolMonPlugin"
+            VALUE "InternalName", "dmex.PoolMonPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "PoolMonPlugin.dll"
             VALUE "ProductName", "NT Pool Table plugin for Process Hacker"

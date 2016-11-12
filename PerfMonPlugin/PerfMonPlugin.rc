@@ -43,7 +43,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Performance counters plugin for Process Hacker"
             VALUE "FileVersion", "1.1"
-            VALUE "InternalName", "PerfMonPlugin"
+            VALUE "InternalName", "dmex.PerfMonPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "PerfMonPlugin.dll"
             VALUE "ProductName", "Performance counters plugin for Process Hacker"

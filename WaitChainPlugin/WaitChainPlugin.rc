@@ -42,7 +42,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Wait Chain Traversal plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "WaitChainPlugin"
+            VALUE "InternalName", "dmex.WaitChainPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "WaitChainPlugin.dll"
             VALUE "ProductName", "Wait Chain Traversal plugin for Process Hacker"

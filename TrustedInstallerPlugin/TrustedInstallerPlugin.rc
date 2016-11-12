@@ -70,7 +70,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "TrustedInstaller plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "TrustedInstallerPlugin"
+            VALUE "InternalName", "dmex.TrustedInstallerPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "TrustedInstallerPlugin.dll"
             VALUE "ProductName", "TrustedInstaller plugin for Process Hacker"

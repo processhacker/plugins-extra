@@ -70,7 +70,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Terminator plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "TerminatorPlugin"
+            VALUE "InternalName", "dmex.TerminatorPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "TerminatorPlugin.dll"
             VALUE "ProductName", "Terminator plugin for Process Hacker"

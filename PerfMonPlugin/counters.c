@@ -72,6 +72,7 @@ VOID PerfMonUpdate(
         PPERF_COUNTER_ENTRY entry;
         ULONG counterType = 0;
         PDH_FMT_COUNTERVALUE displayValue = { 0 };
+        //PDH_RAW_COUNTER rawValue = { 0 };
 
         entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
 
@@ -81,34 +82,28 @@ VOID PerfMonUpdate(
         if (entry->HaveFirstSample)
         {
             if (!entry->PerfQueryHandle)
-            {
-                ULONG counterLength = 0;
-                PDH_STATUS counterStatus = 0;
-
-                // Create the counter query handle
-                if ((counterStatus = PdhOpenQuery(NULL, 0, &entry->PerfQueryHandle)) != ERROR_SUCCESS)
+            {               
+                if (PdhOpenQuery(NULL, 0, &entry->PerfQueryHandle) == ERROR_SUCCESS)
                 {
-                    //PhShowError(NULL, L"PdhOpenQuery failed with status 0x%x.", counterStatus);
-                }
-
-                // Add the selected counter to the query handle
-                if ((counterStatus = PdhAddCounter(entry->PerfQueryHandle, PhGetString(entry->Id.PerfCounterPath), 0, &entry->PerfCounterHandle)))
-                {
-                    //PhShowError(NULL, L"PdhAddCounter failed with status 0x%x.", counterStatus);
-                }
-
-                if ((counterStatus = PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, NULL)) == PDH_MORE_DATA)
-                {
-                    entry->PerfCounterInfo = PhAllocate(counterLength);
-                    memset(entry->PerfCounterInfo, 0, counterLength);
-                }
-
-                if ((counterStatus = PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, entry->PerfCounterInfo)))
-                {
-                    //PhShowError(NULL, L"PdhGetCounterInfo failed with status 0x%x.", counterStatus);
+                    if (PdhAddCounter(entry->PerfQueryHandle, PhGetString(entry->Id.PerfCounterPath), 0, &entry->PerfCounterHandle) == ERROR_SUCCESS)
+                    {
+                        //ULONG counterLength;
+                        //
+                        //if (PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, NULL) == PDH_MORE_DATA)
+                        //{
+                        //  entry->PerfCounterInfo = PhAllocate(counterLength);
+                        //  memset(entry->PerfCounterInfo, 0, counterLength);
+                        //}
+                        //
+                        //if (PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, entry->PerfCounterInfo) != ERROR_SUCCESS)
+                        //{
+                        //  PhShowError(NULL, L"PdhGetCounterInfo failed with status 0x%x.", counterStatus);
+                        //}                
+                    }
                 }
             }
 
+            // Update the counter data
             PdhCollectQueryData(entry->PerfQueryHandle);
 
             //PdhSetCounterScaleFactor(entry->PerfCounterHandle, PDH_MAX_SCALE);
@@ -118,9 +113,12 @@ VOID PerfMonUpdate(
                 &counterType,
                 &displayValue
                 );
+            //PdhGetRawCounterValue(entry->PerfCounterHandle, 0, &rawValue);
 
-            //if (counterType == PERF_COUNTER_COUNTER)
-            PhUpdateDelta(&entry->HistoryDelta, displayValue.largeValue);
+            if (counterType == PERF_COUNTER_COUNTER)
+            {
+                PhUpdateDelta(&entry->HistoryDelta, displayValue.largeValue);
+            }
         }
         else
         {

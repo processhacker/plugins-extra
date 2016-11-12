@@ -69,7 +69,7 @@ BEGIN
             VALUE "CompanyName", "wj32"
             VALUE "FileDescription", "Process critical status plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "SetCriticalPlugin"
+            VALUE "InternalName", "wj32.SetCriticalPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "SetCriticalPlugin.dll"
             VALUE "ProductName", "Process critical status plugin for Process Hacker"

@@ -43,7 +43,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Service Backup and Restore Plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "ServiceBackupRestorePlugin"
+            VALUE "InternalName", "dmex.ServiceBackupRestorePlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "ServiceBackupRestorePlugin.dll"
             VALUE "ProductName", "Service Backup and Restore Plugin for Process Hacker"

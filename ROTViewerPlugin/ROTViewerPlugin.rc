@@ -42,7 +42,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "RunningObjectTable plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "RunningObjectTableViewer"
+            VALUE "InternalName", "dmex.RunningObjectTable"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "RunningObjectTableViewer.dll"
             VALUE "ProductName", "RunningObjectTable plugin for Process Hacker"

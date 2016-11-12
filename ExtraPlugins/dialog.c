@@ -427,11 +427,16 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                     {
                         HICON shieldIcon;
 
+                        shieldIcon = PhLoadIcon(NULL, IDI_SHIELD, PH_LOAD_ICON_SIZE_SMALL | PH_LOAD_ICON_STRICT, 0, 0);
                         selectedItem = PhCreateEMenuItem(0, ID_MENU_UNINSTALL, L"Uninstall", NULL, NULL);
 
-                        if (shieldIcon = PhLoadIcon(NULL, IDI_SHIELD, PH_LOAD_ICON_SIZE_SMALL | PH_LOAD_ICON_STRICT, 0, 0))
+                        if (shieldIcon)
                         {
-                            selectedItem->Bitmap = PhIconToBitmap(shieldIcon, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
+                            selectedItem->Bitmap = PhIconToBitmap(
+                                shieldIcon, 
+                                GetSystemMetrics(SM_CXSMICON), 
+                                GetSystemMetrics(SM_CYSMICON)
+                                );
                             DestroyIcon(shieldIcon);
                         }
        
@@ -449,15 +454,22 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                     {
                         HICON shieldIcon;
 
+                        shieldIcon = PhLoadIcon(NULL, IDI_SHIELD, PH_LOAD_ICON_SIZE_SMALL | PH_LOAD_ICON_STRICT, 0, 0);
                         selectedItem = PhCreateEMenuItem(0, ID_MENU_INSTALL, PhaFormatString(L"Install %s", PhGetStringOrEmpty(selectedNode->Name))->Buffer, NULL, NULL);
 
-                        if (shieldIcon = PhLoadIcon(NULL, IDI_SHIELD, PH_LOAD_ICON_SIZE_SMALL | PH_LOAD_ICON_STRICT, 0, 0))
+                        if (shieldIcon)
                         {
-                            selectedItem->Bitmap = PhIconToBitmap(shieldIcon, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
+                            selectedItem->Bitmap = PhIconToBitmap(
+                                shieldIcon, 
+                                GetSystemMetrics(SM_CXSMICON), 
+                                GetSystemMetrics(SM_CYSMICON)
+                                );
                             DestroyIcon(shieldIcon);
                         }
 
                         PhInsertEMenuItem(menu, selectedItem, -1);
+                        PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+                        PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_DISABLE, L"Disable", NULL, NULL), -1);
                     }
 
                     selectedItem = PhShowEMenu(
@@ -570,11 +582,9 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                             break;
                         case ID_MENU_DISABLE:
                             {
-                                //BOOLEAN newDisabledState;
-                                //newDisabledState = !PhIsPluginDisabled(&selectedNode->InternalName->sr);
                                 PPH_STRING baseName;
 
-                                baseName = PhGetBaseName(selectedNode->FilePath);
+                                baseName = PhGetBaseName(selectedNode->FileName);
              
                                 PhSetPluginDisabled(&baseName->sr, TRUE);
                                 selectedNode->State = PLUGIN_STATE_RESTART;

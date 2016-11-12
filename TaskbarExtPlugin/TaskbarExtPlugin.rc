@@ -43,7 +43,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Taskbar Extensions Plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "TaskbarExtPlugin"
+            VALUE "InternalName", "dmex.TaskbarExtPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "TaskbarExtPlugin.dll"
             VALUE "ProductName", "Taskbar Extensions Plugin for Process Hacker"

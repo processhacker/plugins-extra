@@ -218,12 +218,14 @@ VOID EnumerateLoadedPlugins(
 
         entry->State = PLUGIN_STATE_LOCAL;
         entry->PluginInstance = pluginInstance;
-        entry->FilePath = PhCreateString2(&pluginInstance->FileName->sr);
         entry->InternalName = PhCreateString2(&pluginInstance->Name);
         entry->Name = PhCreateString(pluginInstance->Information.DisplayName);
-        entry->Version = PhSubstring(version, 0, version->Length / sizeof(WCHAR) - 4);
         entry->Author = PhCreateString(pluginInstance->Information.Author);
         entry->Description = PhCreateString(pluginInstance->Information.Description);
+        entry->FilePath = PhCreateString2(&pluginInstance->FileName->sr);
+        entry->FileName = PhGetBaseName(entry->FilePath);
+
+        entry->Version = PhSubstring(version, 0, version->Length / sizeof(WCHAR) - 4);
 
         SYSTEMTIME utcTime, localTime;
         PhLargeIntegerToSystemTime(&utcTime, &basic.LastWriteTime);
@@ -255,7 +257,7 @@ NTSTATUS QueryPluginsCallbackThread(
     WinHttpGetIEProxyConfigForCurrentUser(&proxyConfig);
 
     if (!(httpSessionHandle = WinHttpOpen(
-        L"PH",
+        L"ExtraPlugins_1.0",
         proxyConfig.lpszProxy ? WINHTTP_ACCESS_TYPE_NAMED_PROXY : WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
         proxyConfig.lpszProxy,
         proxyConfig.lpszProxyBypass,
@@ -316,6 +318,7 @@ NTSTATUS QueryPluginsCallbackThread(
         PPLUGIN_NODE entry;
         SYSTEMTIME time = { 0 };
         SYSTEMTIME localTime = { 0 };
+        PH_STRINGREF pluginBaseName;
 
         jvalue = json_object_array_get_idx(rootJsonObject, i);
 
@@ -342,6 +345,7 @@ NTSTATUS QueryPluginsCallbackThread(
         entry->SHA2_64 = PhConvertUtf8ToUtf16(json_object_get_string(json_get_object(jvalue, "plugin_hash_64")));
         entry->HASH_32 = PhConvertUtf8ToUtf16(json_object_get_string(json_get_object(jvalue, "plugin_signed_32")));
         entry->HASH_64 = PhConvertUtf8ToUtf16(json_object_get_string(json_get_object(jvalue, "plugin_signed_64")));
+        entry->FileName = PhConvertUtf8ToUtf16(json_object_get_string(json_get_object(jvalue, "plugin_filename")));
 
         swscanf(
             PhGetString(entry->UpdatedTime),
@@ -359,40 +363,45 @@ NTSTATUS QueryPluginsCallbackThread(
             entry->UpdatedTime = PhFormatDateTime(&localTime);
         }
 
-        if (entry->PluginInstance = (PPHAPP_PLUGIN)PhFindPlugin(PhGetString(entry->InternalName)))
+
+
+        PhInitializeStringRefLongHint(&pluginBaseName, PhGetString(entry->FileName));
+
+        if (!PhIsPluginDisabled(&pluginBaseName))
         {
-            PH_IMAGE_VERSION_INFO versionInfo;
-
-            entry->FilePath = PhCreateString2(&entry->PluginInstance->FileName->sr);
-
-            if (PhInitializeImageVersionInfo(&versionInfo, PhGetString(entry->PluginInstance->FileName)))
+            if (entry->PluginInstance = (PPHAPP_PLUGIN)PhFindPlugin(PhGetString(entry->InternalName)))
             {
-                ULONGLONG currentVersion = ParseVersionString(versionInfo.FileVersion);
-                ULONGLONG latestVersion = ParseVersionString(entry->Version);
+                PH_IMAGE_VERSION_INFO versionInfo;
+                entry->FilePath = PhCreateString2(&entry->PluginInstance->FileName->sr);
 
-                if (currentVersion == latestVersion)
+                if (PhInitializeImageVersionInfo(&versionInfo, PhGetString(entry->PluginInstance->FileName)))
                 {
-                    // User is running the latest version
-                }
-                else if (currentVersion > latestVersion)
-                {
-                    // User is running a newer version
-                }
-                else
-                {
-                    // User is running an older version
-                    entry->State = PLUGIN_STATE_UPDATE;
+                    ULONGLONG currentVersion = ParseVersionString(versionInfo.FileVersion);
+                    ULONGLONG latestVersion = ParseVersionString(entry->Version);
 
-                    PostMessage(context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
+                    if (currentVersion == latestVersion)
+                    {
+                        // User is running the latest version
+                    }
+                    else if (currentVersion > latestVersion)
+                    {
+                        // User is running a newer version
+                    }
+                    else
+                    {
+                        // User is running an older version
+                        entry->State = PLUGIN_STATE_UPDATE;
+
+                        PostMessage(context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
+                    }
                 }
             }
-        }
-        else
-        {
-            // New plugin available for download
-            entry->State = PLUGIN_STATE_REMOTE;
-
-            PostMessage(context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
+            else
+            {
+                // New plugin available for download
+                entry->State = PLUGIN_STATE_REMOTE;
+                PostMessage(context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
+            }
         }
     }
 
