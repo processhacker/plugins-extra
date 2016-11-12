@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Performance Monitor Plugin
  *
- * Copyright (C) 2015 dmex
+ * Copyright (C) 2015-2016 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -26,7 +26,7 @@
 #pragma comment(lib, "pdh.lib")
 
 #define PLUGIN_NAME L"dmex.PerfMonPlugin"
-#define SETTING_NAME_PERFMON_LIST (PLUGIN_NAME L".PerfCounterList")
+#define SETTING_NAME_PERFMON_LIST (PLUGIN_NAME L".PerfMonList")
 
 #define CINTERFACE
 #define COBJMACROS
@@ -38,9 +38,9 @@
 #include "resource.h"
 
 extern PPH_PLUGIN PluginInstance;
-extern PPH_LIST DiskDrivesList;
-extern PPH_OBJECT_TYPE DiskDriveEntryType;
-extern PH_QUEUED_LOCK DiskDrivesListLock;
+extern PPH_LIST PerfCounterList;
+extern PPH_OBJECT_TYPE PerfCounterEntryType;
+extern PH_QUEUED_LOCK PerfCounterListLock;
 
 typedef struct _PERF_COUNTER_ID
 {
@@ -50,6 +50,10 @@ typedef struct _PERF_COUNTER_ID
 typedef struct _PERF_COUNTER_ENTRY
 {
     PERF_COUNTER_ID Id;
+
+    HQUERY PerfQueryHandle;
+    HCOUNTER PerfCounterHandle;
+    PPDH_COUNTER_INFO PerfCounterInfo;
 
     union
     {
@@ -62,12 +66,8 @@ typedef struct _PERF_COUNTER_ENTRY
         };
     };
 
-    HQUERY PerfQueryHandle;
-    HCOUNTER PerfCounterHandle;
-    PPDH_COUNTER_INFO PerfCounterInfo;
     PH_UINT64_DELTA HistoryDelta;
     PH_CIRCULAR_BUFFER_ULONG64 HistoryBuffer;
-
 } PERF_COUNTER_ENTRY, *PPERF_COUNTER_ENTRY;
 
 VOID PerfMonInitialize(

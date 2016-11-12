@@ -29,9 +29,9 @@ VOID PerfMonEntryDeleteProcedure(
 {
     PPERF_COUNTER_ENTRY entry = Object;
         
-    PhAcquireQueuedLockExclusive(&DiskDrivesListLock);
-    PhRemoveItemList(DiskDrivesList, PhFindItemList(DiskDrivesList, entry));
-    PhReleaseQueuedLockExclusive(&DiskDrivesListLock);
+    PhAcquireQueuedLockExclusive(&PerfCounterListLock);
+    PhRemoveItemList(PerfCounterList, PhFindItemList(PerfCounterList, entry));
+    PhReleaseQueuedLockExclusive(&PerfCounterListLock);
 
     DeletePerfCounterId(&entry->Id);
     PhDeleteCircularBuffer_ULONG64(&entry->HistoryBuffer);
@@ -48,15 +48,15 @@ VOID PerfMonEntryDeleteProcedure(
         entry->PerfCounterInfo = NULL;
     }
 
-    PhDereferenceObject(entry);
+    //PhDereferenceObject(entry);
 }
 
 VOID PerfMonInitialize(
     VOID
     )
 {
-    DiskDrivesList = PhCreateList(1);
-    DiskDriveEntryType = PhCreateObjectType(L"PerfMonEntry", 0, PerfMonEntryDeleteProcedure);
+    PerfCounterList = PhCreateList(1);
+    PerfCounterEntryType = PhCreateObjectType(L"PerfMonEntry", 0, PerfMonEntryDeleteProcedure);
 }
 
 VOID PerfMonUpdate(
@@ -65,16 +65,15 @@ VOID PerfMonUpdate(
 {
     static ULONG runCount = 0; // MUST keep in sync with runCount in process provider
 
-    PhAcquireQueuedLockShared(&DiskDrivesListLock);
+    PhAcquireQueuedLockShared(&PerfCounterListLock);
 
-    for (ULONG i = 0; i < DiskDrivesList->Count; i++)
+    for (ULONG i = 0; i < PerfCounterList->Count; i++)
     {
         PPERF_COUNTER_ENTRY entry;
         ULONG counterType = 0;
         PDH_FMT_COUNTERVALUE displayValue = { 0 };
-        //PDH_RAW_COUNTER rawValue = { 0 };
 
-        entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
+        entry = PhReferenceObjectSafe(PerfCounterList->Items[i]);
 
         if (!entry)
             continue;
@@ -87,18 +86,20 @@ VOID PerfMonUpdate(
                 {
                     if (PdhAddCounter(entry->PerfQueryHandle, PhGetString(entry->Id.PerfCounterPath), 0, &entry->PerfCounterHandle) == ERROR_SUCCESS)
                     {
-                        //ULONG counterLength;
-                        //
-                        //if (PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, NULL) == PDH_MORE_DATA)
-                        //{
-                        //  entry->PerfCounterInfo = PhAllocate(counterLength);
-                        //  memset(entry->PerfCounterInfo, 0, counterLength);
-                        //}
-                        //
-                        //if (PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, entry->PerfCounterInfo) != ERROR_SUCCESS)
-                        //{
-                        //  PhShowError(NULL, L"PdhGetCounterInfo failed with status 0x%x.", counterStatus);
-                        //}                
+                        ULONG counterLength;
+
+                        if (PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, NULL) == PDH_MORE_DATA)
+                        {
+                            entry->PerfCounterInfo = PhAllocate(counterLength);
+                            memset(entry->PerfCounterInfo, 0, counterLength);
+                        }
+
+                        if (PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, entry->PerfCounterInfo) == ERROR_SUCCESS)
+                        {
+                            
+                        }
+
+                        OutputDebugString(L"");
                     }
                 }
             }
@@ -107,23 +108,22 @@ VOID PerfMonUpdate(
             PdhCollectQueryData(entry->PerfQueryHandle);
 
             //PdhSetCounterScaleFactor(entry->PerfCounterHandle, PDH_MAX_SCALE);
-            PdhGetFormattedCounterValue(
+            //PdhGetRawCounterValue(entry->PerfCounterHandle, 0, &rawValue);
+
+            if (PdhGetFormattedCounterValue(
                 entry->PerfCounterHandle,
                 PDH_FMT_LARGE | PDH_FMT_NOSCALE | PDH_FMT_NOCAP100,
                 &counterType,
                 &displayValue
-                );
-            //PdhGetRawCounterValue(entry->PerfCounterHandle, 0, &rawValue);
-
-            if (counterType == PERF_COUNTER_COUNTER)
+                ) == ERROR_SUCCESS && counterType == PERF_COUNTER_COUNTER)
             {
                 PhUpdateDelta(&entry->HistoryDelta, displayValue.largeValue);
             }
         }
         else
         {
-            // The first sample must be zero
-            PhInitializeDelta(&entry->HistoryDelta);
+            PhInitializeDelta(&entry->HistoryDelta); // The first sample must be zero
+
             entry->HaveFirstSample = TRUE;
         }
 
@@ -135,7 +135,7 @@ VOID PerfMonUpdate(
         PhDereferenceObjectDeferDelete(entry);
     }
 
-    PhReleaseQueuedLockShared(&DiskDrivesListLock);
+    PhReleaseQueuedLockShared(&PerfCounterListLock);
 
     runCount++;
 }
@@ -180,15 +180,16 @@ PPERF_COUNTER_ENTRY CreatePerfCounterEntry(
 {
     PPERF_COUNTER_ENTRY entry;
 
-    entry = PhCreateObject(sizeof(PERF_COUNTER_ENTRY), DiskDriveEntryType);
+    entry = PhCreateObject(sizeof(PERF_COUNTER_ENTRY), PerfCounterEntryType);
     memset(entry, 0, sizeof(PERF_COUNTER_ENTRY));
 
     CopyPerfCounterId(&entry->Id, Id);
+
     PhInitializeCircularBuffer_ULONG64(&entry->HistoryBuffer, PhGetIntegerSetting(L"SampleCount"));
 
-    PhAcquireQueuedLockExclusive(&DiskDrivesListLock);
-    PhAddItemList(DiskDrivesList, entry);
-    PhReleaseQueuedLockExclusive(&DiskDrivesListLock);
+    PhAcquireQueuedLockExclusive(&PerfCounterListLock);
+    PhAddItemList(PerfCounterList, entry);
+    PhReleaseQueuedLockExclusive(&PerfCounterListLock);
 
     return entry;
 }

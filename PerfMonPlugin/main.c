@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Performance Monitor Plugin
  *
- * Copyright (C) 2015 dmex
+ * Copyright (C) 2015-2016 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -22,11 +22,10 @@
 
 #include "perfmon.h"
 
-PPH_OBJECT_TYPE DiskDriveEntryType = NULL;
-PPH_LIST DiskDrivesList = NULL;
-PH_QUEUED_LOCK DiskDrivesListLock = PH_QUEUED_LOCK_INIT;
+PPH_LIST PerfCounterList = NULL;
+PPH_OBJECT_TYPE PerfCounterEntryType = NULL;
+PH_QUEUED_LOCK PerfCounterListLock = PH_QUEUED_LOCK_INIT;
 
-PPH_LIST CountersList;
 PPH_PLUGIN PluginInstance;
 PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
 PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
@@ -74,10 +73,10 @@ VOID NTAPI SystemInformationInitializingCallback(
 {
     PPH_PLUGIN_SYSINFO_POINTERS pluginEntry = (PPH_PLUGIN_SYSINFO_POINTERS)Parameter;
 
-    PhAcquireQueuedLockShared(&DiskDrivesListLock);
-    for (ULONG i = 0; i < DiskDrivesList->Count; i++)
+    PhAcquireQueuedLockShared(&PerfCounterListLock);
+    for (ULONG i = 0; i < PerfCounterList->Count; i++)
     {
-        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
+        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(PerfCounterList->Items[i]);
 
         if (!entry)
             continue;
@@ -87,7 +86,7 @@ VOID NTAPI SystemInformationInitializingCallback(
             PerfMonCounterSysInfoInitializing(pluginEntry, entry);
         }
     }
-    PhReleaseQueuedLockShared(&DiskDrivesListLock);
+    PhReleaseQueuedLockShared(&PerfCounterListLock);
 }
 
 LOGICAL DllMain(

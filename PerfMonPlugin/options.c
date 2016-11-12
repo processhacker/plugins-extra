@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Performance Monitor Plugin
  *
- * Copyright (C) 2015 dmex
+ * Copyright (C) 2015-2016 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -76,11 +76,11 @@ VOID PerfMonLoadCounters(
     _In_ PPH_PERFMON_CONTEXT Context
     )
 {
-    PhAcquireQueuedLockShared(&DiskDrivesListLock);
-    for (ULONG i = 0; i < DiskDrivesList->Count; i++)
+    PhAcquireQueuedLockShared(&PerfCounterListLock);
+    for (ULONG i = 0; i < PerfCounterList->Count; i++)
     {
         INT lvItemIndex;
-        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
+        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(PerfCounterList->Items[i]);
 
         if (!entry)
             continue;
@@ -97,8 +97,7 @@ VOID PerfMonLoadCounters(
             ListView_SetItemState(Context->ListViewHandle, lvItemIndex, ITEM_CHECKED, LVIS_STATEIMAGEMASK);
         }
     }
-
-    PhReleaseQueuedLockShared(&DiskDrivesListLock);
+    PhReleaseQueuedLockShared(&PerfCounterListLock);
 }
 
 VOID PerfMonLoadList(
@@ -139,10 +138,10 @@ VOID PerfMonSaveList(
 
     PhInitializeStringBuilder(&stringBuilder, 260);
 
-    PhAcquireQueuedLockShared(&DiskDrivesListLock);
-    for (ULONG i = 0; i < DiskDrivesList->Count; i++)
+    PhAcquireQueuedLockShared(&PerfCounterListLock);
+    for (ULONG i = 0; i < PerfCounterList->Count; i++)
     {
-        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
+        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(PerfCounterList->Items[i]);
 
         if (!entry)
             continue;
@@ -154,7 +153,7 @@ VOID PerfMonSaveList(
 
         PhDereferenceObjectDeferDelete(entry);
     }
-    PhReleaseQueuedLockShared(&DiskDrivesListLock);
+    PhReleaseQueuedLockShared(&PerfCounterListLock);
 
     if (stringBuilder.String->Length != 0)
         PhRemoveEndStringBuilder(&stringBuilder, 1);
@@ -170,11 +169,10 @@ BOOLEAN PerfMonFindEntry(
 {
     BOOLEAN found = FALSE;
 
-    PhAcquireQueuedLockShared(&DiskDrivesListLock);
-
-    for (ULONG i = 0; i < DiskDrivesList->Count; i++)
+    PhAcquireQueuedLockShared(&PerfCounterListLock);
+    for (ULONG i = 0; i < PerfCounterList->Count; i++)
     {
-        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
+        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(PerfCounterList->Items[i]);
 
         if (!entry)
             continue;
@@ -200,8 +198,7 @@ BOOLEAN PerfMonFindEntry(
             PhDereferenceObjectDeferDelete(entry);
         }
     }
-
-    PhReleaseQueuedLockShared(&DiskDrivesListLock);
+    PhReleaseQueuedLockShared(&PerfCounterListLock);
 
     return found;
 }
@@ -236,14 +233,10 @@ VOID PerfMonShowCounters(
 
     if ((counterStatus = PdhBrowseCounters(&browseConfig)) != ERROR_SUCCESS)
     {
-        if (counterStatus != PDH_DIALOG_CANCELLED)
-        {
-            //PhShowError(Parent, L"PdhBrowseCounters failed with status 0x%x.", counterStatus);
-        }
-
         goto CleanupExit;
     }
-    else if (PhCountStringZ(counterPathBuffer) == 0)
+    
+    if (PhCountStringZ(counterPathBuffer) == 0)
     {
         goto CleanupExit;
     }
@@ -264,13 +257,13 @@ VOID PerfMonShowCounters(
 
         counterWildCardString = PhCreateStringEx(NULL, wildCardLength * sizeof(WCHAR));
 
-        if ((counterStatus = PdhExpandWildCardPath(
-            NULL,
-            PhGetString(counterPathString),
-            PhGetString(counterWildCardString),
-            &wildCardLength,
+        if (PdhExpandWildCardPath(
+            NULL, 
+            PhGetString(counterPathString), 
+            PhGetString(counterWildCardString), 
+            &wildCardLength, 
             0
-            )) == ERROR_SUCCESS)
+            ) == ERROR_SUCCESS)
         {
             PH_STRINGREF part;
             PH_STRINGREF remaining = counterWildCardString->sr;
@@ -282,26 +275,19 @@ VOID PerfMonShowCounters(
                 if (remaining.Length == 0)
                     break;
 
-                if ((counterStatus = PdhValidatePath(part.Buffer)) != ERROR_SUCCESS)
+                if (PdhValidatePath(part.Buffer) != ERROR_SUCCESS)
                 {
-                    //PhShowError(Parent, L"PdhValidatePath failed with status 0x%x", counterStatus);
                     goto CleanupExit;
                 }
 
                 PerfMonAddCounter(Context, PhCreateString2(&part));
             }
         }
-        else
-        {
-            //PhShowError(Parent, L"PdhExpandWildCardPath failed with status 0x%x", counterStatus);
-            goto CleanupExit;
-        }
     }
     else
     {
-        if ((counterStatus = PdhValidatePath(PhGetString(counterPathString))) != ERROR_SUCCESS)
+        if (PdhValidatePath(PhGetString(counterPathString)) != ERROR_SUCCESS)
         {
-            //PhShowError(Parent, L"PdhValidatePath failed with status 0x%x", counterStatus);
             goto CleanupExit;
         }
 
@@ -361,14 +347,10 @@ INT_PTR CALLBACK OptionsDlgProc(
                 LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER, 
                 LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
             PhSetControlTheme(context->ListViewHandle, L"explorer");
-            PhAddListViewColumn(context->ListViewHandle, 0, 0, 0, LVCFMT_LEFT, 420, L"Counter");
+            PhAddListViewColumn(context->ListViewHandle, 0, 0, 0, LVCFMT_LEFT, 500, L"Counter");
             PhSetExtendedListView(context->ListViewHandle);
 
             PerfMonLoadCounters(context);
-
-            RECT rect;
-            GetClientRect(context->ListViewHandle, &rect);
-            ListView_SetColumnWidth(context->ListViewHandle, 0, rect.right - 25);
         }
         break;
     case WM_COMMAND:
@@ -393,7 +375,7 @@ INT_PTR CALLBACK OptionsDlgProc(
             {
                 LPNM_LISTVIEW listView = (LPNM_LISTVIEW)lParam;
 
-                if (!PhTryAcquireReleaseQueuedLockExclusive(&DiskDrivesListLock))
+                if (!PhTryAcquireReleaseQueuedLockExclusive(&PerfCounterListLock))
                     break;
 
                 if (listView->uChanged & LVIF_STATE)
