@@ -444,32 +444,55 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
                     SIZE nameSize;
                     SIZE textSize;
                     
+                    if (node->PluginOptions)
+                    {
+                        if (!node->Icon)
+                        {
+                            HBITMAP bitmapActive;
+
+                            bitmapActive = LoadImageFromResources(17, 17, MAKEINTRESOURCE(IDB_SETTINGS_PNG), TRUE);
+
+                            if (bitmapActive)
+                            {
+                                HDC screenDc;
+                                HBITMAP screenBitmap;
+                                ICONINFO iconInfo = { TRUE };
+
+                                screenDc = CreateIC(L"DISPLAY", NULL, NULL, NULL);
+                                screenBitmap = CreateCompatibleBitmap(screenDc, 17, 17);
+
+                                iconInfo.hbmColor = bitmapActive;
+                                iconInfo.hbmMask = screenBitmap;
+                                node->Icon = CreateIconIndirect(&iconInfo);
+
+                                DeleteObject(screenBitmap);
+                                DeleteObject(bitmapActive);
+                                DeleteDC(screenDc);
+                            }
+                        }
+
+                        if (node->Icon)
+                        {
+                            DrawIconEx(
+                                customDraw->Dc,
+                                rect.left + 5,
+                                rect.top + ((rect.bottom - rect.top) - 17) / 2,
+                                node->Icon,
+                                17,
+                                17,
+                                0,
+                                NULL,
+                                DI_NORMAL
+                                );
+                        }
+                    }
+
+                    rect.left += 19;
                     rect.left += 8;
+
                     rect.top += 5;
                     rect.right -= 5;
                     rect.bottom -= 8;
-
-                    //HICON icon;
-                    //
-                    //PhGetStockApplicationIcon(NULL, &icon);
-                    //
-                    //// Draw the icon.
-                    //if (icon)
-                    //{
-                    //    DrawIconEx(
-                    //        customDraw->Dc,
-                    //        rect.left,
-                    //        rect.top,
-                    //        icon,
-                    //        36,
-                    //        36,
-                    //        0,
-                    //        NULL,
-                    //        DI_NORMAL
-                    //        );
-                    //
-                    //    rect.left += 36 + 5;
-                    //}
 
                     // top
                     SetTextColor(customDraw->Dc, RGB(0x0, 0x0, 0x0));

@@ -75,8 +75,8 @@ extern PPH_PLUGIN PluginInstance;
 
 typedef enum _TREE_PLUGIN_STATE
 {
-    PLUGIN_STATE_RESTART,
     PLUGIN_STATE_LOCAL,
+    PLUGIN_STATE_RESTART,
     PLUGIN_STATE_REMOTE,
     PLUGIN_STATE_UPDATE,
 } TREE_PLUGIN_STATE;
@@ -245,6 +245,7 @@ typedef struct _WCT_CONTEXT
     HWND TreeNewHandle;
 
     PPH_STRING SearchboxText;
+    PPH_STRING TreeText;
     HFONT NormalFontHandle;
     HFONT BoldFontHandle;
 

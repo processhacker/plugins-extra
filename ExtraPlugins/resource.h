@@ -9,6 +9,8 @@
 #define IDB_SEARCH_INACTIVE             108
 #define IDD_DIALOG1                     111
 #define IDD_DISABLED_DIALOG             111
+#define IDB_SETTINGS                    113
+#define IDB_SETTINGS_PNG                113
 #define IDC_PLUGINTREE                  1001
 #define IDC_INSTALLED                   1036
 #define IDC_BROWSE                      1037
@@ -28,7 +30,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        113
+#define _APS_NEXT_RESOURCE_VALUE        114
 #define _APS_NEXT_COMMAND_VALUE         40028
 #define _APS_NEXT_CONTROL_VALUE         1047
 #define _APS_NEXT_SYMED_VALUE           104

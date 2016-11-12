@@ -57,7 +57,26 @@ BOOLEAN WordMatchStringZ(
     return WordMatchStringRef(Context, &text);
 }
 
-LRESULT SysButtonCustomDraw(
+VOID UpdateTreeView(
+    _In_ PWCT_CONTEXT Context
+    )
+{
+    //PhSwapReference(&Context->TreeText, PhCreateString(L"Loading Plugins..."));
+    //TreeNew_SetEmptyText(Context->TreeNewHandle, &Context->TreeText->sr, 0);
+
+    PhApplyTreeNewFilters(Context->TreeFilter);
+    TreeNew_AutoSizeColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+}
+
+VOID UpdateMenuView(_In_ PWCT_CONTEXT Context, UINT Id)
+{
+    HWND active = Context->PluginMenuActive;
+    Context->PluginMenuActiveId = Id;
+    Context->PluginMenuActive = GetDlgItem(Context->DialogHandle, Id);
+    RedrawWindow(active, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE | RDW_FRAME);
+}
+
+LRESULT DrawButton(
     _In_ PWCT_CONTEXT Context, 
     _In_ LPARAM lParam
     )
@@ -274,6 +293,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
       
             PhCenterWindow(hwndDlg, PhMainWndHandle);
             WtcInitializeWindowTree(hwndDlg, context->TreeNewHandle, &context->TreeContext);
+            PhAddTreeNewFilter(context->TreeFilter = WtcGetTreeListFilterSupport(), (PPH_TN_FILTER_FUNCTION)ProcessTreeFilterCallback, context);
 
             PhInitializeLayoutManager(&context->LayoutManager, hwndDlg);
             PhAddLayoutItem(&context->LayoutManager, context->TreeNewHandle, NULL, PH_ANCHOR_ALL);
@@ -282,15 +302,11 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
             PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDC_DISABLED), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_LEFT);
             PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDOK), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_RIGHT);       
             PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
-            
-            context->Type = PLUGIN_STATE_LOCAL;
-            PhAddTreeNewFilter(context->TreeFilter = WtcGetTreeListFilterSupport(), (PPH_TN_FILTER_FUNCTION)ProcessTreeFilterCallback, context);
-            
-            EnumerateLoadedPlugins(context);
-            TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
-            PhQueueItemWorkQueue(PhGetGlobalWorkQueue(), QueryPluginsCallbackThread, context);
 
+            EnumerateLoadedPlugins(context);
             SetWindowText(GetDlgItem(hwndDlg, IDC_DISABLED), PhGetString(PhaFormatString(L"Disabled Plugins (%lu)", PhDisabledPluginsCount())));
+            PhQueueItemWorkQueue(PhGetGlobalWorkQueue(), QueryPluginsCallbackThread, context);
+            UpdateTreeView(context);
 
             SendMessage(hwndDlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(hwndDlg, IDC_INSTALLED), TRUE);
         }
@@ -334,8 +350,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                         SetFocus(context->SearchHandle);
                         Static_SetText(context->SearchHandle, L"");
 
-                        PhApplyTreeNewFilters(context->TreeFilter);
-                        TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+                        UpdateTreeView(context);
                     }
                 }
                 break;
@@ -343,40 +358,24 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                 {
                     context->Type = PLUGIN_STATE_LOCAL;
 
-                    HWND active = context->PluginMenuActive;
-                    context->PluginMenuActiveId = IDC_INSTALLED;
-                    context->PluginMenuActive = GetDlgItem(hwndDlg, IDC_INSTALLED);
-                    RedrawWindow(active, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE | RDW_FRAME);
-
-                    PhApplyTreeNewFilters(context->TreeFilter);
-                    TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+                    UpdateMenuView(context, IDC_INSTALLED);
+                    UpdateTreeView(context);
                 }
                 break;
             case IDC_BROWSE:
                 {
                     context->Type = PLUGIN_STATE_REMOTE;
 
-                    HWND active = context->PluginMenuActive;
-                    context->PluginMenuActiveId = IDC_BROWSE;
-                    context->PluginMenuActive = GetDlgItem(hwndDlg, IDC_BROWSE);           
-                    RedrawWindow(active, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE | RDW_FRAME);
-
-                    PhApplyTreeNewFilters(context->TreeFilter);
-                    TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+                    UpdateMenuView(context, IDC_BROWSE);
+                    UpdateTreeView(context);
                 }
                 break;
             case IDC_UPDATES:
                 {
                     context->Type = PLUGIN_STATE_UPDATE;
 
-                    HWND active = context->PluginMenuActive;
-                    context->PluginMenuActiveId = IDC_UPDATES;
-                    context->PluginMenuActive = GetDlgItem(hwndDlg, IDC_UPDATES);
-
-                    RedrawWindow(active, NULL, NULL, RDW_ERASENOW | RDW_INVALIDATE | RDW_FRAME);
-
-                    PhApplyTreeNewFilters(context->TreeFilter);
-                    TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+                    UpdateMenuView(context, IDC_UPDATES);
+                    UpdateTreeView(context);
                 }
                 break;
             case WM_ACTION:
@@ -441,6 +440,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                         }
        
                         PhInsertEMenuItem(menu, selectedItem, -1);
+                        PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
                         PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_DISABLE, L"Disable", NULL, NULL), -1);
                         PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
                         PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_PROPERTIES, L"Options", NULL, NULL), -1);
@@ -449,13 +449,18 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                         {
                             PhSetFlagsEMenuItem(menu, ID_MENU_PROPERTIES, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
                         }
+
+                        if (!PhGetOwnTokenAttributes().Elevated)
+                        {
+                            PhSetFlagsEMenuItem(menu, ID_MENU_UNINSTALL, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
+                        }
                     }
                     else
                     {
                         HICON shieldIcon;
 
                         shieldIcon = PhLoadIcon(NULL, IDI_SHIELD, PH_LOAD_ICON_SIZE_SMALL | PH_LOAD_ICON_STRICT, 0, 0);
-                        selectedItem = PhCreateEMenuItem(0, ID_MENU_INSTALL, PhaFormatString(L"Install %s", PhGetStringOrEmpty(selectedNode->Name))->Buffer, NULL, NULL);
+                        selectedItem = PhCreateEMenuItem(0, ID_MENU_INSTALL, PhaFormatString(L"Install %s plugin", PhGetStringOrEmpty(selectedNode->Name))->Buffer, NULL, NULL);
 
                         if (shieldIcon)
                         {
@@ -470,6 +475,11 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                         PhInsertEMenuItem(menu, selectedItem, -1);
                         PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
                         PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_DISABLE, L"Disable", NULL, NULL), -1);
+
+                        if (!PhGetOwnTokenAttributes().Elevated)
+                        {
+                            PhSetFlagsEMenuItem(menu, ID_MENU_INSTALL, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
+                        }
                     }
 
                     selectedItem = PhShowEMenu(
@@ -522,8 +532,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                                 }
                                             }
 
-                                            PhApplyTreeNewFilters(context->TreeFilter);
-                                            TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+                                            UpdateTreeView(context);
                                         }
                                         else 
                                         {
@@ -541,8 +550,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                                 selectedNode->State = PLUGIN_STATE_RESTART;
                                             }
 
-                                            PhApplyTreeNewFilters(context->TreeFilter);
-                                            TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+                                            UpdateTreeView(context);
                                         }                           
                                     }
                                 }
@@ -583,8 +591,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                             }
                                         }
 
-                                        PhApplyTreeNewFilters(context->TreeFilter);
-                                        TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+                                        UpdateTreeView(context);
                                     }
                                 }
                             }
@@ -598,8 +605,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                 PhSetPluginDisabled(&baseName->sr, TRUE);
 
                                 selectedNode->State = PLUGIN_STATE_RESTART;
-                                PhApplyTreeNewFilters(context->TreeFilter);
-                                TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+                                UpdateTreeView(context);
 
                                 SetWindowText(GetDlgItem(hwndDlg, IDC_DISABLED),
                                     PhGetString(PhaFormatString(L"Disabled Plugins (%lu)", PhDisabledPluginsCount()))
@@ -648,7 +654,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                 {
                     if (header->idFrom == IDC_INSTALLED || header->idFrom == IDC_BROWSE || header->idFrom == IDC_UPDATES)
                     {
-                        SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, SysButtonCustomDraw(context, lParam));
+                        SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, DrawButton(context, lParam));
                         return TRUE;
                     }
                 }
@@ -662,8 +668,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
 
                 CloudAddChildWindowNode(&context->TreeContext, entry);
 
-                TreeNew_NodesStructured(context->TreeNewHandle);
-                TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+                UpdateTreeView(context);
             }
             break;
     case ID_UPDATE_COUNT:

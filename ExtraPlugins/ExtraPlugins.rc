@@ -176,6 +176,8 @@ IDB_SEARCH_ACTIVE       PNG                     "resources\\active_search.png"
 
 IDB_SEARCH_INACTIVE     PNG                     "resources\\inactive_search.png"
 
+IDB_SETTINGS_PNG        PNG                     "resources\\cog_edit_modern.png"
+
 #endif    // English (Australia) resources
 /////////////////////////////////////////////////////////////////////////////
 
