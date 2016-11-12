@@ -285,10 +285,10 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
             PhAddTreeNewFilter(context->TreeFilter, (PPH_TN_FILTER_FUNCTION)ProcessTreeFilterCallback, context);
             
             EnumerateLoadedPlugins(context);
-            PhQueueItemWorkQueue(PhGetGlobalWorkQueue(), QueryPluginsCallbackThread, context);
-            SendMessage(hwndDlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(hwndDlg, IDC_INSTALLED), TRUE);
-
             TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+            PhQueueItemWorkQueue(PhGetGlobalWorkQueue(), QueryPluginsCallbackThread, context);
+
+            SendMessage(hwndDlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(hwndDlg, IDC_INSTALLED), TRUE);
         }
         break;
     case WM_SIZE:
@@ -393,23 +393,27 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                     {
                         PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_UNINSTALL, L"Uninstall", NULL, NULL), -1);
                         PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
-                        PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_DISABLE, L"Disable", NULL, NULL), -1);                     
+                        PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_DISABLE, L"Disable", NULL, NULL), -1);
                     }
                     else
                     {
                         PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_INSTALL, L"Install", NULL, NULL), -1);
                     }
         
-                    //PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_LOAD, L"View Website", NULL, NULL), -1);
                     PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
                     PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_UNLOAD, L"Options", NULL, NULL), -1);
-                    PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
-                    PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_PROPERTIES, L"Properties", NULL, NULL), -1);
-                    
-                    if (!selectedNode->PluginOptions)
+
+                    if (!PhGetOwnTokenAttributes().Elevated)
+                    {
+                        PhSetFlagsEMenuItem(menu, ID_MENU_UNINSTALL, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
+                        PhSetFlagsEMenuItem(menu, ID_MENU_INSTALL, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
+                    }
+
+                    if (!selectedNode->PluginInstance || !selectedNode->PluginInstance->Information.HasOptions)
                     {
                         PhSetFlagsEMenuItem(menu, ID_MENU_UNLOAD, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
                     }
+                    
 
                     selectedItem = PhShowEMenu(
                         menu,
@@ -524,6 +528,14 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                 ShowPluginProperties(hwndDlg);
                             }
                             break;
+                        case ID_MENU_UNLOAD:
+                            {
+                                if (selectedNode->PluginInstance)
+                                {
+                                    PhInvokeCallback(PhGetPluginCallback((PPH_PLUGIN)selectedNode->PluginInstance, PluginCallbackShowOptions), hwndDlg);
+                                }
+                            }
+                            break;
                         }
                     }
                 }
@@ -555,6 +567,16 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
             }
         }
         break;
+    case ID_UPDATE_ADD:
+            {
+                PPLUGIN_NODE entry = (PPLUGIN_NODE)lParam;
+
+                CloudAddChildWindowNode(&context->TreeContext, entry);
+
+                TreeNew_NodesStructured(context->TreeNewHandle);
+                TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
+            }
+            break;
     case ID_UPDATE_COUNT:
         {
             ULONG count = 0;

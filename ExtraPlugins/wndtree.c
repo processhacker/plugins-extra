@@ -408,7 +408,7 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
 
             if (selectedNode = WeGetSelectedWindowNode(context))
             {
-                if (selectedNode->PluginInstance)
+                if (selectedNode->PluginInstance && selectedNode->PluginInstance->Information.HasOptions)
                 {
                     PhInvokeCallback(PhGetPluginCallback((PPH_PLUGIN)selectedNode->PluginInstance, PluginCallbackShowOptions), context->ParentWindowHandle);
                 }

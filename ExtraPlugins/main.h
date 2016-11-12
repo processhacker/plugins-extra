@@ -58,7 +58,8 @@
 #define SETTING_NAME_LAST_CHECK (SETTING_PREFIX L".LastUpdateCheckTime")
 
 #define ID_SEARCH_CLEAR (WM_APP + 8001)
-#define ID_UPDATE_COUNT (WM_APP + 8002)
+#define ID_UPDATE_ADD (WM_APP + 8002)
+#define ID_UPDATE_COUNT (WM_APP + 8003)
 
 #define MAKE_VERSION_ULONGLONG(major, minor, build, revision) \
     (((ULONGLONG)(major) << 48) | \
