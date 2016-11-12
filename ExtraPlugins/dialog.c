@@ -252,7 +252,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                     CLEARTYPE_QUALITY | ANTIALIASED_QUALITY,
                     DEFAULT_PITCH,
                     logFont.lfFaceName
-                );
+                    );
 
                 context->BoldFontHandle = CreateFont(
                     -PhMultiplyDivideSigned(-16, PhGlobalDpi, 72),
@@ -269,7 +269,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                     CLEARTYPE_QUALITY | ANTIALIASED_QUALITY,
                     DEFAULT_PITCH,
                     logFont.lfFaceName
-                );
+                    );
             }
       
             PhCenterWindow(hwndDlg, PhMainWndHandle);
@@ -284,12 +284,13 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
             PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
             
             context->Type = PLUGIN_STATE_LOCAL;
-            context->TreeFilter = WtcGetTreeListFilterSupport();
-            PhAddTreeNewFilter(context->TreeFilter, (PPH_TN_FILTER_FUNCTION)ProcessTreeFilterCallback, context);
+            PhAddTreeNewFilter(context->TreeFilter = WtcGetTreeListFilterSupport(), (PPH_TN_FILTER_FUNCTION)ProcessTreeFilterCallback, context);
             
             EnumerateLoadedPlugins(context);
             TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
             PhQueueItemWorkQueue(PhGetGlobalWorkQueue(), QueryPluginsCallbackThread, context);
+
+            SetWindowText(GetDlgItem(hwndDlg, IDC_DISABLED), PhGetString(PhaFormatString(L"Disabled Plugins (%lu)", PhDisabledPluginsCount())));
 
             SendMessage(hwndDlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(hwndDlg, IDC_INSTALLED), TRUE);
         }
@@ -581,6 +582,9 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                 PhApplyTreeNewFilters(context->TreeFilter);
                                 TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
 
+                                SetWindowText(GetDlgItem(hwndDlg, IDC_DISABLED),
+                                    PhGetString(PhaFormatString(L"Disabled Plugins (%lu)", PhDisabledPluginsCount()))
+                                    );
                                 //PhpUpdateDisabledPlugin(hwndDlg, PhFindListViewItemByFlags(PluginsLv, -1, LVNI_SELECTED), SelectedPlugin, newDisabledState);
                                 //SetDlgItemText(hwndDlg, IDC_DISABLE, PhpGetPluginDisableButtonText(baseName));
                             }
@@ -601,6 +605,15 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
             case IDOK:
                 {
                     DestroyWindow(hwndDlg);
+                }
+                break;
+            case IDC_DISABLED:
+                {
+                    ShowDisabledPluginsDialog(hwndDlg);
+
+                    SetWindowText(GetDlgItem(hwndDlg, IDC_DISABLED), 
+                        PhGetString(PhaFormatString(L"Disabled Plugins (%lu)", PhDisabledPluginsCount()))
+                        );
                 }
                 break;
             }
@@ -647,8 +660,9 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                     count++;
                 }
             }
-
+            
             SetWindowText(GetDlgItem(hwndDlg, IDC_UPDATES), PhGetString(PhaFormatString(L"Updates (%lu)", count)));
+
         }
         break;
     }

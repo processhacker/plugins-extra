@@ -226,12 +226,6 @@ VOID NTAPI LoadCallback(
     else
     {
         PluginsCleanup();
-
-        if (LastCleanupExpired())
-        {
-            // Cleanup every plugins settings every 25 days.
-            //PhClearIgnoredSettings();
-        }
     }
 }
 

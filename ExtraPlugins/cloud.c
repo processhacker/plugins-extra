@@ -181,7 +181,6 @@ VOID EnumerateLoadedPlugins(
             entry->Author = PhCreateString(pluginInstance->Information.Author);
             entry->Description = PhCreateString(pluginInstance->Information.Description);
 
-
             SYSTEMTIME stUTC, stLocal;
             PhLargeIntegerToSystemTime(&stUTC, &basic.LastWriteTime);
             SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
@@ -266,13 +265,10 @@ NTSTATUS QueryPluginsCallbackThread(
     if (!ReadRequestString(httpRequestHandle, &xmlStringBuffer, &xmlStringBufferLength))
         goto CleanupExit;
 
-    if (xmlStringBuffer == NULL || xmlStringBuffer[0] == '\0')
-        goto CleanupExit;
-
     if (!(rootJsonObject = json_tokener_parse(xmlStringBuffer)))
         goto CleanupExit;
 
-    for (int i = 0; i < json_object_array_length(rootJsonObject); i++)
+    for (INT i = 0; i < json_object_array_length(rootJsonObject); i++)
     {
         json_object_ptr jvalue;
         PPLUGIN_NODE entry;

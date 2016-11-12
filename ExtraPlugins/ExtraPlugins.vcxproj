@@ -93,6 +93,7 @@
   <ItemGroup>
     <ClCompile Include="cloud.c" />
     <ClCompile Include="dialog.c" />
+    <ClCompile Include="disabled.c" />
     <ClCompile Include="json-c\arraylist.c" />
     <ClCompile Include="json-c\debug.c" />
     <ClCompile Include="json-c\json_c_version.c" />

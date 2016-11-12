@@ -237,7 +237,7 @@ LRESULT CALLBACK NcAreaWndSubclassProc(
 {
     PEDIT_CONTEXT context;
 
-    context = (PEDIT_CONTEXT)GetProp(hWnd, L"EditSubclassContext");
+    context = (PEDIT_CONTEXT)GetProp(hWnd, L"SearchBoxContext");
 
     switch (uMsg)
     {
@@ -252,7 +252,7 @@ LRESULT CALLBACK NcAreaWndSubclassProc(
                 DeleteObject(context->WindowFont);
 
             RemoveWindowSubclass(hWnd, NcAreaWndSubclassProc, uIdSubclass);
-            RemoveProp(hWnd, L"EditSubclassContext");
+            RemoveProp(hWnd, L"SearchBoxContext");
             PhFree(context);
         }
         break;
@@ -479,13 +479,11 @@ HBITMAP LoadImageFromResources(
     HGLOBAL resourceHandle = NULL;
     HRSRC resourceHandleSource = NULL;
     WICInProcPointer resourceBuffer = NULL;
-
     HDC screenHdc = NULL;
     HDC bufferDc = NULL;
     BITMAPINFO bitmapInfo = { 0 };
     HBITMAP bitmapHandle = NULL;
     PBYTE bitmapBuffer = NULL;
-
     IWICStream* wicStream = NULL;
     IWICBitmapSource* wicBitmapSource = NULL;
     IWICBitmapDecoder* wicDecoder = NULL;
@@ -658,7 +656,7 @@ VOID CreateSearchControl(
     Edit_SetCueBannerText(context->WindowHandle, L"Search Plugins (Ctrl+K)");
 
     // Set our window context data.
-    SetProp(context->WindowHandle, L"EditSubclassContext", (HANDLE)context);
+    SetProp(context->WindowHandle, L"SearchBoxContext", (HANDLE)context);
 
     // Subclass the Edit control window procedure.
     SetWindowSubclass(context->WindowHandle, NcAreaWndSubclassProc, 0, (ULONG_PTR)context);

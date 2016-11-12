@@ -97,6 +97,7 @@
     <ClCompile Include="dialog.c" />
     <ClCompile Include="searchbox.c" />
     <ClCompile Include="setup\uninstall.c" />
+    <ClCompile Include="disabled.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">

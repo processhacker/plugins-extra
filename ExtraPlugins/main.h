@@ -68,6 +68,9 @@
     ((ULONGLONG)(build) << 16) | \
     ((ULONGLONG)(revision) <<  0))
 
+#define ITEM_CHECKED (INDEXTOSTATEIMAGEMASK(2))
+#define ITEM_UNCHECKED (INDEXTOSTATEIMAGEMASK(1))
+
 extern PPH_PLUGIN PluginInstance;
 
 typedef enum _TREE_PLUGIN_STATE
@@ -165,6 +168,24 @@ typedef struct _WCT_TREE_CONTEXT
 // dialog.c 
 VOID ShowPluginManagerDialog(VOID);
 
+// disabled.c
+VOID ShowDisabledPluginsDialog(_In_ HWND Parent);
+
+typedef struct _PLUGIN_DISABLED_CONTEXT
+{
+    PH_QUEUED_LOCK ListLock;
+    HWND DialogHandle;
+    HWND ListViewHandle;
+    PH_LAYOUT_MANAGER LayoutManager;
+} PLUGIN_DISABLED_CONTEXT, *PPLUGIN_DISABLED_CONTEXT;
+
+ULONG PhDisabledPluginsCount(VOID);
+
+// plugin.c
+PWSTR PhGetPluginBaseName(_In_ PPHAPP_PLUGIN Plugin);
+BOOLEAN PhIsPluginLoadedByBaseName(_In_ PPH_STRINGREF BaseName);
+BOOLEAN PhIsPluginDisabled(_In_ PPH_STRINGREF BaseName);
+VOID PhSetPluginDisabled(_In_ PPH_STRINGREF BaseName, _In_ BOOLEAN Disable);
 
 
 VOID WtcInitializeWindowTree(
@@ -234,7 +255,7 @@ typedef struct _WCT_CONTEXT
     PPH_TN_FILTER_SUPPORT TreeFilter;
 
     PH_LAYOUT_MANAGER LayoutManager;
-} WCT_CONTEXT, *PWCT_CONTEXT;    
+} WCT_CONTEXT, *PWCT_CONTEXT;
 
 NTSTATUS QueryPluginsCallbackThread(_In_ PVOID Parameter);
 
@@ -386,15 +407,5 @@ LRESULT SysButtonCustomDraw(
     _In_ LPARAM lParam
     );
 
-// plugin.c
-
-BOOLEAN PhIsPluginDisabled(
-    _In_ PPH_STRINGREF BaseName
-    );
-
-VOID PhSetPluginDisabled(
-    _In_ PPH_STRINGREF BaseName,
-    _In_ BOOLEAN Disable
-    );
 
 #endif
