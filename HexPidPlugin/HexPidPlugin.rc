@@ -69,7 +69,7 @@ BEGIN
             VALUE "CompanyName", "wj32"
             VALUE "FileDescription", "Hexadecimal PID plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "HexPidPlugin.dll"
+            VALUE "InternalName", "wj32.HexPidPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "HexPidPlugin.dll"
             VALUE "ProductName", "Hexadecimal PID plugin for Process Hacker"

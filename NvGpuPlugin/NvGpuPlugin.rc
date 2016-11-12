@@ -43,7 +43,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Nvidia GPU plugin for Process Hacker"
             VALUE "FileVersion", "1.1"
-            VALUE "InternalName", "NvGpuPlugin"
+            VALUE "InternalName", "dmex.NvGpuPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "NvGpuPlugin.dll"
             VALUE "ProductName", "Nvidia GPU plugin for Process Hacker"

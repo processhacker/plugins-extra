@@ -43,7 +43,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Atom Table Plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "AtomTablePlugin"
+            VALUE "InternalName", "dmex.AtomTablePlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "AtomTablePlugin.dll"
             VALUE "ProductName", "Atom Table plugin for Process Hacker"

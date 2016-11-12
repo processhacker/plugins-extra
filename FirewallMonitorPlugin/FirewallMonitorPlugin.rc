@@ -70,7 +70,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Firewall Monitor plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "FirewallMonitorPlugin"
+            VALUE "InternalName", "dmex.FirewallMonitor"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "FirewallMonitorPlugin.dll"
             VALUE "ProductName", "Firewall Monitor plugin for Process Hacker"

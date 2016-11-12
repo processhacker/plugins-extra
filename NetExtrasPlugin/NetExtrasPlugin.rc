@@ -70,7 +70,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Network Extras Plugin for Process Hacker"
             VALUE "FileVersion", "1.1"
-            VALUE "InternalName", "NetExtrasPlugin"
+            VALUE "InternalName", "dmex.NetworkExtrasPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "NetExtrasPlugin.dll"
             VALUE "ProductName", "Network Extras Plugin for Process Hacker"

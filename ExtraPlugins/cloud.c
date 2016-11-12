@@ -136,64 +136,106 @@ VOID EnumerateLoadedPlugins(
         links = PhSuccessorElementAvlTree(links)
         )
     {
-        PPHAPP_PLUGIN pluginInstance = CONTAINING_RECORD(links, PHAPP_PLUGIN, Links);
-        PH_IMAGE_VERSION_INFO versionInfo;
+        HANDLE handle;
+        IO_STATUS_BLOCK isb;
+        FILE_BASIC_INFORMATION basic;
+        PPHAPP_PLUGIN pluginInstance;
 
-        if (PhInitializeImageVersionInfo(&versionInfo, PhGetString(pluginInstance->FileName)))
+        pluginInstance = CONTAINING_RECORD(links, PHAPP_PLUGIN, Links);
+        memset(&basic, 0, sizeof(FILE_BASIC_INFORMATION));
+
+        if (NT_SUCCESS(PhCreateFileWin32(
+            &handle,
+            PhGetString(pluginInstance->FileName),
+            FILE_GENERIC_READ,
+            FILE_ATTRIBUTE_NORMAL,
+            FILE_SHARE_READ,
+            FILE_OPEN,
+            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
+            )))
         {
-            HANDLE handle;
-            IO_STATUS_BLOCK isb;
-            FILE_BASIC_INFORMATION basic;
+            NtQueryInformationFile(
+                handle,
+                &isb,
+                &basic,
+                sizeof(FILE_BASIC_INFORMATION),
+                FileBasicInformation
+                );
 
-            memset(&basic, 0, sizeof(FILE_BASIC_INFORMATION));
+            NtClose(handle);
+        }
 
-            if (NT_SUCCESS(PhCreateFileWin32(
-                &handle, 
-                PhGetString(pluginInstance->FileName), 
-                FILE_GENERIC_READ, 
-                FILE_ATTRIBUTE_NORMAL, 
-                FILE_SHARE_READ, 
-                FILE_OPEN, 
-                FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
-                )))
+        ULONG versionSize;
+        PVOID versionInfo;
+        PUSHORT languageInfo;
+        UINT language;
+        UINT bufferSize = 0;
+        PWSTR buffer = NULL;
+        PPH_STRING internalName = NULL;
+        PPH_STRING version = NULL;
+
+        versionSize = GetFileVersionInfoSize(PhGetString(pluginInstance->FileName), NULL);
+        versionInfo = PhAllocate(versionSize);
+        memset(versionInfo, 0, versionSize);
+
+        if (GetFileVersionInfo(PhGetString(pluginInstance->FileName), 0, versionSize, versionInfo))
+        {
+            if (VerQueryValue(versionInfo, L"\\", &buffer, &bufferSize))
             {
-                NtQueryInformationFile(
-                    handle,
-                    &isb,
-                    &basic,
-                    sizeof(FILE_BASIC_INFORMATION),
-                    FileBasicInformation
-                    );
+                VS_FIXEDFILEINFO* info = (VS_FIXEDFILEINFO*)buffer;
 
-                NtClose(handle);
+                if (info->dwSignature == 0xfeef04bd)
+                {
+                    version = PhFormatString(
+                        L"%lu.%lu.%lu.%lu",
+                        (info->dwFileVersionMS >> 16) & 0xffff,
+                        (info->dwFileVersionMS >> 0) & 0xffff,
+                        (info->dwFileVersionLS >> 16) & 0xffff,
+                        (info->dwFileVersionLS >> 0) & 0xffff
+                        );
+                }
             }
 
+            if (VerQueryValue(versionInfo, L"\\VarFileInfo\\Translation", &languageInfo, &language))
+            {
+                PPH_STRING internalNameString = PhFormatString(
+                    L"\\StringFileInfo\\%04x%04x\\InternalName", 
+                    languageInfo[0],
+                    languageInfo[1]
+                    );
 
-            PPLUGIN_NODE entry = PhCreateAlloc(sizeof(PLUGIN_NODE));
-            memset(entry, 0, sizeof(PLUGIN_NODE));
+                if (VerQueryValue(versionInfo, PhGetStringOrEmpty(internalNameString), &buffer, &bufferSize))
+                {
+                    internalName = PhCreateStringEx(buffer, bufferSize * sizeof(WCHAR));
+                }
 
-            entry->State = PLUGIN_STATE_LOCAL;
-            entry->PluginInstance = pluginInstance;
-            entry->FilePath = PhCreateString2(&pluginInstance->FileName->sr);
-            entry->InternalName = PhCreateString2(&pluginInstance->Name);
-            entry->Name = PhCreateString(pluginInstance->Information.DisplayName);
-            entry->Version = PhSubstring(versionInfo.FileVersion, 0, versionInfo.FileVersion->Length / 2 - 4);
-            entry->Author = PhCreateString(pluginInstance->Information.Author);
-            entry->Description = PhCreateString(pluginInstance->Information.Description);
-
-            SYSTEMTIME stUTC, stLocal;
-            PhLargeIntegerToSystemTime(&stUTC, &basic.LastWriteTime);
-            SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
-            entry->UpdatedTime = PhFormatDateTime(&stLocal);
-
-            PhLargeIntegerToSystemTime(&stUTC, &basic.CreationTime);
-            SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLocal);
-            entry->AddedTime = PhFormatDateTime(&stLocal);
-
-            PostMessage(Context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
-
-            PhDeleteImageVersionInfo(&versionInfo);
+                PhDereferenceObject(internalNameString);
+            }
         }
+
+        PPLUGIN_NODE entry = PhCreateAlloc(sizeof(PLUGIN_NODE));
+        memset(entry, 0, sizeof(PLUGIN_NODE));
+
+        entry->State = PLUGIN_STATE_LOCAL;
+        entry->PluginInstance = pluginInstance;
+        entry->FilePath = PhCreateString2(&pluginInstance->FileName->sr);
+        entry->InternalName = PhCreateString2(&pluginInstance->Name);
+        entry->Name = PhCreateString(pluginInstance->Information.DisplayName);
+        entry->Version = PhSubstring(version, 0, version->Length / sizeof(WCHAR) - 4);
+        entry->Author = PhCreateString(pluginInstance->Information.Author);
+        entry->Description = PhCreateString(pluginInstance->Information.Description);
+
+        SYSTEMTIME utcTime, localTime;
+        PhLargeIntegerToSystemTime(&utcTime, &basic.LastWriteTime);
+        SystemTimeToTzSpecificLocalTime(NULL, &utcTime, &localTime);
+        entry->UpdatedTime = PhFormatDateTime(&localTime);
+
+        PhLargeIntegerToSystemTime(&utcTime, &basic.CreationTime);
+        SystemTimeToTzSpecificLocalTime(NULL, &utcTime, &localTime);
+        entry->AddedTime = PhFormatDateTime(&localTime);
+
+        PostMessage(Context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
+
     }
 }
 

@@ -43,7 +43,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Extra plugins for Process Hacker"
             VALUE "FileVersion", "1.0.0.0"
-            VALUE "InternalName", "ExtraPlugins"
+            VALUE "InternalName", "dmex.ExtraPlugins"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "ExtraPlugins.dll"
             VALUE "ProductName", "Extra plugins for Process Hacker"

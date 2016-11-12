@@ -24,7 +24,7 @@
 #define _BOOT_H_
 
 #define BOOT_ENTRIES_MENUITEM 1000
-#define PLUGIN_NAME L"dmex.EFIFirmwareEntriesPlugin"
+#define PLUGIN_NAME L"dmex.UefiFirmwareEntriesPlugin"
 #define SETTING_NAME_WINDOW_POSITION (PLUGIN_NAME L".WindowPosition")
 #define SETTING_NAME_WINDOW_SIZE (PLUGIN_NAME L".WindowSize")
 #define SETTING_NAME_LISTVIEW_COLUMNS (PLUGIN_NAME L".ListViewColumns")

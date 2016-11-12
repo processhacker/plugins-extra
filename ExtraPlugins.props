@@ -51,6 +51,7 @@
             <FunctionLevelLinking>false</FunctionLevelLinking>
             <IntrinsicFunctions>false</IntrinsicFunctions>
             <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+            <StringPooling>true</StringPooling>
         </ClCompile>
     </ItemDefinitionGroup>
 
@@ -64,6 +65,7 @@
             <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
             <WholeProgramOptimization>true</WholeProgramOptimization>
             <StringPooling>true</StringPooling>
+            <ControlFlowGuard>Guard</ControlFlowGuard>
         </ClCompile>
         <Link>
             <OptimizeReferences>true</OptimizeReferences>

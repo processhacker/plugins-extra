@@ -17,6 +17,7 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENA)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_AUS
+#pragma code_page(1252)
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -69,7 +70,7 @@ BEGIN
             VALUE "CompanyName", "wj32"
             VALUE "FileDescription", "Average CPU plugin for Process Hacker"
             VALUE "FileVersion", "1.1"
-            VALUE "InternalName", "AvgCpuPlugin"
+            VALUE "InternalName", "wj32.AvgCpuPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "AvgCpuPlugin.dll"
             VALUE "ProductName", "Average CPU plugin for Process Hacker"

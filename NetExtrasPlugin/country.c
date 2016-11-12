@@ -26,7 +26,6 @@
 BOOLEAN GeoDbLoaded = FALSE;
 static MMDB_s GeoDb = { 0 };
 
-
 // Copied from mstcpip.h (due to PH-SDK conflicts).
 // Note: Ipv6 versions are already available from ws2ipdef.h and did not need copying.
 

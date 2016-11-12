@@ -43,7 +43,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "UEFI firmware plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "UEFIFirmwarePlugin"
+            VALUE "InternalName", "dmex.UefiFirmwareEntriesPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "UEFIFirmwarePlugin.dll"
             VALUE "ProductName", "UEFI firmware plugin for Process Hacker"

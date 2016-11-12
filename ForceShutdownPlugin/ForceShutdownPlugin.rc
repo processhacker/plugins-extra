@@ -69,7 +69,7 @@ BEGIN
             VALUE "CompanyName", "dmex"
             VALUE "FileDescription", "Force shutdown plugin for Process Hacker"
             VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "ForceShutdownPlugin"
+            VALUE "InternalName", "dmex.ForceShutdownPlugin"
             VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
             VALUE "OriginalFilename", "ForceShutdownPlugin.dll"
             VALUE "ProductName", "Force shutdown plugin for Process Hacker"
