@@ -26,7 +26,7 @@
 #pragma comment(lib, "pdh.lib")
 
 #define PLUGIN_NAME L"dmex.PerfMonPlugin"
-#define SETTING_NAME_PERFMON_LIST (PLUGIN_NAME L".CountersList")
+#define SETTING_NAME_PERFMON_LIST (PLUGIN_NAME L".PerfCounterList")
 
 #define CINTERFACE
 #define COBJMACROS
@@ -38,10 +38,8 @@
 #include "resource.h"
 
 extern PPH_PLUGIN PluginInstance;
-
-extern PPH_LIST CountersList;
-extern PPH_OBJECT_TYPE DiskDriveEntryType;
 extern PPH_LIST DiskDrivesList;
+extern PPH_OBJECT_TYPE DiskDriveEntryType;
 extern PH_QUEUED_LOCK DiskDrivesListLock;
 
 typedef struct _PERF_COUNTER_ID
@@ -49,14 +47,9 @@ typedef struct _PERF_COUNTER_ID
     PPH_STRING PerfCounterPath;
 } PERF_COUNTER_ID, *PPERF_COUNTER_ID;
 
-typedef struct _DV_DISK_ENTRY
+typedef struct _PERF_COUNTER_ENTRY
 {
     PERF_COUNTER_ID Id;
-
-    HQUERY PerfQueryHandle;
-    HCOUNTER PerfCounterHandle;
-
-    ULONG DiskIndex;
 
     union
     {
@@ -69,11 +62,13 @@ typedef struct _DV_DISK_ENTRY
         };
     };
 
+    HQUERY PerfQueryHandle;
+    HCOUNTER PerfCounterHandle;
+    PPDH_COUNTER_INFO PerfCounterInfo;
     PH_UINT64_DELTA HistoryDelta;
     PH_CIRCULAR_BUFFER_ULONG64 HistoryBuffer;
-} DV_DISK_ENTRY, *PDV_DISK_ENTRY;
 
-
+} PERF_COUNTER_ENTRY, *PPERF_COUNTER_ENTRY;
 
 VOID PerfMonInitialize(
     VOID
@@ -81,22 +76,22 @@ VOID PerfMonInitialize(
 VOID PerfMonUpdate(
     VOID
     );
-VOID InitializeDiskId(
+VOID InitializePerfCounterId(
     _Out_ PPERF_COUNTER_ID Id,
     _In_ PPH_STRING DevicePath
     );
-VOID CopyDiskId(
+VOID CopyPerfCounterId(
     _Out_ PPERF_COUNTER_ID Destination,
     _In_ PPERF_COUNTER_ID Source
     );
-VOID DeleteDiskId(
+VOID DeletePerfCounterId(
     _Inout_ PPERF_COUNTER_ID Id
     );
-BOOLEAN EquivalentDiskId(
+BOOLEAN EquivalentPerfCounterId(
     _In_ PPERF_COUNTER_ID Id1,
     _In_ PPERF_COUNTER_ID Id2
     );
-PDV_DISK_ENTRY CreateDiskEntry(
+PPERF_COUNTER_ENTRY CreatePerfCounterEntry(
     _In_ PPERF_COUNTER_ID Id
     );
 
@@ -122,7 +117,7 @@ typedef struct _PH_PERFMON_CONTEXT
 
 typedef struct _PH_PERFMON_SYSINFO_CONTEXT
 {
-    PDV_DISK_ENTRY Entry;
+    PPERF_COUNTER_ENTRY Entry;
 
     HWND WindowHandle;
     HWND GraphHandle;
@@ -141,9 +136,9 @@ VOID ShowOptionsDialog(
     _In_ HWND ParentHandle
     );
 
-VOID PerfCounterSysInfoInitializing(
+VOID PerfMonCounterSysInfoInitializing(
     _In_ PPH_PLUGIN_SYSINFO_POINTERS Pointers,
-    _In_ PDV_DISK_ENTRY Entry
+    _In_ PPERF_COUNTER_ENTRY Entry
     );
 
 #endif _ROTHEADER_

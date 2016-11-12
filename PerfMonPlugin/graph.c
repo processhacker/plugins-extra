@@ -345,9 +345,9 @@ BOOLEAN PerfCounterSectionCallback(
     return FALSE;
 }
 
-VOID PerfCounterSysInfoInitializing(
+VOID PerfMonCounterSysInfoInitializing(
     _In_ PPH_PLUGIN_SYSINFO_POINTERS Pointers,
-    _In_ PDV_DISK_ENTRY Entry
+    _In_ PPERF_COUNTER_ENTRY Entry
     )
 {
     PH_SYSINFO_SECTION section;

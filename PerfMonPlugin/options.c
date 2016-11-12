@@ -54,11 +54,11 @@ VOID PerfMonAddCounter(
 {
     INT lvItemIndex;
     PERF_COUNTER_ID id;
-    PDV_DISK_ENTRY entry;
+    PPERF_COUNTER_ENTRY entry;
 
-    InitializeDiskId(&id, CounterPath);
-    entry = CreateDiskEntry(&id);
-    DeleteDiskId(&id);
+    InitializePerfCounterId(&id, CounterPath);
+    entry = CreatePerfCounterEntry(&id);
+    DeletePerfCounterId(&id);
 
     entry->UserReference = TRUE;
 
@@ -80,7 +80,7 @@ VOID PerfMonLoadCounters(
     for (ULONG i = 0; i < DiskDrivesList->Count; i++)
     {
         INT lvItemIndex;
-        PDV_DISK_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
+        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
 
         if (!entry)
             continue;
@@ -115,16 +115,16 @@ VOID PerfMonLoadList(
     {
         PH_STRINGREF part;
         PERF_COUNTER_ID id;
-        PDV_DISK_ENTRY entry;
+        PPERF_COUNTER_ENTRY entry;
 
         if (remaining.Length == 0)
             break;
 
         PhSplitStringRefAtChar(&remaining, ',', &part, &remaining);
 
-        InitializeDiskId(&id, PhCreateString2(&part));
-        entry = CreateDiskEntry(&id);
-        DeleteDiskId(&id);
+        InitializePerfCounterId(&id, PhCreateString2(&part));
+        entry = CreatePerfCounterEntry(&id);
+        DeletePerfCounterId(&id);
 
         entry->UserReference = TRUE;
     }
@@ -142,7 +142,7 @@ VOID PerfMonSaveList(
     PhAcquireQueuedLockShared(&DiskDrivesListLock);
     for (ULONG i = 0; i < DiskDrivesList->Count; i++)
     {
-        PDV_DISK_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
+        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
 
         if (!entry)
             continue;
@@ -174,30 +174,30 @@ BOOLEAN PerfMonFindEntry(
 
     for (ULONG i = 0; i < DiskDrivesList->Count; i++)
     {
-        PDV_DISK_ENTRY currentEntry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
+        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
 
-        if (!currentEntry)
+        if (!entry)
             continue;
 
-        found = EquivalentDiskId(&currentEntry->Id, Id);
+        found = EquivalentPerfCounterId(&entry->Id, Id);
 
         if (found)
         {
             if (RemoveUserReference)
             {
-                if (currentEntry->UserReference)
+                if (entry->UserReference)
                 {
-                    PhDereferenceObjectDeferDelete(currentEntry);
-                    currentEntry->UserReference = FALSE;
+                    PhDereferenceObjectDeferDelete(entry);
+                    entry->UserReference = FALSE;
                 }
             }
 
-            PhDereferenceObjectDeferDelete(currentEntry);
+            PhDereferenceObjectDeferDelete(entry);
             break;
         }
         else
         {
-            PhDereferenceObjectDeferDelete(currentEntry);
+            PhDereferenceObjectDeferDelete(entry);
         }
     }
 
@@ -238,7 +238,7 @@ VOID PerfMonShowCounters(
     {
         if (counterStatus != PDH_DIALOG_CANCELLED)
         {
-            PhShowError(Parent, L"PdhBrowseCounters failed with status 0x%x.", counterStatus);
+            //PhShowError(Parent, L"PdhBrowseCounters failed with status 0x%x.", counterStatus);
         }
 
         goto CleanupExit;
@@ -284,7 +284,7 @@ VOID PerfMonShowCounters(
 
                 if ((counterStatus = PdhValidatePath(part.Buffer)) != ERROR_SUCCESS)
                 {
-                    PhShowError(Parent, L"PdhValidatePath failed with status 0x%x", counterStatus);
+                    //PhShowError(Parent, L"PdhValidatePath failed with status 0x%x", counterStatus);
                     goto CleanupExit;
                 }
 
@@ -293,14 +293,15 @@ VOID PerfMonShowCounters(
         }
         else
         {
-            PhShowError(Parent, L"PdhExpandWildCardPath failed with status 0x%x", counterStatus);
+            //PhShowError(Parent, L"PdhExpandWildCardPath failed with status 0x%x", counterStatus);
+            goto CleanupExit;
         }
     }
     else
     {
-        if ((counterStatus = PdhValidatePath(counterPathString->Buffer)) != ERROR_SUCCESS)
+        if ((counterStatus = PdhValidatePath(PhGetString(counterPathString))) != ERROR_SUCCESS)
         {
-            PhShowError(Parent, L"PdhValidatePath failed with status 0x%x", counterStatus);
+            //PhShowError(Parent, L"PdhValidatePath failed with status 0x%x", counterStatus);
             goto CleanupExit;
         }
 
@@ -360,6 +361,10 @@ INT_PTR CALLBACK OptionsDlgProc(
             PhSetExtendedListView(context->ListViewHandle);
 
             PerfMonLoadCounters(context);
+
+            RECT rect;
+            GetClientRect(context->ListViewHandle, &rect);
+            ListView_SetColumnWidth(context->ListViewHandle, 0, rect.right - 25);
         }
         break;
     case WM_COMMAND:
@@ -397,9 +402,9 @@ INT_PTR CALLBACK OptionsDlgProc(
 
                             if (!PerfMonFindEntry(param, FALSE))
                             {
-                                PDV_DISK_ENTRY entry;
+                                PPERF_COUNTER_ENTRY entry;
 
-                                entry = CreateDiskEntry(param);
+                                entry = CreatePerfCounterEntry(param);
                                 entry->UserReference = TRUE;
                             }
 
@@ -421,20 +426,6 @@ INT_PTR CALLBACK OptionsDlgProc(
                     }
                 }
             }
-            //else if (header->code == NM_RCLICK)
-            //{
-            //    PDV_DISK_ID param;
-            //    PPH_STRING deviceInstance;
-
-            //    if (param = PhGetSelectedListViewItemParam(context->ListViewHandle))
-            //    {
-            //        if (deviceInstance = FindDiskDeviceInstance(param->DevicePath))
-            //        {
-            //            ShowDeviceMenu(hwndDlg, deviceInstance);
-            //            PhDereferenceObject(deviceInstance);
-            //        }
-            //    }
-            //}
         }
         break;
     }

@@ -77,26 +77,17 @@ VOID NTAPI SystemInformationInitializingCallback(
     PhAcquireQueuedLockShared(&DiskDrivesListLock);
     for (ULONG i = 0; i < DiskDrivesList->Count; i++)
     {
-        PDV_DISK_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
+        PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(DiskDrivesList->Items[i]);
 
         if (!entry)
             continue;
 
         if (entry->UserReference)
         {
-            PerfCounterSysInfoInitializing(pluginEntry, entry);
+            PerfMonCounterSysInfoInitializing(pluginEntry, entry);
         }
     }
     PhReleaseQueuedLockShared(&DiskDrivesListLock);
-
-    //PPH_PLUGIN_SYSINFO_POINTERS pluginEntry = (PPH_PLUGIN_SYSINFO_POINTERS)Parameter;
-
-    //for (ULONG i = 0; i < CountersList->Count; i++)
-    //{
-    //    PPH_PERFMON_ENTRY entry = (PPH_PERFMON_ENTRY)CountersList->Items[i];
-
-    //    PerfCounterSysInfoInitializing(pluginEntry, entry->Name);
-    //}
 }
 
 LOGICAL DllMain(

@@ -27,13 +27,13 @@ VOID PerfMonEntryDeleteProcedure(
     _In_ ULONG Flags
     )
 {
-    PDV_DISK_ENTRY entry = Object;
+    PPERF_COUNTER_ENTRY entry = Object;
         
     PhAcquireQueuedLockExclusive(&DiskDrivesListLock);
     PhRemoveItemList(DiskDrivesList, PhFindItemList(DiskDrivesList, entry));
     PhReleaseQueuedLockExclusive(&DiskDrivesListLock);
 
-    DeleteDiskId(&entry->Id);
+    DeletePerfCounterId(&entry->Id);
 
     PhDeleteCircularBuffer_ULONG64(&entry->HistoryBuffer);
 }
@@ -56,7 +56,7 @@ VOID PerfMonUpdate(
 
     for (ULONG i = 0; i < DiskDrivesList->Count; i++)
     {
-        PDV_DISK_ENTRY entry;
+        PPERF_COUNTER_ENTRY entry;
         ULONG counterType = 0;
         PDH_FMT_COUNTERVALUE displayValue = { 0 };
 
@@ -99,7 +99,7 @@ VOID PerfMonUpdate(
     runCount++;
 }
 
-VOID InitializeDiskId(
+VOID InitializePerfCounterId(
     _Out_ PPERF_COUNTER_ID Id,
     _In_ PPH_STRING PerfCounterPath
     )
@@ -107,22 +107,22 @@ VOID InitializeDiskId(
     PhSetReference(&Id->PerfCounterPath, PerfCounterPath);
 }
 
-VOID CopyDiskId(
+VOID CopyPerfCounterId(
     _Out_ PPERF_COUNTER_ID Destination,
     _In_ PPERF_COUNTER_ID Source
     )
 {
-    InitializeDiskId(Destination, Source->PerfCounterPath);
+    InitializePerfCounterId(Destination, Source->PerfCounterPath);
 }
 
-VOID DeleteDiskId(
+VOID DeletePerfCounterId(
     _Inout_ PPERF_COUNTER_ID Id
     )
 {
     PhClearReference(&Id->PerfCounterPath);
 }
 
-BOOLEAN EquivalentDiskId(
+BOOLEAN EquivalentPerfCounterId(
     _In_ PPERF_COUNTER_ID Id1,
     _In_ PPERF_COUNTER_ID Id2
     )
@@ -130,42 +130,41 @@ BOOLEAN EquivalentDiskId(
     return PhEqualString(Id1->PerfCounterPath, Id2->PerfCounterPath, TRUE);
 }
 
-PDV_DISK_ENTRY CreateDiskEntry(
+PPERF_COUNTER_ENTRY CreatePerfCounterEntry(
     _In_ PPERF_COUNTER_ID Id
     )
 {
-    PDV_DISK_ENTRY entry;
+    PPERF_COUNTER_ENTRY entry;
     ULONG counterLength = 0;
     PDH_STATUS counterStatus = 0;
 
-    entry = PhCreateObject(sizeof(DV_DISK_ENTRY), DiskDriveEntryType);
-    memset(entry, 0, sizeof(DV_DISK_ENTRY));
+    entry = PhCreateObject(sizeof(PERF_COUNTER_ENTRY), DiskDriveEntryType);
+    memset(entry, 0, sizeof(PERF_COUNTER_ENTRY));
 
-    entry->DiskIndex = ULONG_MAX;
-    CopyDiskId(&entry->Id, Id);
+    CopyPerfCounterId(&entry->Id, Id);
 
-    // Create the counter query handle.
+    // Create the counter query handle
     if ((counterStatus = PdhOpenQuery(NULL, 0, &entry->PerfQueryHandle)) != ERROR_SUCCESS)
     {
         PhShowError(NULL, L"PdhOpenQuery failed with status 0x%x.", counterStatus);
     }
 
-    // Add the selected counter to the query handle.
+    // Add the selected counter to the query handle
     if ((counterStatus = PdhAddCounter(entry->PerfQueryHandle, PhGetString(entry->Id.PerfCounterPath), 0, &entry->PerfCounterHandle)))
     {
         PhShowError(NULL, L"PdhAddCounter failed with status 0x%x.", counterStatus);
     }
 
-    //PPDH_COUNTER_INFO counterInfo;
-    //if ((counterStatus = PdhGetCounterInfo(context->PerfCounterHandle, TRUE, &counterLength, NULL)) == PDH_MORE_DATA)
-    //{
-    //    counterInfo = PhAllocate(counterLength);
-    //    memset(counterInfo, 0, counterLength);
-    //}
-    //if ((counterStatus = PdhGetCounterInfo(context->PerfCounterHandle, TRUE, &counterLength, counterInfo)))
-    //{
-    //    PhShowError(NULL, L"PdhGetCounterInfo failed with status 0x%x.", counterStatus);
-    //}
+    if ((counterStatus = PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, NULL)) == PDH_MORE_DATA)
+    {
+        entry->PerfCounterInfo = PhAllocate(counterLength);
+        memset(entry->PerfCounterInfo, 0, counterLength);
+    }
+
+    if ((counterStatus = PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, entry->PerfCounterInfo)))
+    {
+        //PhShowError(NULL, L"PdhGetCounterInfo failed with status 0x%x.", counterStatus);
+    }
 
     PhInitializeCircularBuffer_ULONG64(&entry->HistoryBuffer, PhGetIntegerSetting(L"SampleCount"));
 
