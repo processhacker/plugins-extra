@@ -65,30 +65,60 @@ VOID PerfMonUpdate(
         if (!entry)
             continue;
 
-        // TODO: Handle this on a different thread.
-        PdhCollectQueryData(entry->PerfQueryHandle);
-
-        //PdhSetCounterScaleFactor(entry->PerfCounterHandle, PDH_MAX_SCALE);
-        PdhGetFormattedCounterValue(
-            entry->PerfCounterHandle,
-            PDH_FMT_LARGE | PDH_FMT_NOSCALE | PDH_FMT_NOCAP100,
-            &counterType,
-            &displayValue
-            );
-
-        //if (counterType == PERF_COUNTER_COUNTER)
-        PhUpdateDelta(&entry->HistoryDelta, displayValue.largeValue);
-
-        if (!entry->HaveFirstSample)
+        if (entry->HaveFirstSample)
         {
-            // The first sample must be zero.
-            entry->HistoryDelta.Delta = 0;
+            if (!entry->PerfQueryHandle)
+            {
+                ULONG counterLength = 0;
+                PDH_STATUS counterStatus = 0;
+
+                // Create the counter query handle
+                if ((counterStatus = PdhOpenQuery(NULL, 0, &entry->PerfQueryHandle)) != ERROR_SUCCESS)
+                {
+                    //PhShowError(NULL, L"PdhOpenQuery failed with status 0x%x.", counterStatus);
+                }
+
+                // Add the selected counter to the query handle
+                if ((counterStatus = PdhAddCounter(entry->PerfQueryHandle, PhGetString(entry->Id.PerfCounterPath), 0, &entry->PerfCounterHandle)))
+                {
+                    //PhShowError(NULL, L"PdhAddCounter failed with status 0x%x.", counterStatus);
+                }
+
+                if ((counterStatus = PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, NULL)) == PDH_MORE_DATA)
+                {
+                    entry->PerfCounterInfo = PhAllocate(counterLength);
+                    memset(entry->PerfCounterInfo, 0, counterLength);
+                }
+
+                if ((counterStatus = PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, entry->PerfCounterInfo)))
+                {
+                    //PhShowError(NULL, L"PdhGetCounterInfo failed with status 0x%x.", counterStatus);
+                }
+            }
+
+            PdhCollectQueryData(entry->PerfQueryHandle);
+
+            //PdhSetCounterScaleFactor(entry->PerfCounterHandle, PDH_MAX_SCALE);
+            PdhGetFormattedCounterValue(
+                entry->PerfCounterHandle,
+                PDH_FMT_LARGE | PDH_FMT_NOSCALE | PDH_FMT_NOCAP100,
+                &counterType,
+                &displayValue
+                );
+
+            //if (counterType == PERF_COUNTER_COUNTER)
+            PhUpdateDelta(&entry->HistoryDelta, displayValue.largeValue);
+        }
+        else
+        {
+            // The first sample must be zero
+            PhInitializeDelta(&entry->HistoryDelta);
             entry->HaveFirstSample = TRUE;
         }
 
         if (runCount != 0)
         {
-            PhAddItemCircularBuffer_ULONG64(&entry->HistoryBuffer, displayValue.largeValue);
+            PhAddItemCircularBuffer_ULONG64(&entry->HistoryBuffer, entry->HistoryDelta.Value);
         }
 
         PhDereferenceObjectDeferDelete(entry);
@@ -127,6 +157,9 @@ BOOLEAN EquivalentPerfCounterId(
     _In_ PPERF_COUNTER_ID Id2
     )
 {
+    if (!Id1 || !Id2)
+        return FALSE;
+
     return PhEqualString(Id1->PerfCounterPath, Id2->PerfCounterPath, TRUE);
 }
 
@@ -135,37 +168,11 @@ PPERF_COUNTER_ENTRY CreatePerfCounterEntry(
     )
 {
     PPERF_COUNTER_ENTRY entry;
-    ULONG counterLength = 0;
-    PDH_STATUS counterStatus = 0;
 
     entry = PhCreateObject(sizeof(PERF_COUNTER_ENTRY), DiskDriveEntryType);
     memset(entry, 0, sizeof(PERF_COUNTER_ENTRY));
 
     CopyPerfCounterId(&entry->Id, Id);
-
-    // Create the counter query handle
-    if ((counterStatus = PdhOpenQuery(NULL, 0, &entry->PerfQueryHandle)) != ERROR_SUCCESS)
-    {
-        PhShowError(NULL, L"PdhOpenQuery failed with status 0x%x.", counterStatus);
-    }
-
-    // Add the selected counter to the query handle
-    if ((counterStatus = PdhAddCounter(entry->PerfQueryHandle, PhGetString(entry->Id.PerfCounterPath), 0, &entry->PerfCounterHandle)))
-    {
-        PhShowError(NULL, L"PdhAddCounter failed with status 0x%x.", counterStatus);
-    }
-
-    if ((counterStatus = PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, NULL)) == PDH_MORE_DATA)
-    {
-        entry->PerfCounterInfo = PhAllocate(counterLength);
-        memset(entry->PerfCounterInfo, 0, counterLength);
-    }
-
-    if ((counterStatus = PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, entry->PerfCounterInfo)))
-    {
-        //PhShowError(NULL, L"PdhGetCounterInfo failed with status 0x%x.", counterStatus);
-    }
-
     PhInitializeCircularBuffer_ULONG64(&entry->HistoryBuffer, PhGetIntegerSetting(L"SampleCount"));
 
     PhAcquireQueuedLockExclusive(&DiskDrivesListLock);

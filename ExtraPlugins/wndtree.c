@@ -400,8 +400,20 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
         }
         return TRUE;
     case TreeNewKeyDown:
-    case TreeNewLeftDoubleClick:
     case TreeNewNodeExpanding:
+        return TRUE;
+    case TreeNewLeftDoubleClick:
+        {
+            PPLUGIN_NODE selectedNode;
+
+            if (selectedNode = WeGetSelectedWindowNode(context))
+            {
+                if (selectedNode->PluginInstance)
+                {
+                    PhInvokeCallback(PhGetPluginCallback((PPH_PLUGIN)selectedNode->PluginInstance, PluginCallbackShowOptions), context->ParentWindowHandle);
+                }
+            }
+        }
         return TRUE;
     case TreeNewContextMenu:
         {

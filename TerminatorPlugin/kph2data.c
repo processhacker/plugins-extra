@@ -174,7 +174,21 @@ NTSTATUS Kph2InitializeDynamicPackage(
     else if (majorVersion == 10 && minorVersion == 0 && buildNumber == 10586)
     {
         Package->BuildNumber = 10586;
-        Package->ResultingNtVersion = PHNT_THRESHOLD;
+        Package->ResultingNtVersion = PHNT_THRESHOLD2;
+
+        Package->StructData.EgeGuid = 0x18;
+        Package->StructData.EpObjectTable = 0x418;
+        Package->StructData.EreGuidEntry = 0x20;
+        Package->StructData.HtHandleContentionEvent = 0x30;
+        Package->StructData.OtName = 0x10;
+        Package->StructData.OtIndex = 0x28;
+        Package->StructData.ObDecodeShift = 16;
+        Package->StructData.ObAttributesShift = 17;
+    }
+    else if (majorVersion == 10 && minorVersion == 0 && buildNumber == 14393)
+    {
+        Package->BuildNumber = 14393;
+        Package->ResultingNtVersion = PHNT_THRESHOLD2;
 
         Package->StructData.EgeGuid = 0x18;
         Package->StructData.EpObjectTable = 0x418;

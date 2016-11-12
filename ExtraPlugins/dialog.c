@@ -519,19 +519,6 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                 }
                             }
                             break;
-                        case ID_MENU_UNLOAD:
-                            {
-                                PPLUGIN_NODE selectedNode;
-
-                                if (selectedNode = WeGetSelectedWindowNode(&context->TreeContext))
-                                {
-                                    if (selectedNode->PluginInstance)
-                                    {
-                                        //PhInvokeCallback(PhGetPluginCallback(selectedNode->Entry->PluginInstance, PluginCallbackShowOptions), hwndDlg);
-                                    }
-                                }
-                            }
-                            break;
                         case ID_MENU_PROPERTIES:
                             {
                                 ShowPluginProperties(hwndDlg);

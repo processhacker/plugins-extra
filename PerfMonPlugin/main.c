@@ -111,7 +111,7 @@ LOGICAL DllMain(
             if (!PluginInstance)
                 return FALSE;
 
-            info->DisplayName = L"Performance Monitor Counters";
+            info->DisplayName = L"Performance Counters";
             info->Author = L"dmex";
             info->Description = L"Plugin for adding Performance Counters to the System Information window.";
             info->HasOptions = TRUE;
