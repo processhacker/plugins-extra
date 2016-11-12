@@ -349,7 +349,6 @@ NTSTATUS QueryPluginsCallbackThread(
                     //PostMessage(context->DialogHandle, PH_UPDATEAVAILABLE, 0, 0);
 
                     entry->State = PLUGIN_STATE_UPDATE;
-
                     PostMessage(context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
                 }
             }

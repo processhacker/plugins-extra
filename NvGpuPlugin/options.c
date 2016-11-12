@@ -200,6 +200,8 @@ INT_PTR CALLBACK OptionsDlgProc(
         {
             RestartRequired = FALSE;
 
+            PhCenterWindow(hwndDlg, GetParent(hwndDlg));
+
             SetDlgItemCheckForSetting(hwndDlg, IDC_ENABLENVIDIASUPPORT, SETTING_NAME_ENABLE_MONITORING);
         }
         break;

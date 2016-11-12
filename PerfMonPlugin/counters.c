@@ -34,8 +34,21 @@ VOID PerfMonEntryDeleteProcedure(
     PhReleaseQueuedLockExclusive(&DiskDrivesListLock);
 
     DeletePerfCounterId(&entry->Id);
-
     PhDeleteCircularBuffer_ULONG64(&entry->HistoryBuffer);
+
+    if (entry->PerfQueryHandle)
+    {
+        PdhCloseQuery(entry->PerfQueryHandle);
+        entry->PerfQueryHandle = NULL;
+    }
+
+    if (entry->PerfCounterInfo)
+    {
+        PhFree(entry->PerfCounterInfo);
+        entry->PerfCounterInfo = NULL;
+    }
+
+    PhDereferenceObject(entry);
 }
 
 VOID PerfMonInitialize(

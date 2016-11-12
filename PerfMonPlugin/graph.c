@@ -252,17 +252,6 @@ BOOLEAN PerfCounterSectionCallback(
     case SysInfoCreate:
         return TRUE;
     case SysInfoDestroy:
-        {
-            //PhDeleteCircularBuffer_ULONG64(&context->Entry->HistoryBuffer);
-
-            //// Close the query handle.
-            //if (context->Entry->PerfQueryHandle)
-            //{
-            //    PdhCloseQuery(context->Entry->PerfQueryHandle);
-            //}
-
-            //PhFree(context);
-        }
         return TRUE;
     case SysInfoTick:
         return TRUE;
