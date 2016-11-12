@@ -375,6 +375,36 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                     TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
                 }
                 break;
+            case WM_ACTION:
+                {
+                    PPLUGIN_NODE selectedNode;
+
+                    if (selectedNode = WeGetSelectedWindowNode(&context->TreeContext))
+                    {
+                        if (selectedNode->State == PLUGIN_STATE_LOCAL)
+                        {
+                            if (selectedNode->PluginInstance && selectedNode->PluginInstance->Information.HasOptions)
+                            {
+                                PhInvokeCallback(PhGetPluginCallback((PPH_PLUGIN)selectedNode->PluginInstance, PluginCallbackShowOptions), hwndDlg);
+                            }
+                        }
+                        else if (selectedNode->State == PLUGIN_STATE_REMOTE)
+                        {
+                            if (StartInitialCheck(hwndDlg, selectedNode, PLUGIN_ACTION_INSTALL))
+                            {
+
+                            }
+                        }
+                        else if (selectedNode->State == PLUGIN_STATE_UPDATE)
+                        {
+                            if (StartInitialCheck(hwndDlg, selectedNode, PLUGIN_ACTION_INSTALL))
+                            {
+
+                            }
+                        }
+                    }
+                }
+                break;
             case ID_WCTSHOWCONTEXTMENU:
                 {
                     POINT cursorPos;
@@ -391,29 +421,40 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
 
                     if (selectedNode->State == PLUGIN_STATE_LOCAL)
                     {
-                        PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_UNINSTALL, L"Uninstall", NULL, NULL), -1);
-                        PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+                        HICON shieldIcon;
+
+                        selectedItem = PhCreateEMenuItem(0, ID_MENU_UNINSTALL, L"Uninstall", NULL, NULL);
+
+                        if (shieldIcon = PhLoadIcon(NULL, IDI_SHIELD, PH_LOAD_ICON_SIZE_SMALL | PH_LOAD_ICON_STRICT, 0, 0))
+                        {
+                            selectedItem->Bitmap = PhIconToBitmap(shieldIcon, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
+                            DestroyIcon(shieldIcon);
+                        }
+       
+                        PhInsertEMenuItem(menu, selectedItem, -1);
                         PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_DISABLE, L"Disable", NULL, NULL), -1);
+                        PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+                        PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_PROPERTIES, L"Options", NULL, NULL), -1);
+
+                        if (!selectedNode->PluginInstance || !selectedNode->PluginInstance->Information.HasOptions)
+                        {
+                            PhSetFlagsEMenuItem(menu, ID_MENU_PROPERTIES, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
+                        }
                     }
                     else
                     {
-                        PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_INSTALL, L"Install", NULL, NULL), -1);
-                    }
-        
-                    PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
-                    PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_MENU_UNLOAD, L"Options", NULL, NULL), -1);
+                        HICON shieldIcon;
 
-                    if (!PhGetOwnTokenAttributes().Elevated)
-                    {
-                        PhSetFlagsEMenuItem(menu, ID_MENU_UNINSTALL, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
-                        PhSetFlagsEMenuItem(menu, ID_MENU_INSTALL, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
-                    }
+                        selectedItem = PhCreateEMenuItem(0, ID_MENU_INSTALL, PhaFormatString(L"Install %s", PhGetStringOrEmpty(selectedNode->Name))->Buffer, NULL, NULL);
 
-                    if (!selectedNode->PluginInstance || !selectedNode->PluginInstance->Information.HasOptions)
-                    {
-                        PhSetFlagsEMenuItem(menu, ID_MENU_UNLOAD, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
+                        if (shieldIcon = PhLoadIcon(NULL, IDI_SHIELD, PH_LOAD_ICON_SIZE_SMALL | PH_LOAD_ICON_STRICT, 0, 0))
+                        {
+                            selectedItem->Bitmap = PhIconToBitmap(shieldIcon, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
+                            DestroyIcon(shieldIcon);
+                        }
+
+                        PhInsertEMenuItem(menu, selectedItem, -1);
                     }
-                    
 
                     selectedItem = PhShowEMenu(
                         menu,
@@ -432,17 +473,17 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                             {
                                 if (!PhGetOwnTokenAttributes().Elevated)
                                 {
-                                    SHELLEXECUTEINFO info = { sizeof(SHELLEXECUTEINFO) };
-                                    info.lpFile = L"ProcessHacker.exe";
-                                    info.lpParameters = L"-plugin dmex.ExtraPlugins:INSTALL -plugin dmex.ExtraPlugins:hex64value";
-                                    info.lpVerb = L"runas";
-                                    info.nShow = SW_SHOW;
-                                    info.hwnd = hwndDlg;
+                                    //SHELLEXECUTEINFO info = { sizeof(SHELLEXECUTEINFO) };
+                                    //info.lpFile = L"ProcessHacker.exe";
+                                    //info.lpParameters = L"-plugin dmex.ExtraPlugins:INSTALL -plugin dmex.ExtraPlugins:hex64value";
+                                    //info.lpVerb = L"runas";
+                                    //info.nShow = SW_SHOW;
+                                    //info.hwnd = hwndDlg;
 
-                                    if (!ShellExecuteEx(&info))
-                                    {
+                                    //if (!ShellExecuteEx(&info))
+                                    //{
 
-                                    }
+                                    //}
                                 }
                                 else
                                 {
@@ -525,7 +566,10 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                             break;
                         case ID_MENU_PROPERTIES:
                             {
-                                ShowPluginProperties(hwndDlg);
+                                if (selectedNode->PluginInstance)
+                                {
+                                    PhInvokeCallback(PhGetPluginCallback((PPH_PLUGIN)selectedNode->PluginInstance, PluginCallbackShowOptions), hwndDlg);
+                                }
                             }
                             break;
                         case ID_MENU_UNLOAD:

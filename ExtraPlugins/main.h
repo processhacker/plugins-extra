@@ -49,8 +49,9 @@
 #define PH_UPDATESUCCESS   (WM_APP + 505)
 #define PH_UPDATEFAILURE   (WM_APP + 506)
 #define WM_SHOWDIALOG      (WM_APP + 550)
-
+#define WM_ACTION          (WM_APP + 1550)
 #define ID_WCTSHOWCONTEXTMENU 19584
+
 #define SETTING_PREFIX L"dmex.ExtraPlugins"
 #define SETTING_NAME_TREE_LIST_COLUMNS (SETTING_PREFIX L".TreeListColumns")
 #define SETTING_NAME_WINDOW_POSITION (SETTING_PREFIX L".WindowPosition")
@@ -298,13 +299,7 @@ VOID ShowInstallRestartDialog(_In_ PPH_UPDATER_CONTEXT Context);
 VOID ShowUninstallRestartDialog(_In_ PPH_UPDATER_CONTEXT Context);
 NTSTATUS SetupExtractBuild(_In_ PVOID Parameter);
 
-// plugin.c
-VOID ShowPluginProperties(
-    _In_ HWND Parent
-    );
-
 // verify.c
-
 typedef struct _UPDATER_HASH_CONTEXT
 {
     BCRYPT_ALG_HANDLE SignAlgHandle;
@@ -352,21 +347,6 @@ VOID CreateSearchControl(
 typedef struct _EDIT_CONTEXT
 {
     UINT CommandID;
-    LONG CXWidth;
-    INT CXBorder;
-    INT ImageWidth;
-    INT ImageHeight;
-
-    HWND WindowHandle;
-    HFONT WindowFont;
-    HIMAGELIST ImageList;
-    HBITMAP BitmapActive;
-    HBITMAP BitmapInactive;
-
-    HBRUSH BrushNormal;
-    HBRUSH BrushPushed;
-    HBRUSH BrushHot;
-    //COLORREF BackgroundColorRef;
 
     union
     {
@@ -378,6 +358,20 @@ typedef struct _EDIT_CONTEXT
             ULONG Spare : 30;
         };
     };
+   
+    LONG CXWidth;
+    INT CXBorder;
+    INT ImageWidth;
+    INT ImageHeight;
+    HWND WindowHandle;
+    HFONT WindowFont;
+    HIMAGELIST ImageList;
+    HBITMAP BitmapActive;
+    HBITMAP BitmapInactive;
+    HBRUSH BrushNormal;
+    HBRUSH BrushPushed;
+    HBRUSH BrushHot;
+
 } EDIT_CONTEXT, *PEDIT_CONTEXT;
 
 HBITMAP LoadImageFromResources(

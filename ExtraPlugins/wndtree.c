@@ -404,15 +404,7 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
         return TRUE;
     case TreeNewLeftDoubleClick:
         {
-            PPLUGIN_NODE selectedNode;
-
-            if (selectedNode = WeGetSelectedWindowNode(context))
-            {
-                if (selectedNode->PluginInstance && selectedNode->PluginInstance->Information.HasOptions)
-                {
-                    PhInvokeCallback(PhGetPluginCallback((PPH_PLUGIN)selectedNode->PluginInstance, PluginCallbackShowOptions), context->ParentWindowHandle);
-                }
-            }
+            SendMessage(context->ParentWindowHandle, WM_COMMAND, WM_ACTION, (LPARAM)context);
         }
         return TRUE;
     case TreeNewContextMenu:

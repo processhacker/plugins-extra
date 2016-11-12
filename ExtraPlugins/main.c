@@ -253,7 +253,7 @@ LOGICAL DllMain(
 
             info->DisplayName = L"Extra Plugins Manager";
             info->Author = L"dmex";
-            info->Description = L"Extra plugins for Process Hacker from the community.";
+            info->Description = L"Process Hacker plugins from the community.";
             info->HasOptions = FALSE;
             
             PhRegisterCallback(
