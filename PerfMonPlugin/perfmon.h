@@ -50,10 +50,8 @@ typedef struct _PERF_COUNTER_ID
 typedef struct _PERF_COUNTER_ENTRY
 {
     PERF_COUNTER_ID Id;
-
     HQUERY PerfQueryHandle;
     HCOUNTER PerfCounterHandle;
-    PPDH_COUNTER_INFO PerfCounterInfo;
 
     union
     {

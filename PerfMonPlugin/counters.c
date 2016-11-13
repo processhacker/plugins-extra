@@ -41,14 +41,6 @@ VOID PerfMonEntryDeleteProcedure(
         PdhCloseQuery(entry->PerfQueryHandle);
         entry->PerfQueryHandle = NULL;
     }
-
-    if (entry->PerfCounterInfo)
-    {
-        PhFree(entry->PerfCounterInfo);
-        entry->PerfCounterInfo = NULL;
-    }
-
-    //PhDereferenceObject(entry);
 }
 
 VOID PerfMonInitialize(
@@ -86,30 +78,28 @@ VOID PerfMonUpdate(
                 {
                     if (PdhAddCounter(entry->PerfQueryHandle, PhGetString(entry->Id.PerfCounterPath), 0, &entry->PerfCounterHandle) == ERROR_SUCCESS)
                     {
-                        ULONG counterLength;
-
-                        if (PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, NULL) == PDH_MORE_DATA)
-                        {
-                            entry->PerfCounterInfo = PhAllocate(counterLength);
-                            memset(entry->PerfCounterInfo, 0, counterLength);
-                        }
-
-                        if (PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, entry->PerfCounterInfo) == ERROR_SUCCESS)
-                        {
-                            
-                        }
-
-                        OutputDebugString(L"");
+                        //ULONG counterLength = 0;
+                        //PPDH_COUNTER_INFO perfCounterInfo;
+                        //
+                        //if (PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, NULL) == PDH_MORE_DATA)
+                        //{
+                        //    perfCounterInfo = PhAllocate(counterLength);
+                        //    memset(perfCounterInfo, 0, counterLength);
+                        //}
+                        //
+                        //if (PdhGetCounterInfo(entry->PerfCounterHandle, TRUE, &counterLength, perfCounterInfo) == ERROR_SUCCESS)
+                        //{
+                        //    
+                        //}
+                        //PhFree(perfCounterInfo);
                     }
                 }
             }
 
-            // Update the counter data
+            // Update the counter sample data
             PdhCollectQueryData(entry->PerfQueryHandle);
 
-            //PdhSetCounterScaleFactor(entry->PerfCounterHandle, PDH_MAX_SCALE);
-            //PdhGetRawCounterValue(entry->PerfCounterHandle, 0, &rawValue);
-
+            // Get the counter value
             if (PdhGetFormattedCounterValue(
                 entry->PerfCounterHandle,
                 PDH_FMT_LARGE | PDH_FMT_NOSCALE | PDH_FMT_NOCAP100,

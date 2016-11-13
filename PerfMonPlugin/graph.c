@@ -82,7 +82,6 @@ INT_PTR CALLBACK PerfCounterDialogProc(
     if (uMsg == WM_INITDIALOG)
     {
         context = (PPH_PERFMON_SYSINFO_CONTEXT)lParam;
-
         SetProp(hwndDlg, L"Context", (HANDLE)context);
     }
     else
@@ -92,14 +91,12 @@ INT_PTR CALLBACK PerfCounterDialogProc(
         if (uMsg == WM_DESTROY)
         {
             PhDeleteLayoutManager(&context->LayoutManager);
-
             PhDeleteGraphState(&context->GraphState);
 
             if (context->GraphHandle)
                 DestroyWindow(context->GraphHandle);
 
             PhUnregisterCallback(&PhProcessesUpdatedEvent, &context->ProcessesUpdatedRegistration);
-
             RemoveProp(hwndDlg, L"Context");
         }
     }
@@ -114,8 +111,6 @@ INT_PTR CALLBACK PerfCounterDialogProc(
             PPH_LAYOUT_ITEM panelItem;
 
             context->WindowHandle = hwndDlg;
-
-            // Create the graph control.
             context->GraphHandle = CreateWindow(
                 PH_GRAPH_CLASSNAME,
                 NULL,
@@ -187,7 +182,6 @@ INT_PTR CALLBACK PerfCounterDialogProc(
                             if (max != 0)
                             {
                                 // Scale the data.
-
                                 PhDivideSinglesBySingle(
                                     context->GraphState.Data1,
                                     max,
@@ -210,14 +204,14 @@ INT_PTR CALLBACK PerfCounterDialogProc(
                         {
                             if (context->GraphState.TooltipIndex != getTooltipText->Index)
                             {
-                                ULONG64 itemUsage = PhGetItemCircularBuffer_ULONG64(
+                                ULONG64 counterValue = PhGetItemCircularBuffer_ULONG64(
                                     &context->Entry->HistoryBuffer,
                                     getTooltipText->Index
                                     );
 
                                 PhMoveReference(&context->GraphState.TooltipText, PhFormatString(
                                     L"%I64u\n%s",
-                                    itemUsage,
+                                    PhaFormatUInt64(counterValue, TRUE)->Buffer,
                                     ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                                     ));
                             }
@@ -313,8 +307,8 @@ BOOLEAN PerfCounterSectionCallback(
                 );
 
             PhMoveReference(&Section->GraphState.TooltipText, PhFormatString(
-                L"%I64u\n%s",
-                counterValue,
+                L"%s\n%s",
+                PhaFormatUInt64(counterValue, TRUE)->Buffer,
                 ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                 ));
 

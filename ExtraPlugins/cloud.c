@@ -151,6 +151,16 @@ VOID EnumerateLoadedPlugins(
             continue;
         }
 
+        if (!RtlDoesFileExists_U(PhGetString(pluginInstance->FileName)))
+        {
+            PhSwapReference(&pluginInstance->FileName, PhFormatString(L"%s.bak", PhGetString(pluginInstance->FileName)));
+        }
+
+        if (!RtlDoesFileExists_U(PhGetString(pluginInstance->FileName)))
+        {
+            continue;
+        }
+
         memset(&basic, 0, sizeof(FILE_BASIC_INFORMATION));
 
         if (NT_SUCCESS(PhCreateFileWin32(
