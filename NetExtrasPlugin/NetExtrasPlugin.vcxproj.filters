@@ -60,7 +60,7 @@
   <ItemGroup>
     <Text Include="CHANGELOG.txt" />
     <Text Include="resources\licence.txt">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Images</Filter>
     </Text>
   </ItemGroup>
   <ItemGroup>

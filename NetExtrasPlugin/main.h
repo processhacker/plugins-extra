@@ -33,7 +33,6 @@
 #include <workqueue.h>
 #include <wincodec.h>
 #include <time.h>
-
 #include "resource.h"
 
 typedef struct _NETWORK_EXTRA_CONTEXT
