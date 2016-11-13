@@ -210,7 +210,7 @@ INT_PTR CALLBACK PerfCounterDialogProc(
                                     );
 
                                 PhMoveReference(&context->GraphState.TooltipText, PhFormatString(
-                                    L"%I64u\n%s",
+                                    L"%s\n%s",
                                     PhaFormatUInt64(counterValue, TRUE)->Buffer,
                                     ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                                     ));
