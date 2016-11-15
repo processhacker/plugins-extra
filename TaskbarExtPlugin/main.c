@@ -31,7 +31,6 @@ static PH_CALLBACK_REGISTRATION ProcessesUpdatedCallbackRegistration;
 
 static TASKBAR_ICON TaskbarIconType = TASKBAR_ICON_NONE;
 static ULONG ProcessesUpdatedCount = 0;
-static BOOLEAN TaskbarButtonsCreated = FALSE;
 static UINT TaskbarButtonCreatedMsgId = 0;
 static ITaskbarList3* TaskbarListClass = NULL;
 static HICON BlackIcon = NULL;
@@ -51,13 +50,14 @@ VOID NTAPI ProcessesUpdatedCallback(
 
     if (ProcessesUpdatedCount < 2)
         return;
+    
+    PhPluginGetSystemStatistics(&statistics);
 
+    // Check if we need to clear the icon
     taskbarIconType = PhGetIntegerSetting(SETTING_NAME_TASKBAR_ICON_TYPE);
-
-    // Check if we need to clear the icon...
     if (taskbarIconType != TaskbarIconType && taskbarIconType == TASKBAR_ICON_NONE)
     {
-        // Clear the icon...
+        // Clear the icon
         if (TaskbarListClass)
         {
             ITaskbarList3_SetOverlayIcon(TaskbarListClass, PhMainWndHandle, NULL, NULL);
@@ -65,8 +65,6 @@ VOID NTAPI ProcessesUpdatedCallback(
     }
 
     TaskbarIconType = taskbarIconType;
-
-    PhPluginGetSystemStatistics(&statistics);
 
     switch (TaskbarIconType)
     {
@@ -109,10 +107,12 @@ LRESULT CALLBACK MainWndSubclassProc(
 {
     if (uMsg == TaskbarButtonCreatedMsgId)
     {
-        if (!TaskbarButtonsCreated)
+        static PH_INITONCE initOnce = PH_INITONCE_INIT;
+
+        if (PhBeginInitOnce(&initOnce))
         {
             BlackIcon = PhGetBlackIcon();
-            ButtonsImageList = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 0, 0);
+            ButtonsImageList = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_COLOR32 | ILC_MASK, 0, 0);
             ImageList_SetImageCount(ButtonsImageList, 4);
             PhSetImageListBitmap(ButtonsImageList, 0, PluginInstance->DllBase, MAKEINTRESOURCE(IDB_CHART_LINE_BMP));
             PhSetImageListBitmap(ButtonsImageList, 1, PluginInstance->DllBase, MAKEINTRESOURCE(IDB_FIND_BMP));
@@ -143,7 +143,7 @@ LRESULT CALLBACK MainWndSubclassProc(
             ButtonsArray[3].iBitmap = 3;
             wcsncpy_s(ButtonsArray[3].szTip, ARRAYSIZE(ButtonsArray[3].szTip), L"Inspect Executable File", _TRUNCATE);
 
-            TaskbarButtonsCreated = TRUE;
+            PhEndInitOnce(&initOnce);
         }
 
         if (TaskbarListClass)
@@ -232,7 +232,7 @@ LOGICAL DllMain(
             PPH_PLUGIN_INFORMATION info;
             PH_SETTING_CREATE settings[] =
             {
-                { IntegerSettingType, SETTING_NAME_TASKBAR_ICON_TYPE, L"1" }
+                { IntegerSettingType, SETTING_NAME_TASKBAR_ICON_TYPE, L"4" }
             };
 
             if (WindowsVersion < WINDOWS_7)
