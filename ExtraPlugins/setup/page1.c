@@ -27,7 +27,7 @@ static TASKDIALOG_BUTTON TaskDialogButtonArray[] =
     { IDOK, L"Install" }
 };
 
-HRESULT CALLBACK CheckForUpdatesCallbackProc(
+HRESULT CALLBACK InstallPluginCallbackProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -55,7 +55,7 @@ HRESULT CALLBACK CheckForUpdatesCallbackProc(
     return S_OK;
 }
 
-VOID ShowCheckForUpdatesDialog(
+VOID InstallPluginDialog(
     _In_ PPH_UPDATER_CONTEXT Context
     )
 {
@@ -75,7 +75,7 @@ VOID ShowCheckForUpdatesDialog(
     config.cxWidth = 200;
     config.pButtons = TaskDialogButtonArray;
     config.cButtons = ARRAYSIZE(TaskDialogButtonArray);
-    config.pfCallback = CheckForUpdatesCallbackProc;
+    config.pfCallback = InstallPluginCallbackProc;
     config.lpCallbackData = (LONG_PTR)Context;
 
     SendMessage(Context->DialogHandle, TDM_NAVIGATE_PAGE, 0, (LPARAM)&config);

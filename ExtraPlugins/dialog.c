@@ -64,7 +64,7 @@ VOID UpdateTreeView(
     //PhSwapReference(&Context->TreeText, PhCreateString(L"Loading Plugins..."));
     //TreeNew_SetEmptyText(Context->TreeNewHandle, &Context->TreeText->sr, 0);
 
-    PhApplyTreeNewFilters(Context->TreeFilter);
+    PhApplyTreeNewFilters(GetPluginListFilterSupport(Context));
     TreeNew_AutoSizeColumn(Context->TreeNewHandle, TREE_COLUMN_ITEM_NAME, TN_AUTOSIZE_REMAINING_SPACE);
 }
 
@@ -92,11 +92,10 @@ LRESULT DrawButton(
     if (drawInfo->nmcd.dwDrawStage == CDDS_PREPAINT)
     {
         HPEN PenActive = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
-        HPEN PenNormal = CreatePen(PS_SOLID, 1, RGB(0, 0xff, 0));
+        //HPEN PenNormal = CreatePen(PS_SOLID, 1, RGB(0, 0xff, 0));
         HBRUSH BrushNormal = GetSysColorBrush(COLOR_3DFACE);
-        HBRUSH BrushSelected = CreateSolidBrush(RGB(0xff, 0xff, 0xff));
+        //HBRUSH BrushSelected = CreateSolidBrush(RGB(0xff, 0xff, 0xff));
         HBRUSH BrushPushed = CreateSolidBrush(RGB(153, 209, 255));
-
         PPH_STRING windowText = PH_AUTO(PhGetWindowText(drawInfo->nmcd.hdr.hwndFrom));
 
         SetBkMode(drawInfo->nmcd.hdc, TRANSPARENT);
@@ -131,10 +130,8 @@ LRESULT DrawButton(
         MoveToEx(drawInfo->nmcd.hdc, drawInfo->nmcd.rc.left, drawInfo->nmcd.rc.bottom, 0);
         LineTo(drawInfo->nmcd.hdc, drawInfo->nmcd.rc.right, drawInfo->nmcd.rc.bottom);
 
-        DeletePen(PenNormal);
         DeletePen(PenActive);
         DeleteBrush(BrushNormal);
-        DeleteBrush(BrushSelected);
         DeleteBrush(BrushPushed);
         return CDRF_SKIPDEFAULT;
     }
@@ -292,8 +289,8 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
             }
       
             PhCenterWindow(hwndDlg, PhMainWndHandle);
-            WtcInitializeWindowTree(hwndDlg, context->TreeNewHandle, &context->TreeContext);
-            PhAddTreeNewFilter(context->TreeFilter = WtcGetTreeListFilterSupport(), (PPH_TN_FILTER_FUNCTION)ProcessTreeFilterCallback, context);
+            InitializePluginsTree(context, hwndDlg, context->TreeNewHandle);
+            PhAddTreeNewFilter(GetPluginListFilterSupport(context), (PPH_TN_FILTER_FUNCTION)ProcessTreeFilterCallback, context);
 
             PhInitializeLayoutManager(&context->LayoutManager, hwndDlg);
             PhAddLayoutItem(&context->LayoutManager, context->TreeNewHandle, NULL, PH_ANCHOR_ALL);
@@ -335,7 +332,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                             // Expand the nodes to ensure that they will be visible to the user.
                         }
 
-                        PhApplyTreeNewFilters(context->TreeFilter);
+                        PhApplyTreeNewFilters(GetPluginListFilterSupport(context));
                     }
                 }
                 break;
@@ -382,7 +379,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                 {
                     PPLUGIN_NODE selectedNode;
 
-                    if (selectedNode = WeGetSelectedWindowNode(&context->TreeContext))
+                    if (selectedNode = WeGetSelectedWindowNode(context))
                     {
                         if (selectedNode->State == PLUGIN_STATE_LOCAL)
                         {
@@ -417,7 +414,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
 
                     GetCursorPos(&cursorPos);
 
-                    if (!(selectedNode = WeGetSelectedWindowNode(&context->TreeContext)))
+                    if (!(selectedNode = WeGetSelectedWindowNode(context)))
                         break;
 
                     menu = PhCreateEMenu();
@@ -516,12 +513,12 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                     PPLUGIN_NODE selectedNode;
                                     PPLUGIN_NODE existingNode;
 
-                                    if (selectedNode = WeGetSelectedWindowNode(&context->TreeContext))
+                                    if (selectedNode = WeGetSelectedWindowNode(context))
                                     {
                                         if (selectedNode->State == PLUGIN_STATE_LOCAL)
                                         {
                                             if (existingNode = FindTreeNode(
-                                                &context->TreeContext,
+                                                context,
                                                 PLUGIN_STATE_REMOTE,
                                                 selectedNode->InternalName
                                                 ))
@@ -542,7 +539,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                             }
 
                                             if (existingNode = FindTreeNode(
-                                                &context->TreeContext,
+                                                context,
                                                 PLUGIN_STATE_REMOTE,
                                                 selectedNode->InternalName
                                                 ))
@@ -577,12 +574,12 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
                                     PPLUGIN_NODE selectedNode;
                                     PPLUGIN_NODE existingNode;
 
-                                    if (selectedNode = WeGetSelectedWindowNode(&context->TreeContext))
+                                    if (selectedNode = WeGetSelectedWindowNode(context))
                                     {
                                         if (StartInitialCheck(hwndDlg, selectedNode, PLUGIN_ACTION_UNINSTALL))
                                         {
                                             if (existingNode = FindTreeNode(
-                                                &context->TreeContext, 
+                                                context,
                                                 PLUGIN_STATE_LOCAL, 
                                                 selectedNode->InternalName
                                                 ))
@@ -628,13 +625,18 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
             case IDOK:
                 {
                     //ShowUpdateDialog(hwndDlg, PLUGIN_ACTION_RESTART);
-
                     DestroyWindow(hwndDlg);
                 }
                 break;
             case IDC_DISABLED:
                 {
                     ShowDisabledPluginsDialog(hwndDlg);
+
+                    PluginsClearTree(context);
+                    EnumerateLoadedPlugins(context);
+                    SetWindowText(GetDlgItem(hwndDlg, IDC_DISABLED), PhGetString(PhaFormatString(L"Disabled Plugins (%lu)", PhDisabledPluginsCount())));
+                    PhQueueItemWorkQueue(PhGetGlobalWorkQueue(), QueryPluginsCallbackThread, context);
+                    UpdateTreeView(context);
 
                     SetWindowText(GetDlgItem(hwndDlg, IDC_DISABLED), 
                         PhGetString(PhaFormatString(L"Disabled Plugins (%lu)", PhDisabledPluginsCount()))
@@ -666,27 +668,26 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
             {
                 PPLUGIN_NODE entry = (PPLUGIN_NODE)lParam;
 
-                CloudAddChildWindowNode(&context->TreeContext, entry);
+                PluginsAddTreeNode(context, entry);
 
                 UpdateTreeView(context);
             }
             break;
     case ID_UPDATE_COUNT:
         {
-            ULONG count = 0;
-
-            for (ULONG i = 0; i < context->TreeContext.NodeList->Count; i++)
-            {
-                PPLUGIN_NODE windowNode = context->TreeContext.NodeList->Items[i];
-
-                if (windowNode->State == PLUGIN_STATE_UPDATE)
-                {
-                    count++;
-                }
-            }
-            
-            SetWindowText(GetDlgItem(hwndDlg, IDC_UPDATES), PhGetString(PhaFormatString(L"Updates (%lu)", count)));
-
+            //ULONG count = 0;
+            //
+            //for (ULONG i = 0; i < context->TreeContext.NodeList->Count; i++)
+            //{
+            //    PPLUGIN_NODE windowNode = context->TreeContext.NodeList->Items[i];
+            //
+            //    if (windowNode->State == PLUGIN_STATE_UPDATE)
+            //    {
+            //        count++;
+            //    }
+            //}
+            //
+            //SetWindowText(GetDlgItem(hwndDlg, IDC_UPDATES), PhGetString(PhaFormatString(L"Updates (%lu)", count)));
         }
         break;
     }

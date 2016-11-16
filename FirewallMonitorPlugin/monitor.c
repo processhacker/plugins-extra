@@ -44,7 +44,7 @@ VOID NTAPI FwObjectTypeDeleteProcedure(
     _In_ ULONG Flags
     )
 {
-    PhClearReference(&Object);
+    //PhClearReference(&Object);
 }
 
 PFW_EVENT_ITEM EtCreateFirewallEntryItem(

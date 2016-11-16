@@ -232,7 +232,6 @@ VOID NTAPI TreeNewMessageCallback(
 
                         DeleteObject(screenBitmap);
                         DeleteDC(screenDc);
-
                         DeleteObject(countryBitmap);
                     }
                 }

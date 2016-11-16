@@ -30,7 +30,6 @@
 #include <mxml.h>
 #include <verify.h>
 #include <workqueue.h>
-
 #include <shlobj.h>
 #include <Shellapi.h>
 #include <psapi.h>
@@ -106,7 +105,6 @@ typedef struct _PHAPP_PLUGIN
     PH_CALLBACK Callbacks[PluginCallbackMaximum];
 } PHAPP_PLUGIN, *PPHAPP_PLUGIN;
 
-
 typedef struct _PLUGIN_NODE
 {
     PH_TREENEW_NODE Node;
@@ -147,24 +145,31 @@ typedef struct _PLUGIN_NODE
     PH_STRINGREF TextCache[TREE_COLUMN_ITEM_MAXIMUM];
 } PLUGIN_NODE, *PPLUGIN_NODE;
 
-
-
-typedef struct _WCT_TREE_CONTEXT
+typedef struct _WCT_CONTEXT
 {
-    HWND ParentWindowHandle;
+    HWND DialogHandle;
+    HWND SearchHandle;
     HWND TreeNewHandle;
+    HWND ParentWindowHandle;
+
+    PPH_STRING SearchboxText;
+    PPH_STRING TreeText;
+    HFONT NormalFontHandle;
+    HFONT BoldFontHandle;
+    HFONT TitleFontHandle;
+
+    TREE_PLUGIN_STATE Type;
+    HWND PluginMenuActive;
+    UINT PluginMenuActiveId;
+
+    PH_LAYOUT_MANAGER LayoutManager;
 
     ULONG TreeNewSortColumn;
     PH_SORT_ORDER TreeNewSortOrder;
-
+    PH_TN_FILTER_SUPPORT FilterSupport;
     PPH_HASHTABLE NodeHashtable;
     PPH_LIST NodeList;
-
-    HFONT TitleFontHandle;
-    HFONT NormalFontHandle;
-    HFONT BoldFontHandle;
-} WCT_TREE_CONTEXT, *PWCT_TREE_CONTEXT;
-
+} WCT_CONTEXT, *PWCT_CONTEXT;
 
 // dialog.c 
 VOID ShowPluginManagerDialog(VOID);
@@ -189,78 +194,51 @@ BOOLEAN PhIsPluginDisabled(_In_ PPH_STRINGREF BaseName);
 VOID PhSetPluginDisabled(_In_ PPH_STRINGREF BaseName, _In_ BOOLEAN Disable);
 
 
-VOID WtcInitializeWindowTree(
+VOID InitializePluginsTree(
+    _In_ PWCT_CONTEXT context,
     _In_ HWND ParentWindowHandle,
-    _In_ HWND TreeNewHandle,
-    _Out_ PWCT_TREE_CONTEXT Context
+    _In_ HWND TreeNewHandle
     );
 
-VOID WtcDeleteWindowTree(
-    _In_ PWCT_TREE_CONTEXT Context
+VOID DeletePluginsTree(
+    _In_ PWCT_CONTEXT Context
     );
 
-struct _PH_TN_FILTER_SUPPORT* WtcGetTreeListFilterSupport(
-    VOID
+struct _PH_TN_FILTER_SUPPORT* GetPluginListFilterSupport(
+    _In_ PWCT_CONTEXT Context
     );
 
-VOID CloudAddChildWindowNode(
-    _In_ PWCT_TREE_CONTEXT Context,
+VOID PluginsAddTreeNode(
+    _In_ PWCT_CONTEXT Context,
     _In_ PPLUGIN_NODE Entry
     );
 
-PPLUGIN_NODE WeAddWindowNode(
-    _Inout_ PWCT_TREE_CONTEXT Context
-    );
-
 PPLUGIN_NODE FindTreeNode(
-    _In_ PWCT_TREE_CONTEXT Context,
+    _In_ PWCT_CONTEXT Context,
     _In_ TREE_PLUGIN_STATE Type,
     _In_ PPH_STRING InternalName
     );
 
 VOID WeRemoveWindowNode(
-    _In_ PWCT_TREE_CONTEXT Context,
+    _In_ PWCT_CONTEXT Context,
     _In_ PPLUGIN_NODE WindowNode
     );
 
-VOID WeClearWindowTree(
-    _In_ PWCT_TREE_CONTEXT Context
+VOID PluginsClearTree(
+    _In_ PWCT_CONTEXT Context
     );
 
 PPLUGIN_NODE WeGetSelectedWindowNode(
-    _In_ PWCT_TREE_CONTEXT Context
+    _In_ PWCT_CONTEXT Context
     );
 
 VOID WeGetSelectedWindowNodes(
-    _In_ PWCT_TREE_CONTEXT Context,
+    _In_ PWCT_CONTEXT Context,
     _Out_ PPLUGIN_NODE **Windows,
     _Out_ PULONG NumberOfWindows
     );
 
-
-typedef struct _WCT_CONTEXT
-{
-    HWND DialogHandle;
-    HWND SearchHandle;
-    HWND TreeNewHandle;
-
-    PPH_STRING SearchboxText;
-    PPH_STRING TreeText;
-    HFONT NormalFontHandle;
-    HFONT BoldFontHandle;
-
-    TREE_PLUGIN_STATE Type;
-    HWND PluginMenuActive;
-    UINT PluginMenuActiveId;
-
-    WCT_TREE_CONTEXT TreeContext;
-    PPH_TN_FILTER_SUPPORT TreeFilter;
-
-    PH_LAYOUT_MANAGER LayoutManager;
-} WCT_CONTEXT, *PWCT_CONTEXT;
-
 NTSTATUS QueryPluginsCallbackThread(_In_ PVOID Parameter);
-
 VOID EnumerateLoadedPlugins(_In_ PWCT_CONTEXT Context);
 
 typedef enum _PLUGIN_ACTION
@@ -298,15 +276,17 @@ BOOLEAN StartInitialCheck(
     _In_ PLUGIN_ACTION Action
     );
 
+// page1.c
+VOID InstallPluginDialog(
+    _In_ PPH_UPDATER_CONTEXT Context
+    );
+
 VOID ShowAvailableDialog(_In_ PPH_UPDATER_CONTEXT Context);
-VOID ShowCheckForUpdatesDialog(_In_ PPH_UPDATER_CONTEXT Context);
+
 VOID ShowCheckingForUpdatesDialog(_In_ PPH_UPDATER_CONTEXT Context);
 VOID TaskDialogLinkClicked(_In_ PPH_UPDATER_CONTEXT Context);
-
 NTSTATUS UpdateDownloadThread(_In_ PVOID Parameter);
 
-// page1.c
-VOID ShowCheckForUpdatesDialog(_In_ PPH_UPDATER_CONTEXT Context);
 // page2.c
 VOID ShowCheckingForUpdatesDialog(_In_ PPH_UPDATER_CONTEXT Context);
 // page3.c
@@ -326,6 +306,12 @@ VOID ShowUpdateFailedDialog(
 VOID ShowInstallRestartDialog(_In_ PPH_UPDATER_CONTEXT Context);
 VOID ShowUninstallRestartDialog(_In_ PPH_UPDATER_CONTEXT Context);
 NTSTATUS SetupExtractBuild(_In_ PVOID Parameter);
+
+BOOLEAN ReadRequestString(
+    _In_ HINTERNET Handle,
+    _Out_ _Deref_post_z_cap_(*DataLength) PSTR *Data,
+    _Out_ ULONG *DataLength
+    );
 
 // verify.c
 typedef struct _UPDATER_HASH_CONTEXT
@@ -393,9 +379,8 @@ typedef struct _EDIT_CONTEXT
     INT ImageHeight;
     HWND WindowHandle;
     HFONT WindowFont;
-    HIMAGELIST ImageList;
-    HBITMAP BitmapActive;
-    HBITMAP BitmapInactive;
+    HICON BitmapActive;
+    HICON BitmapInactive;
     HBRUSH BrushNormal;
     HBRUSH BrushPushed;
     HBRUSH BrushHot;
@@ -409,10 +394,10 @@ HBITMAP LoadImageFromResources(
     _In_ BOOLEAN RGBAImage
     );
 
-LRESULT SysButtonCustomDraw(
-    _In_ PWCT_CONTEXT Context,
-    _In_ LPARAM lParam
+HICON BitmapToIcon(
+    _In_ HBITMAP BitmapHandle,
+    _In_ INT Width,
+    _In_ INT Height
     );
-
 
 #endif

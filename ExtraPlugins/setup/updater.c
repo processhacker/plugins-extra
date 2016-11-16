@@ -997,7 +997,6 @@ HRESULT CALLBACK TaskDialogBootstrapCallback(
     case TDN_CREATED:
         {
             context->DialogHandle = hwndDlg;
-
             TaskDialogCreateIcons(context);
 
             SetWindowSubclass(hwndDlg, TaskDialogSubclassProc, 0, (ULONG_PTR)context);

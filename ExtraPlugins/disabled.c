@@ -149,6 +149,17 @@ INT_PTR CALLBACK DisabledPluginsDlgProc(
 
                             PhSetPluginDisabled(&param->sr, TRUE);
 
+                            /*if (existingNode = FindTreeNode(
+                                &context->TreeContext,
+                                PLUGIN_STATE_LOCAL,
+                                selectedNode->InternalName
+                                ))
+                            {
+                                existingNode->State = PLUGIN_STATE_RESTART;
+                            }*/
+
+                            //entry->State = PLUGIN_STATE_LOCAL;
+
                             //context->OptionsChanged = TRUE;
                         }
                         break;

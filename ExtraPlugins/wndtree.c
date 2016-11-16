@@ -22,120 +22,19 @@
 
 #include "main.h"
 
-static PH_TN_FILTER_SUPPORT FilterSupport;
-
-BOOLEAN WepWindowNodeHashtableCompareFunction(
+BOOLEAN PluginsNodeHashtableCompareFunction(
     _In_ PVOID Entry1,
     _In_ PVOID Entry2
     );
-ULONG WepWindowNodeHashtableHashFunction(
+ULONG PluginsNodeHashtableHashFunction(
     _In_ PVOID Entry
     );
-VOID WepDestroyWindowNode(
-    _In_ PPLUGIN_NODE WindowNode
-    );
-BOOLEAN NTAPI WepWindowTreeNewCallback(
-    _In_ HWND hwnd,
-    _In_ PH_TREENEW_MESSAGE Message,
-    __in_opt PVOID Parameter1,
-    __in_opt PVOID Parameter2,
-    __in_opt PVOID Context
+VOID DestroyPluginsNode(
+    _In_ PPLUGIN_NODE Node
     );
 
-VOID WtcInitializeWindowTree(
-    _In_ HWND ParentWindowHandle,
-    _In_ HWND TreeNewHandle,
-    __out PWCT_TREE_CONTEXT Context
-    )
-{
-    memset(Context, 0, sizeof(WCT_TREE_CONTEXT));
-
-    Context->NodeHashtable = PhCreateHashtable(
-        sizeof(PPLUGIN_NODE),
-        WepWindowNodeHashtableCompareFunction,
-        WepWindowNodeHashtableHashFunction,
-        100
-        );
-    Context->NodeList = PhCreateList(100);
-
-    Context->ParentWindowHandle = ParentWindowHandle;
-    Context->TreeNewHandle = TreeNewHandle;
-    PhSetControlTheme(TreeNewHandle, L"explorer");
-
-    LOGFONT logFont;
-
-    if (SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(LOGFONT), &logFont, 0))
-    {
-        Context->TitleFontHandle = CreateFont(
-            -PhMultiplyDivideSigned(-14, PhGlobalDpi, 72),
-            0,
-            0,
-            0,
-            FW_BOLD,
-            FALSE,
-            FALSE,
-            FALSE,
-            ANSI_CHARSET,
-            OUT_DEFAULT_PRECIS,
-            CLIP_DEFAULT_PRECIS,
-            CLEARTYPE_QUALITY | ANTIALIASED_QUALITY,
-            DEFAULT_PITCH,
-            logFont.lfFaceName
-            );
-
-        Context->NormalFontHandle = CreateFont(
-            -PhMultiplyDivideSigned(-10, PhGlobalDpi, 72),
-            0,
-            0,
-            0,
-            FW_NORMAL,
-            FALSE,
-            FALSE,
-            FALSE,
-            ANSI_CHARSET,
-            OUT_DEFAULT_PRECIS,
-            CLIP_DEFAULT_PRECIS,
-            CLEARTYPE_QUALITY | ANTIALIASED_QUALITY,
-            DEFAULT_PITCH,
-            logFont.lfFaceName
-            );
-
-        Context->BoldFontHandle = CreateFont(
-            -PhMultiplyDivideSigned(-12, PhGlobalDpi, 72),
-            0,
-            0,
-            0,
-            FW_SEMIBOLD,
-            FALSE,
-            FALSE,
-            FALSE,
-            ANSI_CHARSET,
-            OUT_DEFAULT_PRECIS,
-            CLIP_DEFAULT_PRECIS,
-            CLEARTYPE_QUALITY | ANTIALIASED_QUALITY,
-            DEFAULT_PITCH,
-            logFont.lfFaceName
-            );
-    }
-
-    TreeNew_SetCallback(TreeNewHandle, WepWindowTreeNewCallback, Context);
-    TreeNew_SetRowHeight(TreeNewHandle, 48);
-
-    PhAddTreeNewColumnEx2(TreeNewHandle, TREE_COLUMN_ITEM_NAME, TRUE, L"Plugin", 80, PH_ALIGN_LEFT, TREE_COLUMN_ITEM_NAME, 0, TN_COLUMN_FLAG_CUSTOMDRAW);
-    PhAddTreeNewColumnEx2(TreeNewHandle, TREE_COLUMN_ITEM_AUTHOR, TRUE, L"Author", 80, PH_ALIGN_LEFT, TREE_COLUMN_ITEM_AUTHOR, 0, 0);
-    PhAddTreeNewColumnEx2(TreeNewHandle, TREE_COLUMN_ITEM_VERSION, TRUE, L"Version", 80, PH_ALIGN_CENTER, TREE_COLUMN_ITEM_VERSION, DT_CENTER, 0);
-
-    TreeNew_SetSort(TreeNewHandle, 0, NoSortOrder);
-
-    PPH_STRING settings = PhGetStringSetting(SETTING_NAME_TREE_LIST_COLUMNS);
-    PhCmLoadSettings(TreeNewHandle, &settings->sr);
-    PhDereferenceObject(settings);
-        
-    PhInitializeTreeNewFilterSupport(&FilterSupport, TreeNewHandle, Context->NodeList);
-}
-
-VOID WtcDeleteWindowTree(
-    _In_ PWCT_TREE_CONTEXT Context
+VOID DeletePluginsTree(
+    _In_ PWCT_CONTEXT Context
     )
 {
     PPH_STRING settings = PhCmSaveSettings(Context->TreeNewHandle);
@@ -144,21 +43,21 @@ VOID WtcDeleteWindowTree(
 
     for (ULONG i = 0; i < Context->NodeList->Count; i++)
     {
-        WepDestroyWindowNode(Context->NodeList->Items[i]);
+        DestroyPluginsNode(Context->NodeList->Items[i]);
     }
 
     PhDereferenceObject(Context->NodeHashtable);
     PhDereferenceObject(Context->NodeList);
 }
 
-struct _PH_TN_FILTER_SUPPORT* WtcGetTreeListFilterSupport(
-    VOID
+struct _PH_TN_FILTER_SUPPORT* GetPluginListFilterSupport(
+    _In_ PWCT_CONTEXT Context
     )
 {
-    return &FilterSupport;
+    return &Context->FilterSupport;
 }
 
-BOOLEAN WepWindowNodeHashtableCompareFunction(
+BOOLEAN PluginsNodeHashtableCompareFunction(
     _In_ PVOID Entry1,
     _In_ PVOID Entry2
     )
@@ -169,15 +68,15 @@ BOOLEAN WepWindowNodeHashtableCompareFunction(
     return PhEqualString(windowNode1->InternalName, windowNode2->InternalName, TRUE);
 }
 
-ULONG WepWindowNodeHashtableHashFunction(
+ULONG PluginsNodeHashtableHashFunction(
     _In_ PVOID Entry
     )
 {
     return PhHashStringRef(&(*(PPLUGIN_NODE*)Entry)->InternalName->sr, TRUE);
 }
 
-VOID CloudAddChildWindowNode(
-    _In_ PWCT_TREE_CONTEXT Context,
+VOID PluginsAddTreeNode(
+    _In_ PWCT_CONTEXT Context,
     _In_ PPLUGIN_NODE Entry
     )
 {
@@ -190,14 +89,14 @@ VOID CloudAddChildWindowNode(
     PhAddEntryHashtable(Context->NodeHashtable, &Entry);
     PhAddItemList(Context->NodeList, Entry);
 
-    if (FilterSupport.NodeList)
+    if (Context->FilterSupport.NodeList)
     {
-        Entry->Node.Visible = PhApplyTreeNewFiltersToNode(&FilterSupport, &Entry->Node);
+        Entry->Node.Visible = PhApplyTreeNewFiltersToNode(&Context->FilterSupport, &Entry->Node);
     }
 }
 
 PPLUGIN_NODE FindTreeNode(
-    _In_ PWCT_TREE_CONTEXT Context,
+    _In_ PWCT_CONTEXT Context,
     _In_ TREE_PLUGIN_STATE State,
     _In_ PPH_STRING InternalName
     )
@@ -210,26 +109,11 @@ PPLUGIN_NODE FindTreeNode(
             return entry;
     }
 
-    /*PLUGIN_NODE lookupWindowNode;
-    PPLUGIN_NODE lookupWindowNodePtr = &lookupWindowNode;
-    PPLUGIN_NODE *windowNode;
-
-    lookupWindowNode.Type = Type;
-    lookupWindowNode.InternalName = InternalName;
-
-    windowNode = (PPLUGIN_NODE*)PhFindEntryHashtable(
-        Context->NodeHashtable,
-        &lookupWindowNodePtr
-        );
-
-    if (windowNode)
-        return *windowNode;
-    else*/
     return NULL;
 }
 
 VOID WeRemoveWindowNode(
-    _In_ PWCT_TREE_CONTEXT Context,
+    _In_ PWCT_CONTEXT Context,
     _In_ PPLUGIN_NODE WindowNode
     )
 {
@@ -243,27 +127,15 @@ VOID WeRemoveWindowNode(
         PhRemoveItemList(Context->NodeList, index);
     }
 
-    WepDestroyWindowNode(WindowNode);
-
-    TreeNew_NodesStructured(Context->TreeNewHandle);
+    DestroyPluginsNode(WindowNode);
 }
 
-VOID WepDestroyWindowNode(
+VOID DestroyPluginsNode(
     _In_ PPLUGIN_NODE WindowNode
     )
 {
-    //if (WindowNode->NameString)
-    //    PhDereferenceObject(WindowNode->NameString);
-    //if (WindowNode->VersionString)
-    //    PhDereferenceObject(WindowNode->VersionString);
-    //if (WindowNode->DescriptionString)
-    //    PhDereferenceObject(WindowNode->DescriptionString);
-    //if (WindowNode->AuthorString)
-    //    PhDereferenceObject(WindowNode->AuthorString);
-
     PhDereferenceObject(WindowNode);
 }
-
 
 #define SORT_FUNCTION(Column) PmPoolTreeNewCompare##Column
 #define BEGIN_SORT_FUNCTION(Column) static int __cdecl PmPoolTreeNewCompare##Column( \
@@ -280,7 +152,7 @@ VOID WepDestroyWindowNode(
     if (sortResult == 0) \
         sortResult = uintptrcmp((ULONG_PTR)node1->Node.Index, (ULONG_PTR)node2->Node.Index); \
     \
-    return PhModifySort(sortResult, ((PWCT_TREE_CONTEXT)_context)->TreeNewSortOrder); \
+    return PhModifySort(sortResult, ((PWCT_CONTEXT)_context)->TreeNewSortOrder); \
 }
 
 BEGIN_SORT_FUNCTION(Name)
@@ -301,7 +173,7 @@ BEGIN_SORT_FUNCTION(Version)
 }
 END_SORT_FUNCTION
 
-BOOLEAN NTAPI WepWindowTreeNewCallback(
+BOOLEAN NTAPI PluginsTreeNewCallback(
     _In_ HWND hwnd,
     _In_ PH_TREENEW_MESSAGE Message,
     __in_opt PVOID Parameter1,
@@ -309,7 +181,7 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
     __in_opt PVOID Context
     )
 {
-    PWCT_TREE_CONTEXT context;
+    PWCT_CONTEXT context;
     PPLUGIN_NODE node;
 
     context = Context;
@@ -327,15 +199,7 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
                 {
                     SORT_FUNCTION(Name),
                     SORT_FUNCTION(Author),
-                    SORT_FUNCTION(Version),
-                    //SORT_FUNCTION(PagedAlloc),
-                    //SORT_FUNCTION(PagedFree),
-                    //SORT_FUNCTION(PagedCurrent),
-                    //SORT_FUNCTION(PagedTotal),
-                    //SORT_FUNCTION(NonPagedAlloc),
-                    //SORT_FUNCTION(NonPagedFree),
-                    //SORT_FUNCTION(NonPagedCurrent),
-                    //SORT_FUNCTION(NonPagedTotal),
+                    SORT_FUNCTION(Version)
                 };
                 int (__cdecl *sortFunction)(void *, const void *, const void *);
 
@@ -450,24 +314,10 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
                         {
                             HBITMAP bitmapActive;
 
-                            bitmapActive = LoadImageFromResources(17, 17, MAKEINTRESOURCE(IDB_SETTINGS_PNG), TRUE);
-
-                            if (bitmapActive)
+                            if (bitmapActive = LoadImageFromResources(17, 17, MAKEINTRESOURCE(IDB_SETTINGS_PNG), TRUE))
                             {
-                                HDC screenDc;
-                                HBITMAP screenBitmap;
-                                ICONINFO iconInfo = { TRUE };
-
-                                screenDc = CreateIC(L"DISPLAY", NULL, NULL, NULL);
-                                screenBitmap = CreateCompatibleBitmap(screenDc, 17, 17);
-
-                                iconInfo.hbmColor = bitmapActive;
-                                iconInfo.hbmMask = screenBitmap;
-                                node->Icon = CreateIconIndirect(&iconInfo);
-
-                                DeleteObject(screenBitmap);
+                                node->Icon = BitmapToIcon(bitmapActive, 17, 17);
                                 DeleteObject(bitmapActive);
-                                DeleteDC(screenDc);
                             }
                         }
 
@@ -523,21 +373,19 @@ BOOLEAN NTAPI WepWindowTreeNewCallback(
     return FALSE;
 }
 
-VOID WeClearWindowTree(
-    _In_ PWCT_TREE_CONTEXT Context
+VOID PluginsClearTree(
+    _In_ PWCT_CONTEXT Context
     )
 {
     for (ULONG i = 0; i < Context->NodeList->Count; i++)
-        WepDestroyWindowNode(Context->NodeList->Items[i]);
+        DestroyPluginsNode(Context->NodeList->Items[i]);
 
     PhClearHashtable(Context->NodeHashtable);
     PhClearList(Context->NodeList);
-
-    TreeNew_NodesStructured(Context->TreeNewHandle);
 }
 
 PPLUGIN_NODE WeGetSelectedWindowNode(
-    _In_ PWCT_TREE_CONTEXT Context
+    _In_ PWCT_CONTEXT Context
     )
 {
     for (ULONG i = 0; i < Context->NodeList->Count; i++)
@@ -552,7 +400,7 @@ PPLUGIN_NODE WeGetSelectedWindowNode(
 }
 
 VOID WeGetSelectedWindowNodes(
-    _In_ PWCT_TREE_CONTEXT Context,
+    _In_ PWCT_CONTEXT Context,
     __out PPLUGIN_NODE **Windows,
     __out PULONG NumberOfWindows
     )
@@ -571,4 +419,77 @@ VOID WeGetSelectedWindowNodes(
     *NumberOfWindows = list->Count;
 
     PhDereferenceObject(list);
+}
+
+VOID InitializePluginsTree(
+    _In_ PWCT_CONTEXT Context,
+    _In_ HWND ParentWindowHandle,
+    _In_ HWND TreeNewHandle
+    )
+{
+    LOGFONT logFont;
+
+    Context->NodeHashtable = PhCreateHashtable(
+        sizeof(PPLUGIN_NODE),
+        PluginsNodeHashtableCompareFunction,
+        PluginsNodeHashtableHashFunction,
+        100
+        );
+    Context->NodeList = PhCreateList(100);
+
+    Context->ParentWindowHandle = ParentWindowHandle;
+    Context->TreeNewHandle = TreeNewHandle;
+    PhSetControlTheme(TreeNewHandle, L"explorer");
+
+    if (SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(LOGFONT), &logFont, 0))
+    {
+        Context->TitleFontHandle = CreateFont(
+            -PhMultiplyDivideSigned(-14, PhGlobalDpi, 72),
+            0,
+            0,
+            0,
+            FW_BOLD,
+            FALSE,
+            FALSE,
+            FALSE,
+            ANSI_CHARSET,
+            OUT_DEFAULT_PRECIS,
+            CLIP_DEFAULT_PRECIS,
+            CLEARTYPE_QUALITY | ANTIALIASED_QUALITY,
+            DEFAULT_PITCH,
+            logFont.lfFaceName
+            );
+
+        Context->NormalFontHandle = CreateFont(
+            -PhMultiplyDivideSigned(-10, PhGlobalDpi, 72),
+            0,
+            0,
+            0,
+            FW_NORMAL,
+            FALSE,
+            FALSE,
+            FALSE,
+            ANSI_CHARSET,
+            OUT_DEFAULT_PRECIS,
+            CLIP_DEFAULT_PRECIS,
+            CLEARTYPE_QUALITY | ANTIALIASED_QUALITY,
+            DEFAULT_PITCH,
+            logFont.lfFaceName
+            );
+    }
+
+    TreeNew_SetCallback(TreeNewHandle, PluginsTreeNewCallback, Context);
+    TreeNew_SetRowHeight(TreeNewHandle, 48);
+
+    PhAddTreeNewColumnEx2(TreeNewHandle, TREE_COLUMN_ITEM_NAME, TRUE, L"Plugin", 80, PH_ALIGN_LEFT, TREE_COLUMN_ITEM_NAME, 0, TN_COLUMN_FLAG_CUSTOMDRAW);
+    PhAddTreeNewColumnEx2(TreeNewHandle, TREE_COLUMN_ITEM_AUTHOR, TRUE, L"Author", 80, PH_ALIGN_LEFT, TREE_COLUMN_ITEM_AUTHOR, 0, 0);
+    PhAddTreeNewColumnEx2(TreeNewHandle, TREE_COLUMN_ITEM_VERSION, TRUE, L"Version", 80, PH_ALIGN_CENTER, TREE_COLUMN_ITEM_VERSION, DT_CENTER, 0);
+
+    TreeNew_SetSort(TreeNewHandle, 0, NoSortOrder);
+
+    PPH_STRING settings = PhGetStringSetting(SETTING_NAME_TREE_LIST_COLUMNS);
+    PhCmLoadSettings(TreeNewHandle, &settings->sr);
+    PhDereferenceObject(settings);
+
+    PhInitializeTreeNewFilterSupport(&Context->FilterSupport, TreeNewHandle, Context->NodeList);
 }

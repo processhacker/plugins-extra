@@ -59,205 +59,132 @@ json_object_ptr json_get_object(
     return NULL;
 }
 
-static BOOLEAN ReadRequestString(
-    _In_ HINTERNET Handle,
-    _Out_ _Deref_post_z_cap_(*DataLength) PSTR *Data,
-    _Out_ ULONG *DataLength
+HICON PluginDownloadImageThread(
+    _In_ PPH_STRING ImageDownloadUrl
     )
 {
-    BYTE buffer[PAGE_SIZE];
-    PSTR data;
-    ULONG allocatedLength;
-    ULONG dataLength;
-    ULONG returnLength;
+    HINTERNET httpSessionHandle = NULL;
+    HINTERNET httpConnectionHandle = NULL;
+    HINTERNET httpRequestHandle = NULL;
+    PPH_STRING downloadHostPath = NULL;
+    PPH_STRING downloadUrlPath = NULL;
+    WINHTTP_CURRENT_USER_IE_PROXY_CONFIG proxyConfig = { 0 };
+    ULONG xmlStringBufferLength = 0;
+    PSTR xmlStringBuffer = NULL;
+    URL_COMPONENTS httpUrlComponents = { sizeof(URL_COMPONENTS) };
 
-    allocatedLength = sizeof(buffer);
-    data = (PSTR)PhAllocate(allocatedLength);
-    dataLength = 0;
+    WinHttpGetIEProxyConfigForCurrentUser(&proxyConfig);
 
-    // Zero the buffer
-    memset(buffer, 0, PAGE_SIZE);
-    memset(data, 0, allocatedLength);
+    // Set lengths to non-zero
+    httpUrlComponents.dwSchemeLength = (ULONG)-1;
+    httpUrlComponents.dwHostNameLength = (ULONG)-1;
+    httpUrlComponents.dwUrlPathLength = (ULONG)-1;
 
-    while (WinHttpReadData(Handle, buffer, PAGE_SIZE, &returnLength))
+    if (!WinHttpCrackUrl(
+        PhGetStringOrEmpty(ImageDownloadUrl),
+        0,
+        0,
+        &httpUrlComponents
+        ))
     {
-        if (returnLength == 0)
-            break;
-
-        if (allocatedLength < dataLength + returnLength)
-        {
-            allocatedLength *= 2;
-            data = (PSTR)PhReAllocate(data, allocatedLength);
-        }
-
-        // Copy the returned buffer into our pointer
-        memcpy(data + dataLength, buffer, returnLength);
-        // Zero the returned buffer for the next loop
-        //memset(buffer, 0, returnLength);
-
-        dataLength += returnLength;
+        goto CleanupExit;
     }
 
-    if (allocatedLength < dataLength + 1)
+    // Create the Host string.
+    downloadHostPath = PhCreateStringEx(
+        httpUrlComponents.lpszHostName,
+        httpUrlComponents.dwHostNameLength * sizeof(WCHAR)
+        );
+    if (PhIsNullOrEmptyString(downloadHostPath))
+        goto CleanupExit;
+
+    // Create the Path string.
+    downloadUrlPath = PhCreateStringEx(
+        httpUrlComponents.lpszUrlPath,
+        httpUrlComponents.dwUrlPathLength * sizeof(WCHAR)
+        );
+    if (PhIsNullOrEmptyString(downloadUrlPath))
+        goto CleanupExit;
+
+    if (!(httpSessionHandle = WinHttpOpen(
+        L"ExtraPlugins_1.0",
+        proxyConfig.lpszProxy ? WINHTTP_ACCESS_TYPE_NAMED_PROXY : WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+        proxyConfig.lpszProxy,
+        proxyConfig.lpszProxyBypass,
+        0
+        )))
     {
-        allocatedLength++;
-        data = (PSTR)PhReAllocate(data, allocatedLength);
+        goto CleanupExit;
     }
 
-    // Ensure that the buffer is null-terminated.
-    data[dataLength] = 0;
-
-    *DataLength = dataLength;
-    *Data = data;
-
-    return TRUE;
-}
-
-VOID EnumerateLoadedPlugins(
-    _In_ PWCT_CONTEXT Context
-    )
-{
-    PPH_AVL_LINKS root;
-    PPH_AVL_LINKS links;
-
-    root = PluginInstance->Links.Parent;
-
-    while (root)
+    if (!(httpConnectionHandle = WinHttpConnect(
+        httpSessionHandle,
+        L"wj32.org",
+        INTERNET_DEFAULT_HTTP_PORT,
+        0
+        )))
     {
-        if (!root->Parent)
-            break;
-
-        root = root->Parent;
+        goto CleanupExit;
     }
 
-    for (
-        links = PhMinimumElementAvlTree((PPH_AVL_TREE)root); 
-        links; 
-        links = PhSuccessorElementAvlTree(links)
-        )
+    if (!(httpRequestHandle = WinHttpOpenRequest(
+        httpConnectionHandle,
+        NULL,
+        L"/processhacker/plugins/list.php",
+        NULL,
+        WINHTTP_NO_REFERER,
+        WINHTTP_DEFAULT_ACCEPT_TYPES,
+        WINHTTP_FLAG_REFRESH
+        )))
     {
-        HANDLE handle;
-        IO_STATUS_BLOCK isb;
-        FILE_BASIC_INFORMATION basic;
-        PPHAPP_PLUGIN pluginInstance;
-        PH_STRINGREF pluginBaseName;
-
-        pluginInstance = CONTAINING_RECORD(links, PHAPP_PLUGIN, Links);
-
-        PhInitializeStringRefLongHint(&pluginBaseName, PhGetPluginBaseName(pluginInstance));
-
-        if (PhIsPluginDisabled(&pluginBaseName))
-        {
-            continue;
-        }
-
-        if (!RtlDoesFileExists_U(PhGetString(pluginInstance->FileName)))
-        {
-            PhSwapReference(&pluginInstance->FileName, PhFormatString(L"%s.bak", PhGetString(pluginInstance->FileName)));
-        }
-
-        if (!RtlDoesFileExists_U(PhGetString(pluginInstance->FileName)))
-        {
-            continue;
-        }
-
-        memset(&basic, 0, sizeof(FILE_BASIC_INFORMATION));
-
-        if (NT_SUCCESS(PhCreateFileWin32(
-            &handle,
-            PhGetString(pluginInstance->FileName),
-            FILE_GENERIC_READ,
-            FILE_ATTRIBUTE_NORMAL,
-            FILE_SHARE_READ,
-            FILE_OPEN,
-            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
-            )))
-        {
-            NtQueryInformationFile(
-                handle,
-                &isb,
-                &basic,
-                sizeof(FILE_BASIC_INFORMATION),
-                FileBasicInformation
-                );
-
-            NtClose(handle);
-        }
-
-        ULONG versionSize;
-        PVOID versionInfo;
-        PUSHORT languageInfo;
-        UINT language;
-        UINT bufferSize = 0;
-        PWSTR buffer = NULL;
-        PPH_STRING internalName = NULL;
-        PPH_STRING version = NULL;
-
-        versionSize = GetFileVersionInfoSize(PhGetString(pluginInstance->FileName), NULL);
-        versionInfo = PhAllocate(versionSize);
-        memset(versionInfo, 0, versionSize);
-
-        if (GetFileVersionInfo(PhGetString(pluginInstance->FileName), 0, versionSize, versionInfo))
-        {
-            if (VerQueryValue(versionInfo, L"\\", &buffer, &bufferSize))
-            {
-                VS_FIXEDFILEINFO* info = (VS_FIXEDFILEINFO*)buffer;
-
-                if (info->dwSignature == 0xfeef04bd)
-                {
-                    version = PhFormatString(
-                        L"%lu.%lu.%lu.%lu",
-                        (info->dwFileVersionMS >> 16) & 0xffff,
-                        (info->dwFileVersionMS >> 0) & 0xffff,
-                        (info->dwFileVersionLS >> 16) & 0xffff,
-                        (info->dwFileVersionLS >> 0) & 0xffff
-                        );
-                }
-            }
-
-            if (VerQueryValue(versionInfo, L"\\VarFileInfo\\Translation", &languageInfo, &language))
-            {
-                PPH_STRING internalNameString = PhFormatString(
-                    L"\\StringFileInfo\\%04x%04x\\InternalName", 
-                    languageInfo[0],
-                    languageInfo[1]
-                    );
-
-                if (VerQueryValue(versionInfo, PhGetStringOrEmpty(internalNameString), &buffer, &bufferSize))
-                {
-                    internalName = PhCreateStringEx(buffer, bufferSize * sizeof(WCHAR));
-                }
-
-                PhDereferenceObject(internalNameString);
-            }
-        }
-
-        PPLUGIN_NODE entry = PhCreateAlloc(sizeof(PLUGIN_NODE));
-        memset(entry, 0, sizeof(PLUGIN_NODE));
-
-        entry->State = PLUGIN_STATE_LOCAL;
-        entry->PluginInstance = pluginInstance;
-        entry->InternalName = internalName;
-        entry->Version = PhSubstring(version, 0, version->Length / sizeof(WCHAR) - 4);
-        entry->Name = PhCreateString(pluginInstance->Information.DisplayName);
-        entry->Author = PhCreateString(pluginInstance->Information.Author);
-        entry->Description = PhCreateString(pluginInstance->Information.Description);
-        entry->FilePath = PhCreateString2(&pluginInstance->FileName->sr);
-        entry->FileName = PhGetBaseName(entry->FilePath);
-    
-        SYSTEMTIME utcTime, localTime;
-        PhLargeIntegerToSystemTime(&utcTime, &basic.LastWriteTime);
-        SystemTimeToTzSpecificLocalTime(NULL, &utcTime, &localTime);
-        entry->UpdatedTime = PhFormatDateTime(&localTime);
-
-        PhLargeIntegerToSystemTime(&utcTime, &basic.CreationTime);
-        SystemTimeToTzSpecificLocalTime(NULL, &utcTime, &localTime);
-        entry->AddedTime = PhFormatDateTime(&localTime);
-
-        entry->PluginOptions = pluginInstance->Information.HasOptions;
-
-        PostMessage(Context->DialogHandle, ID_UPDATE_ADD, 0, (LPARAM)entry);
+        goto CleanupExit;
     }
+
+    if (!WinHttpSendRequest(
+        httpRequestHandle,
+        WINHTTP_NO_ADDITIONAL_HEADERS,
+        0,
+        WINHTTP_NO_REQUEST_DATA,
+        0,
+        WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH,
+        0
+        ))
+    {
+        goto CleanupExit;
+    }
+
+    if (!WinHttpReceiveResponse(httpRequestHandle, NULL))
+        goto CleanupExit;
+
+    if (!ReadRequestString(httpRequestHandle, &xmlStringBuffer, &xmlStringBufferLength))
+        goto CleanupExit;
+
+    //pluginDllPath = PhConcatStrings(3, PhGetString(PhGetApplicationDirectory()), L"Plugins\\", PhGetString(entry->FileName));
+    //PhInitializeStringRefLongHint(&pluginBaseName, PhGetString(entry->FileName));
+
+    //if (PhIsPluginDisabled(&pluginBaseName))
+    //    goto CleanupExit;
+
+    //if (RtlDoesFileExists_U(PhGetString(pluginDllPath)))
+    //{
+    //    
+    //}
+
+CleanupExit:
+
+    if (httpRequestHandle)
+        WinHttpCloseHandle(httpRequestHandle);
+
+    if (httpConnectionHandle)
+        WinHttpCloseHandle(httpConnectionHandle);
+
+    if (httpSessionHandle)
+        WinHttpCloseHandle(httpSessionHandle);
+
+    if (xmlStringBuffer)
+        PhFree(xmlStringBuffer);
+
+    return NULL;
 }
 
 NTSTATUS QueryPluginsCallbackThread(
@@ -399,7 +326,7 @@ NTSTATUS QueryPluginsCallbackThread(
             PPH_STRING internalName = NULL;
             PPH_STRING version = NULL;
 
-            entry->FilePath = PhCreateString2(&pluginDllPath->sr);//entry->PluginInstance->FileName->sr);
+            entry->FilePath = PhCreateString2(&pluginDllPath->sr);
 
             versionSize = GetFileVersionInfoSize(PhGetString(entry->FilePath), NULL);
             versionInfo = PhAllocate(versionSize);

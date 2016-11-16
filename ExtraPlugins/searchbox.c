@@ -113,36 +113,35 @@ VOID NcAreaInitializeTheme(
     }
 }
 
-VOID NcAreaInitializeImageList(
+VOID NcAreaInitializeImages(
     _Inout_ PEDIT_CONTEXT Context
 )
 {
-    HBITMAP bitmapActive;
-    HBITMAP bitmapInactive;
+    HBITMAP bitmap;
 
     Context->ImageWidth = GetSystemMetrics(SM_CXSMICON) + 4;
     Context->ImageHeight = GetSystemMetrics(SM_CYSMICON) + 4;
-    Context->ImageList = ImageList_Create(16, 16, ILC_COLOR32, 2, 2);
-    ImageList_SetImageCount(Context->ImageList, 2);
 
-    if (bitmapActive = LoadImageFromResources(Context->ImageWidth, Context->ImageHeight, MAKEINTRESOURCE(IDB_SEARCH_ACTIVE), TRUE))
+    if (bitmap = LoadImageFromResources(Context->ImageWidth, Context->ImageHeight, MAKEINTRESOURCE(IDB_SEARCH_ACTIVE), TRUE))
     {
-        ImageList_Replace(Context->ImageList, 0, bitmapActive, NULL);
-        DeleteObject(bitmapActive);
+        Context->BitmapActive = BitmapToIcon(bitmap, Context->ImageWidth, Context->ImageHeight);
+        DeleteObject(bitmap);
     }
-    else
+    else if (bitmap = LoadImage(PluginInstance->DllBase, MAKEINTRESOURCE(IDB_SEARCH_ACTIVE_BMP), IMAGE_BITMAP, 0, 0, 0))
     {
-        PhSetImageListBitmap(Context->ImageList, 0, PluginInstance->DllBase, MAKEINTRESOURCE(IDB_SEARCH_ACTIVE_BMP));
+        Context->BitmapActive = BitmapToIcon(bitmap, Context->ImageWidth, Context->ImageHeight);
+        DeleteObject(bitmap);
     }
 
-    if (bitmapInactive = LoadImageFromResources(Context->ImageWidth, Context->ImageHeight, MAKEINTRESOURCE(IDB_SEARCH_INACTIVE), TRUE))
+    if (bitmap = LoadImageFromResources(Context->ImageWidth, Context->ImageHeight, MAKEINTRESOURCE(IDB_SEARCH_INACTIVE), TRUE))
     {
-        ImageList_Replace(Context->ImageList, 1, bitmapInactive, NULL);
-        DeleteObject(bitmapInactive);
+        Context->BitmapInactive = BitmapToIcon(bitmap, Context->ImageWidth, Context->ImageHeight);
+        DeleteObject(bitmap);
     }
-    else
+    else if (bitmap = LoadImage(PluginInstance->DllBase, MAKEINTRESOURCE(IDB_SEARCH_INACTIVE_BMP), IMAGE_BITMAP, 0, 0, 0))
     {
-        PhSetImageListBitmap(Context->ImageList, 1, PluginInstance->DllBase, MAKEINTRESOURCE(IDB_SEARCH_INACTIVE_BMP));
+        Context->BitmapInactive = BitmapToIcon(bitmap, Context->ImageWidth, Context->ImageHeight);
+        DeleteObject(bitmap);
     }
 }
 
@@ -197,25 +196,37 @@ VOID NcAreaDrawButton(
 
     if (Edit_GetTextLength(Context->WindowHandle) > 0)
     {
-        ImageList_Draw(
-            Context->ImageList,
-            0,
-            bufferDc,
-            bufferRect.left + ((bufferRect.right - bufferRect.left) - Context->ImageWidth) / 2 + 1, // offset by one
-            bufferRect.top + ((bufferRect.bottom - bufferRect.top) - Context->ImageHeight) / 2 + 1, // offset by one
-            ILD_NORMAL | ILD_TRANSPARENT
-            );
+        if (Context->BitmapActive)
+        {
+            DrawIconEx(
+                bufferDc,
+                bufferRect.left + ((bufferRect.right - bufferRect.left) - Context->ImageWidth) / 2 + 1,
+                bufferRect.top + ((bufferRect.bottom - bufferRect.top) - Context->ImageHeight) / 2 + 1,
+                Context->BitmapActive,
+                Context->ImageWidth,
+                Context->ImageHeight,
+                0,
+                NULL,
+                DI_NORMAL
+                );
+        }
     }
     else
     {
-        ImageList_Draw(
-            Context->ImageList,
-            1,
-            bufferDc,
-            bufferRect.left + ((bufferRect.right - bufferRect.left) - (Context->ImageWidth - 2)) / 2, // offset by one
-            bufferRect.top + ((bufferRect.bottom - bufferRect.top) - (Context->ImageHeight - 2)) / 2 + 1, // offset by one
-            ILD_NORMAL | ILD_TRANSPARENT
-            );
+        if (Context->BitmapInactive)
+        {
+            DrawIconEx(
+                bufferDc,
+                bufferRect.left + ((bufferRect.right - bufferRect.left) - (Context->ImageWidth - 2)) / 2, // offset by one
+                bufferRect.top + ((bufferRect.bottom - bufferRect.top) - (Context->ImageHeight - 2)) / 2 + 1, // offset by one
+                Context->BitmapInactive,
+                Context->ImageWidth,
+                Context->ImageHeight,
+                0,
+                NULL,
+                DI_NORMAL
+                );
+        }
     }
 
     BitBlt(hdc, ButtonRect.left, ButtonRect.top, ButtonRect.right, ButtonRect.bottom, bufferDc, 0, 0, SRCCOPY);
@@ -244,9 +255,6 @@ LRESULT CALLBACK NcAreaWndSubclassProc(
     case WM_NCDESTROY:
         {
             NcAreaFreeTheme(context);
-
-            if (context->ImageList)
-                ImageList_Destroy(context->ImageList);
 
             if (context->WindowFont)
                 DeleteObject(context->WindowFont);
@@ -466,12 +474,38 @@ LRESULT CALLBACK NcAreaWndSubclassProc(
     return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
+HICON BitmapToIcon(
+    _In_ HBITMAP BitmapHandle,
+    _In_ INT Width,
+    _In_ INT Height
+    )
+{
+    HICON icon;
+    HDC screenDc;
+    HBITMAP screenBitmap;
+    ICONINFO iconInfo = { 0 };
+
+    screenDc = CreateIC(L"DISPLAY", NULL, NULL, NULL);
+    screenBitmap = CreateCompatibleBitmap(screenDc, Width, Height);
+
+    iconInfo.fIcon = TRUE;
+    iconInfo.hbmColor = BitmapHandle;
+    iconInfo.hbmMask = screenBitmap;
+
+    icon = CreateIconIndirect(&iconInfo);
+
+    DeleteObject(screenBitmap);
+    DeleteDC(screenDc);
+
+    return icon;
+}
+
 HBITMAP LoadImageFromResources(
     _In_ UINT Width,
     _In_ UINT Height,
     _In_ PCWSTR Name,
     _In_ BOOLEAN RGBAImage
-)
+    )
 {
     UINT frameCount = 0;
     BOOLEAN success = FALSE;
@@ -650,7 +684,7 @@ VOID CreateSearchControl(
     context->WindowHandle = WindowHandle;
 
     //NcAreaInitializeTheme(context);
-    NcAreaInitializeImageList(context);
+    NcAreaInitializeImages(context);
 
     // Set initial text
     Edit_SetCueBannerText(context->WindowHandle, L"Search Plugins (Ctrl+K)");
