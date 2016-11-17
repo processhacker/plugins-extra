@@ -36,125 +36,109 @@ NTSTATUS RunAsCreateProcessThread(
     PPH_STRING commandLine = Parameter;
     ULONG bytesNeeded = 0;
 
-    __try
+    if (!(serviceHandle = PhOpenService(L"TrustedInstaller", SERVICE_QUERY_STATUS | SERVICE_START)))
     {
-        if (!(serviceHandle = PhOpenService(L"TrustedInstaller", SERVICE_QUERY_STATUS | SERVICE_START)))
-        {
-            status = PhGetLastWin32ErrorAsNtStatus();
-            __leave;
-        }
+        status = PhGetLastWin32ErrorAsNtStatus();
+        goto CleanupExit;
+    }
 
-        if (!QueryServiceStatusEx(
-            serviceHandle, 
-            SC_STATUS_PROCESS_INFO, 
-            (PBYTE)&serviceStatus, 
-            sizeof(SERVICE_STATUS_PROCESS), 
-            &bytesNeeded
-            ))
-        {
-            status = PhGetLastWin32ErrorAsNtStatus();
-            __leave;
-        }
+    if (!QueryServiceStatusEx(
+        serviceHandle,
+        SC_STATUS_PROCESS_INFO,
+        (PBYTE)&serviceStatus,
+        sizeof(SERVICE_STATUS_PROCESS),
+        &bytesNeeded
+        ))
+    {
+        status = PhGetLastWin32ErrorAsNtStatus();
+        goto CleanupExit;
+    }
 
-        if (serviceStatus.dwCurrentState == SERVICE_RUNNING)
-        {
-            status = STATUS_SUCCESS;
-        }
-        else
-        {
-            ULONG attempts = 5;
+    if (serviceStatus.dwCurrentState == SERVICE_RUNNING)
+    {
+        status = STATUS_SUCCESS;
+    }
+    else
+    {
+        ULONG attempts = 5;
 
-            StartService(serviceHandle, 0, NULL);
+        StartService(serviceHandle, 0, NULL);
 
-            do
+        do
+        {
+            if (QueryServiceStatusEx(
+                serviceHandle,
+                SC_STATUS_PROCESS_INFO,
+                (PBYTE)&serviceStatus,
+                sizeof(SERVICE_STATUS_PROCESS),
+                &bytesNeeded
+                ))
             {
-                if (QueryServiceStatusEx(
-                    serviceHandle, 
-                    SC_STATUS_PROCESS_INFO, 
-                    (PBYTE)&serviceStatus, 
-                    sizeof(SERVICE_STATUS_PROCESS), 
-                    &bytesNeeded
-                    ))
+                if (serviceStatus.dwCurrentState == SERVICE_RUNNING)
                 {
-                    if (serviceStatus.dwCurrentState == SERVICE_RUNNING)
-                    {
-                        status = STATUS_SUCCESS;
-                        break;
-                    }
+                    status = STATUS_SUCCESS;
+                    break;
                 }
+            }
 
-                Sleep(1000);
+            Sleep(1000);
 
-            } while (--attempts != 0);
-        }
-
-        if (!NT_SUCCESS(status))
-        {
-            // One or more services failed to start.
-            status = STATUS_SERVICES_FAILED_AUTOSTART;
-            __leave;
-        }
-
-        if (!NT_SUCCESS(status = PhOpenProcess(
-            &processHandle,
-            ProcessQueryAccess,
-            UlongToHandle(serviceStatus.dwProcessId)
-            )))
-        {
-            __leave;
-        }
-
-        if (!NT_SUCCESS(status = NtOpenProcessToken(
-            processHandle, 
-            TOKEN_QUERY, 
-            &tokenHandle
-            )))
-        {
-            __leave;
-        }
-
-        if (!NT_SUCCESS(status = PhGetTokenUser(tokenHandle, &tokenUser)))
-            __leave;
-
-        if (!(userName = PhGetSidFullName(tokenUser->User.Sid, TRUE, NULL)))
-        {
-            // the SID structure is not valid.
-            status = STATUS_INVALID_SID;
-            __leave;
-        }
-
-        status = PhExecuteRunAsCommand2(
-            PhMainWndHandle,
-            PhGetStringOrEmpty(commandLine),
-            PhGetStringOrEmpty(userName),
-            L"",
-            LOGON32_LOGON_SERVICE,
-            UlongToHandle(serviceStatus.dwProcessId),
-            NtCurrentPeb()->SessionId,
-            NULL,
-            FALSE
-            );
+        } while (--attempts != 0);
     }
-    __finally
+
+    if (!NT_SUCCESS(status))
     {
-        if (commandLine)
-            PhDereferenceObject(commandLine);
-
-        if (userName)
-            PhDereferenceObject(userName);
-
-        if (tokenUser)
-            PhFree(tokenUser);
-
-        if (tokenHandle)
-            NtClose(tokenHandle);
-
-        if (processHandle)
-            NtClose(processHandle);
-
-        if (serviceHandle)
-            CloseServiceHandle(serviceHandle);
+        status = STATUS_SERVICES_FAILED_AUTOSTART; // One or more services failed to start.
+        goto CleanupExit;
     }
+
+    if (!NT_SUCCESS(status = PhOpenProcess(&processHandle, ProcessQueryAccess, UlongToHandle(serviceStatus.dwProcessId))))
+        goto CleanupExit;
+
+    if (!NT_SUCCESS(status = NtOpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)))
+        goto CleanupExit;
+
+    if (!NT_SUCCESS(status = PhGetTokenUser(tokenHandle, &tokenUser)))
+        goto CleanupExit;
+
+    if (!(userName = PhGetSidFullName(tokenUser->User.Sid, TRUE, NULL)))
+    {
+        // the SID structure is not valid.
+        status = STATUS_INVALID_SID;
+        goto CleanupExit;
+    }
+
+    status = PhExecuteRunAsCommand2(
+        PhMainWndHandle,
+        PhGetStringOrEmpty(commandLine),
+        PhGetStringOrEmpty(userName),
+        L"",
+        LOGON32_LOGON_SERVICE,
+        UlongToHandle(serviceStatus.dwProcessId),
+        NtCurrentPeb()->SessionId,
+        NULL,
+        FALSE
+        );
+
+CleanupExit:
+
+    if (commandLine)
+        PhDereferenceObject(commandLine);
+
+    if (userName)
+        PhDereferenceObject(userName);
+
+    if (tokenUser)
+        PhFree(tokenUser);
+
+    if (tokenHandle)
+        NtClose(tokenHandle);
+
+    if (processHandle)
+        NtClose(processHandle);
+
+    if (serviceHandle)
+            CloseServiceHandle(serviceHandle);
 
     return status;
 }

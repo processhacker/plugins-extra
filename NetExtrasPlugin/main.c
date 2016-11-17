@@ -23,13 +23,14 @@
 #include "main.h"
 
 PPH_PLUGIN PluginInstance = NULL;
-static PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
-static PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
-static PH_CALLBACK_REGISTRATION NetworkTreeNewInitializingCallbackRegistration;
-static PH_CALLBACK_REGISTRATION TreeNewMessageCallbackRegistration;
-static HWND NetworkTreeNewHandle = NULL;
+PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
+PH_CALLBACK_REGISTRATION NetworkTreeNewInitializingCallbackRegistration;
+PH_CALLBACK_REGISTRATION TreeNewMessageCallbackRegistration;
+HWND NetworkTreeNewHandle = NULL;
 
-static LONG NTAPI NetworkServiceSortFunction(
+LONG NTAPI NetworkServiceSortFunction(
     _In_ PVOID Node1,
     _In_ PVOID Node2,
     _In_ ULONG SubId,
@@ -73,6 +74,14 @@ VOID NTAPI UnloadCallback(
     NOTHING;
 }
 
+VOID NTAPI ShowOptionsCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    //ShowOptionsDialog((HWND)Parameter);
+}
+
 VOID NTAPI NetworkTreeNewInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
@@ -109,10 +118,28 @@ VOID NTAPI NetworkItemCreateCallback(
     _In_ PVOID Extension
     )
 {
-    //PPH_NETWORK_ITEM networkItem = Object;
+    PPH_NETWORK_ITEM networkItem = Object;
     PNETWORK_EXTENSION extension = Extension;
 
     memset(extension, 0, sizeof(NETWORK_EXTENSION));
+
+    //PPH_NETWORK_NODE networkNode = Object;
+    extension = PhPluginGetObjectExtension(PluginInstance, networkItem, EmNetworkItemType);
+
+    // Update the country data for this connection
+    if (!extension->CountryValid)
+    {
+        PPH_STRING remoteCountryCode;
+        PPH_STRING remoteCountryName;
+
+        if (LookupCountryCode(networkItem->RemoteEndpoint.Address, &remoteCountryCode, &remoteCountryName))
+        {
+            PhSwapReference(&extension->RemoteCountryCode, remoteCountryCode);
+            PhSwapReference(&extension->RemoteCountryName, remoteCountryName);
+        }
+
+        extension->CountryValid = TRUE;
+    }
 }
 
 VOID NTAPI NetworkItemDeleteCallback(
@@ -139,23 +166,7 @@ VOID NTAPI NetworkNodeCreateCallback(
     _In_ PVOID Extension
     )
 {
-    PPH_NETWORK_NODE networkNode = Object;
-    PNETWORK_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, networkNode->NetworkItem, EmNetworkItemType);
 
-    // Update the country data for this connection
-    if (!extension->CountryValid)
-    {
-        PPH_STRING remoteCountryCode;
-        PPH_STRING remoteCountryName;
-
-        if (LookupCountryCode(networkNode->NetworkItem->RemoteEndpoint.Address, &remoteCountryCode, &remoteCountryName))
-        {
-            PhSwapReference(&extension->RemoteCountryCode, remoteCountryCode);
-            PhSwapReference(&extension->RemoteCountryName, remoteCountryName);
-        }
-
-        extension->CountryValid = TRUE;
-    }
 }
 
 VOID NTAPI TreeNewMessageCallback(
@@ -297,7 +308,7 @@ LOGICAL DllMain(
             info->DisplayName = L"Network Extras";
             info->Author = L"dmex";
             info->Description = L"Plugin for extra network information.";
-            info->HasOptions = FALSE;
+            info->HasOptions = TRUE;
 
             PhRegisterCallback(
                 PhGetPluginCallback(PluginInstance, PluginCallbackLoad),
@@ -311,6 +322,13 @@ LOGICAL DllMain(
                 NULL,
                 &PluginUnloadCallbackRegistration
                 );
+            PhRegisterCallback(
+                PhGetPluginCallback(PluginInstance, PluginCallbackShowOptions),
+                ShowOptionsCallback,
+                NULL,
+                &PluginShowOptionsCallbackRegistration
+                );
+
             PhRegisterCallback(
                 PhGetGeneralCallback(GeneralCallbackNetworkTreeNewInitializing),
                 NetworkTreeNewInitializingCallback,

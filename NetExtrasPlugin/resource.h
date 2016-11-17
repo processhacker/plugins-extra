@@ -251,6 +251,7 @@
 #define HU_PNG                          348
 #define IDD_DIALOG1                     349
 #define IDD_OPTIONS                     349
+#define IDC_PROGRESS1                   1001
 
 // Next default values for new objects
 // 
@@ -258,7 +259,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        351
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1001
+#define _APS_NEXT_CONTROL_VALUE         1002
 #define _APS_NEXT_SYMED_VALUE           100
 #endif
 #endif

@@ -23,8 +23,26 @@
 #include "main.h"
 
 PPH_PLUGIN PluginInstance;
-static PH_CALLBACK_REGISTRATION MenuItemCallbackRegistration;
-static PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
+PH_CALLBACK_REGISTRATION MenuItemCallbackRegistration;
+PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
+
+VOID NTAPI LoadCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    NOTHING;
+}
+
+VOID NTAPI UnloadCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    NOTHING;
+}
 
 VOID MenuItemCallback(
     _In_opt_ PVOID Parameter,
@@ -90,6 +108,19 @@ LOGICAL DllMain(
         info->Description = L"Run processes with Trusted Installer privileges via the Hacker menu > 'Run as trusted installer' menu.";
         info->Url = L"https://wj32.org/processhacker/forums/viewtopic.php?t=2407";
         info->HasOptions = FALSE;
+
+        PhRegisterCallback(
+            PhGetPluginCallback(PluginInstance, PluginCallbackLoad),
+            LoadCallback,
+            NULL,
+            &PluginLoadCallbackRegistration
+            );
+        PhRegisterCallback(
+            PhGetPluginCallback(PluginInstance, PluginCallbackUnload),
+            UnloadCallback,
+            NULL,
+            &PluginUnloadCallbackRegistration
+            );
 
         PhRegisterCallback(
             PhGetPluginCallback(PluginInstance, PluginCallbackMenuItem),

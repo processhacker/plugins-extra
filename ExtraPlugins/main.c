@@ -24,6 +24,8 @@
 
 PPH_PLUGIN PluginInstance;
 PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginShowOptionsCallbackRegistration;
 PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
 PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
 
@@ -229,6 +231,14 @@ VOID NTAPI LoadCallback(
     }
 }
 
+VOID NTAPI UnloadCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    NOTHING;
+}
+
 VOID NTAPI MainMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
@@ -260,6 +270,14 @@ VOID NTAPI MenuItemCallback(
         ShowPluginManagerDialog();
         break;
     }
+}
+
+VOID NTAPI ShowOptionsCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    //ShowOptionsDialog((HWND)Parameter);
 }
 
 LOGICAL DllMain(
@@ -296,6 +314,18 @@ LOGICAL DllMain(
                 LoadCallback,
                 NULL,
                 &PluginLoadCallbackRegistration
+                );
+            PhRegisterCallback(
+                PhGetPluginCallback(PluginInstance, PluginCallbackUnload),
+                UnloadCallback,
+                NULL,
+                &PluginUnloadCallbackRegistration
+                );
+            PhRegisterCallback(
+                PhGetPluginCallback(PluginInstance, PluginCallbackShowOptions),
+                ShowOptionsCallback,
+                NULL,
+                &PluginShowOptionsCallbackRegistration
                 );
             PhRegisterCallback(
                 PhGetGeneralCallback(GeneralCallbackMainMenuInitializing),
