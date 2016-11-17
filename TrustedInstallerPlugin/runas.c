@@ -33,8 +33,10 @@ NTSTATUS RunAsCreateProcessThread(
     HANDLE tokenHandle = NULL;
     PTOKEN_USER tokenUser = NULL;
     PPH_STRING userName = NULL;
-    PPH_STRING commandLine = Parameter;
+    PPH_STRING commandLine;
     ULONG bytesNeeded = 0;
+
+    commandLine = PhConcatStrings2(USER_SHARED_DATA->NtSystemRoot, L"\\System32\\cmd.exe");
 
     if (!(serviceHandle = PhOpenService(L"TrustedInstaller", SERVICE_QUERY_STATUS | SERVICE_START)))
     {

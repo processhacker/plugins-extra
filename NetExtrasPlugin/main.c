@@ -118,28 +118,10 @@ VOID NTAPI NetworkItemCreateCallback(
     _In_ PVOID Extension
     )
 {
-    PPH_NETWORK_ITEM networkItem = Object;
+    //PPH_NETWORK_ITEM networkItem = Object;
     PNETWORK_EXTENSION extension = Extension;
 
     memset(extension, 0, sizeof(NETWORK_EXTENSION));
-
-    //PPH_NETWORK_NODE networkNode = Object;
-    extension = PhPluginGetObjectExtension(PluginInstance, networkItem, EmNetworkItemType);
-
-    // Update the country data for this connection
-    if (!extension->CountryValid)
-    {
-        PPH_STRING remoteCountryCode;
-        PPH_STRING remoteCountryName;
-
-        if (LookupCountryCode(networkItem->RemoteEndpoint.Address, &remoteCountryCode, &remoteCountryName))
-        {
-            PhSwapReference(&extension->RemoteCountryCode, remoteCountryCode);
-            PhSwapReference(&extension->RemoteCountryName, remoteCountryName);
-        }
-
-        extension->CountryValid = TRUE;
-    }
 }
 
 VOID NTAPI NetworkItemDeleteCallback(
@@ -166,7 +148,23 @@ VOID NTAPI NetworkNodeCreateCallback(
     _In_ PVOID Extension
     )
 {
+    PPH_NETWORK_NODE networkNode = Object;
+    PNETWORK_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, networkNode->NetworkItem, EmNetworkItemType);
 
+    // Update the country data for this connection
+    if (!extension->CountryValid)
+    {
+        PPH_STRING remoteCountryCode;
+        PPH_STRING remoteCountryName;
+
+        if (LookupCountryCode(networkNode->NetworkItem->RemoteEndpoint.Address, &remoteCountryCode, &remoteCountryName))
+        {
+            PhSwapReference(&extension->RemoteCountryCode, remoteCountryCode);
+            PhSwapReference(&extension->RemoteCountryName, remoteCountryName);
+        }
+
+        extension->CountryValid = TRUE;
+    }
 }
 
 VOID NTAPI TreeNewMessageCallback(

@@ -22,8 +22,6 @@
 
 #include "main.h"
 
-static _SHAutoComplete SHAutoComplete_I = NULL;
-
 NTSTATUS RunAsTrustedInstallerThread(
     _In_ PVOID Parameter
     )
@@ -31,17 +29,14 @@ NTSTATUS RunAsTrustedInstallerThread(
     HANDLE threadHandle;
     THREAD_BASIC_INFORMATION basicInfo;
 
-    if (threadHandle = PhCreateThread(0, RunAsCreateProcessThread, Parameter))
+    if (threadHandle = PhCreateThread(0, RunAsCreateProcessThread, NULL))
     {
-        LARGE_INTEGER timeout;
-
-        NtWaitForSingleObject(threadHandle, FALSE, PhTimeoutFromMilliseconds(&timeout, 20 * 1000));
+        NtWaitForSingleObject(threadHandle, FALSE, NULL);
         
         if (NT_SUCCESS(PhGetThreadBasicInformation(threadHandle, &basicInfo)))
         {
             if (basicInfo.ExitStatus != STATUS_SUCCESS)
             {
-                // Show Error
                 PhShowStatus(
                     PhMainWndHandle, 
                     L"Error creating process with TrustedInstaller privileges", 
@@ -57,111 +52,12 @@ NTSTATUS RunAsTrustedInstallerThread(
     return STATUS_SUCCESS;
 }
 
-INT_PTR CALLBACK RunAsTrustedInstallerDlgProc(
-    _In_ HWND hwndDlg,
-    _In_ UINT uMsg,
-    _In_ WPARAM wParam,
-    _In_ LPARAM lParam
-    )
-{
-    switch (uMsg)
-    {
-    case WM_INITDIALOG:
-        {
-            HMODULE shlwapiHandle;
-
-            PhRegisterDialog(hwndDlg);
-
-            if (!SHAutoComplete_I)
-            {
-                if (shlwapiHandle = LoadLibrary(L"shlwapi.dll"))
-                {
-                    SHAutoComplete_I = PhGetProcedureAddress(shlwapiHandle, "SHAutoComplete", 0);
-                }
-            }
-
-            if (SHAutoComplete_I)
-            {
-                SHAutoComplete_I(
-                    GetDlgItem(hwndDlg, IDC_PROGRAM),
-                    SHACF_AUTOAPPEND_FORCE_ON | SHACF_AUTOSUGGEST_FORCE_ON | SHACF_URLALL | SHACF_FILESYS_ONLY
-                    );
-            }
-
-            SendMessage(hwndDlg, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(hwndDlg, IDC_PROGRAM), TRUE);
-        }
-        break;
-    case WM_DESTROY:
-        {
-            PhUnregisterDialog(hwndDlg);
-        }
-        break;
-    case WM_COMMAND:
-        {
-            switch (LOWORD(wParam))
-            {
-            case IDCANCEL:
-                EndDialog(hwndDlg, IDCANCEL);
-                break;
-            case IDC_BROWSE:
-                {
-                    static PH_FILETYPE_FILTER filters[] =
-                    {
-                        { L"Programs (*.exe;)", L"*.exe;" },
-                        { L"All files (*.*)", L"*.*" }
-                    };
-                    PVOID fileDialog;
-                    PPH_STRING fileName;
-
-                    fileDialog = PhCreateOpenFileDialog();
-                    PhSetFileDialogFilter(fileDialog, filters, sizeof(filters) / sizeof(PH_FILETYPE_FILTER));
-
-                    if (PhShowFileDialog(hwndDlg, fileDialog))
-                    {
-                        fileName = PH_AUTO(PhGetFileDialogFileName(fileDialog));
-                        SetDlgItemText(hwndDlg, IDC_PROGRAM, fileName->Buffer);
-                    }
-
-                    PhFreeFileDialog(fileDialog);
-                }
-                break;
-            case IDOK:
-                {
-                    PPH_STRING program;
-                    HANDLE threadHandle;
-
-                    program = PhGetWindowText(GetDlgItem(hwndDlg, IDC_PROGRAM));
-
-                    if (PhIsNullOrEmptyString(program))
-                    {
-                        PhDereferenceObject(program);
-                        break;
-                    }
-
-                    if (threadHandle = PhCreateThread(0, RunAsTrustedInstallerThread, program))
-                    {
-                        NtClose(threadHandle);
-                    }
-
-                    EndDialog(hwndDlg, IDOK);
-                }
-                break;
-            }
-        }
-        break;
-    }
-
-    return FALSE;
-}
-
 VOID ShowRunAsDialog(
     _In_opt_ HWND Parent
     )
 {
-    DialogBox(
-        PluginInstance->DllBase,
-        MAKEINTRESOURCE(IDD_RUNASDIALOG),
-        Parent,
-        RunAsTrustedInstallerDlgProc
-        );
+    HANDLE threadHandle;
+
+    if (threadHandle = PhCreateThread(0, RunAsTrustedInstallerThread, NULL))
+        NtClose(threadHandle);
 }

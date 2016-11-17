@@ -2,9 +2,6 @@
 // Microsoft Visual C++ generated include file.
 // Used by TrustedInstallerPlugin.rc
 //
-#define IDD_RUNASDIALOG                 101
-#define IDC_PROGRAM                     1001
-#define IDC_BROWSE                      1003
 
 // Next default values for new objects
 // 

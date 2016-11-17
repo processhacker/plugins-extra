@@ -54,9 +54,7 @@ VOID MenuItemCallback(
     switch (menuItem->Id)
     {
     case RUNAS_MENU_ITEM:
-        {
-            ShowRunAsDialog(menuItem->OwnerWindow);
-        }
+        ShowRunAsDialog(menuItem->OwnerWindow);
         break;
     }
 }
