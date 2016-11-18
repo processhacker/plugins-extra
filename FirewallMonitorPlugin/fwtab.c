@@ -483,15 +483,15 @@ BOOLEAN NTAPI FwTreeNewCallback(
             PPH_TREENEW_GET_NODE_ICON getNodeIcon = (PPH_TREENEW_GET_NODE_ICON)Parameter1;
             node = (PFW_EVENT_ITEM)getNodeIcon->Node;
     
-            if (node->Icon)
-            {
-                getNodeIcon->Icon = node->Icon;
-            }
-            else
-            {
-                node->Icon = PhGetFileShellIcon(PhGetString(node->ProcessFileNameString), L".exe", FALSE);
-                getNodeIcon->Icon = node->Icon;
-            }
+            //if (node->Icon)
+            //{
+            //    getNodeIcon->Icon = node->Icon;
+            //}
+            //else
+            //{
+            //    node->Icon = PhGetFileShellIcon(PhGetString(node->ProcessFileNameString), L".exe", FALSE);
+            //    getNodeIcon->Icon = node->Icon;
+            //}
 
             getNodeIcon->Flags = TN_CACHE;
         }
@@ -805,8 +805,8 @@ VOID NTAPI OnFwItemRemoved(
 
     if (!FwNeedsRedraw)
     {
-       // TreeNew_SetRedraw(FwTreeNewHandle, FALSE);
-       // FwNeedsRedraw = TRUE;
+        TreeNew_SetRedraw(FwTreeNewHandle, FALSE);
+        FwNeedsRedraw = TRUE;
     }
 
     RemoveFwNode(fwNode);
@@ -818,8 +818,8 @@ VOID NTAPI OnFwItemsUpdated(
 {
     if (FwNeedsRedraw)
     {
-       // TreeNew_SetRedraw(FwTreeNewHandle, TRUE);
-     //   FwNeedsRedraw = FALSE;
+        TreeNew_SetRedraw(FwTreeNewHandle, TRUE);
+        FwNeedsRedraw = FALSE;
     }
 
     // Text invalidation
