@@ -254,7 +254,7 @@ BOOLEAN NTAPI PluginsTreeNewCallback(
             PPH_TREENEW_GET_NODE_COLOR getNodeColor = (PPH_TREENEW_GET_NODE_COLOR)Parameter1;
             node = (PPLUGIN_NODE)getNodeColor->Node;
 
-            getNodeColor->Flags = TN_CACHE;
+            getNodeColor->Flags = TN_CACHE | TN_AUTO_FORECOLOR;
         }
         return TRUE;
     case TreeNewSortChanged:

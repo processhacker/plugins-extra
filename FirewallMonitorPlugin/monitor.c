@@ -610,9 +610,9 @@ VOID NTAPI ProcessesUpdatedCallback(
 
     for (ULONG i = 0; i < FwNodeList->Count; i++)
     {
-        PFW_EVENT_NODE node = (PFW_EVENT_NODE)FwNodeList->Items[i];
+        PFW_EVENT_ITEM node = (PFW_EVENT_ITEM)FwNodeList->Items[i];
 
-        if (node->EventItem && systemTime.QuadPart > (node->EventItem->AddedTime.QuadPart + (60 * PH_TIMEOUT_SEC)))
+        if (systemTime.QuadPart > (node->AddedTime.QuadPart + (60 * PH_TIMEOUT_SEC)))
         {
             PhInvokeCallback(&FwItemRemovedEvent, node);
         }

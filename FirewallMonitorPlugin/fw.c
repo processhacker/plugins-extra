@@ -46,14 +46,11 @@ BOOLEAN InitializeFirewallApi(
     )
 {
     FwApiLibraryHandle = LoadLibrary(L"FirewallAPI.dll");
-
     FWStatusMessageFromStatusCode_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWStatusMessageFromStatusCode", 0);
     FWOpenPolicyStore_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWOpenPolicyStore", 0);
     FWClosePolicyStore_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWClosePolicyStore", 0);
     FWEnumFirewallRules_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWEnumFirewallRules", 0);
     FWFreeFirewallRules_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWFreeFirewallRules", 0);
-
-
 
     FWOpenPolicyStore_I(
         FW_REDSTONE_BINARY_VERSION,
@@ -95,10 +92,17 @@ VOID FreeFirewallApi(
     VOID
     )
 {
-    //for (ULONG i = 0; i < ARRAYSIZE(PolicyStoreHandles); i++)
-    {
-        //FWClosePolicyStore(PolicyStoreHandles[i]);
-    }
+    if (FWClosePolicyStore_I && PolicyStoreHandles[0])
+        FWClosePolicyStore_I(PolicyStoreHandles[0]);
+
+    if (FWClosePolicyStore_I && PolicyStoreHandles[1])
+        FWClosePolicyStore_I(PolicyStoreHandles[1]);
+
+    if (FWClosePolicyStore_I && PolicyStoreHandles[2])
+        FWClosePolicyStore_I(PolicyStoreHandles[2]);
+
+    if (FWClosePolicyStore_I && PolicyStoreHandles[3])
+        FWClosePolicyStore_I(PolicyStoreHandles[3]);
 
     IsFwApiInitialized = FALSE;
 }

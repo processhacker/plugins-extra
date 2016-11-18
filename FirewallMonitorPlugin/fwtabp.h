@@ -39,16 +39,16 @@ VOID InitializeFwTreeList(
     _In_ HWND hwnd
     );
 
-PFW_EVENT_NODE AddFwNode(
+PFW_EVENT_ITEM AddFwNode(
     _In_ PFW_EVENT_ITEM FwItem
     );
 
 VOID RemoveFwNode(
-    _In_ PFW_EVENT_NODE FwNode
+    _In_ PFW_EVENT_ITEM FwNode
     );
 
 VOID UpdateFwNode(
-    _In_ PFW_EVENT_NODE FwNode
+    _In_ PFW_EVENT_ITEM FwNode
     );
 
 BOOLEAN NTAPI FwTreeNewCallback(
@@ -59,12 +59,12 @@ BOOLEAN NTAPI FwTreeNewCallback(
     _In_opt_ PVOID Context
     );
 
-PFW_EVENT_NODE GetSelectedFwItem(
+PFW_EVENT_ITEM GetSelectedFwItem(
     VOID
     );
 
 VOID GetSelectedFwItems(
-    _Out_ PFW_EVENT_NODE **FwItems,
+    _Out_ PFW_EVENT_ITEM **FwItems,
     _Out_ PULONG NumberOfFwItems
     );
 
@@ -73,7 +73,7 @@ VOID DeselectAllFwNodes(
     );
 
 VOID SelectAndEnsureVisibleFwNode(
-    _In_ PFW_EVENT_NODE FwNode
+    _In_ PFW_EVENT_ITEM FwNode
     );
 
 VOID CopyFwList(
@@ -91,7 +91,7 @@ VOID HandleFwCommand(
 
 VOID InitializeFwMenu(
     _In_ PPH_EMENU Menu,
-    _In_ PFW_EVENT_NODE *FwItems,
+    _In_ PFW_EVENT_ITEM *FwItems,
     _In_ ULONG NumberOfFwItems
     );
 

@@ -32,8 +32,7 @@ static PPH_MAIN_TAB_PAGE addedTabPage;
 
 BOOLEAN FwEnabled;
 PPH_LIST FwNodeList;
-//static PH_QUEUED_LOCK FwLock = PH_QUEUED_LOCK_INIT;
-
+static PH_QUEUED_LOCK FwLock = PH_QUEUED_LOCK_INIT;
 static PH_CALLBACK_REGISTRATION FwItemAddedRegistration;
 static PH_CALLBACK_REGISTRATION FwItemModifiedRegistration;
 static PH_CALLBACK_REGISTRATION FwItemRemovedRegistration;
@@ -132,17 +131,17 @@ BOOLEAN FwTabPageCallback(
         return TRUE;
     case MainTabPageLoadSettings:
         {
-            // Nothing
+            NOTHING;
         }
         return TRUE;
     case MainTabPageSaveSettings:
         {
-            // Nothing
+            SaveSettingsFwTreeList();
         }
         return TRUE;
     case MainTabPageExportContent:
         {
-
+            NOTHING;
         }
         return TRUE;
     case MainTabPageFontChanged:
@@ -165,27 +164,24 @@ VOID InitializeFwTab(
     PH_MAIN_TAB_PAGE page;
     PPH_PLUGIN toolStatusPlugin;
 
-    if (toolStatusPlugin = PhFindPlugin(TOOLSTATUS_PLUGIN_NAME))
-    {
-        ToolStatusInterface = PhGetPluginInformation(toolStatusPlugin)->Interface;
-
-        if (ToolStatusInterface->Version < TOOLSTATUS_INTERFACE_VERSION)
-            ToolStatusInterface = NULL;
-    }
-
     memset(&page, 0, sizeof(PH_MAIN_TAB_PAGE));
     PhInitializeStringRef(&page.Name, L"Firewall");
     page.Callback = FwTabPageCallback;
     addedTabPage = ProcessHacker_CreateTabPage(PhMainWndHandle, &page);
 
-    if (ToolStatusInterface)
+    if (toolStatusPlugin = PhFindPlugin(TOOLSTATUS_PLUGIN_NAME))
     {
-        PTOOLSTATUS_TAB_INFO tabInfo;
+        ToolStatusInterface = PhGetPluginInformation(toolStatusPlugin)->Interface;
 
-        tabInfo = ToolStatusInterface->RegisterTabInfo(addedTabPage->Index);
-        tabInfo->BannerText = L"Search Firewall";
-        tabInfo->ActivateContent = FwToolStatusActivateContent;
-        tabInfo->GetTreeNewHandle = FwToolStatusGetTreeNewHandle;
+        if (ToolStatusInterface->Version <= TOOLSTATUS_INTERFACE_VERSION)
+        {
+            PTOOLSTATUS_TAB_INFO tabInfo;
+
+            tabInfo = ToolStatusInterface->RegisterTabInfo(addedTabPage->Index);
+            tabInfo->BannerText = L"Search Firewall";
+            tabInfo->ActivateContent = FwToolStatusActivateContent;
+            tabInfo->GetTreeNewHandle = FwToolStatusGetTreeNewHandle;
+        }
     }
 }
 
@@ -195,31 +191,27 @@ VOID InitializeFwTreeList(
 {
     FwTreeNewHandle = hwnd;
     PhSetControlTheme(FwTreeNewHandle, L"explorer");
-    //SendMessage(TreeNew_GetTooltips(FwTreeNewHandle), TTM_SETDELAYTIME, TTDT_AUTOPOP, 0x7fff);
 
     TreeNew_SetCallback(hwnd, FwTreeNewCallback, NULL);
-    TreeNew_SetRedraw(hwnd, FALSE);   
-    
-    PhAddTreeNewColumn(hwnd, FWTNC_PROCESSBASENAME, TRUE, L"Name", 100, PH_ALIGN_LEFT, MAXINT, DT_PATH_ELLIPSIS);
-    PhAddTreeNewColumn(hwnd, FWTNC_ACTION, TRUE, L"Action", 70, PH_ALIGN_LEFT, MAXINT, 0);
-    PhAddTreeNewColumn(hwnd, FWTNC_DIRECTION, TRUE, L"Direction", 40, PH_ALIGN_LEFT, MAXINT, 0);
-    PhAddTreeNewColumn(hwnd, FWTNC_PROCESSFILENAME, FALSE, L"File Path", 80, PH_ALIGN_LEFT, MAXINT, DT_PATH_ELLIPSIS);    
-    PhAddTreeNewColumn(hwnd, FWTNC_PROTOCOL, TRUE, L"Protocol", 60, PH_ALIGN_LEFT, MAXINT, 0);
-    PhAddTreeNewColumnEx(hwnd, FWTNC_LOCALADDRESS, TRUE, L"Local Address", 220, PH_ALIGN_RIGHT, MAXINT, DT_RIGHT, TRUE);
-    PhAddTreeNewColumnEx(hwnd, FWTNC_LOCALPORT, TRUE, L"Local Port", 50, PH_ALIGN_LEFT, MAXINT, DT_LEFT, TRUE);
-    PhAddTreeNewColumnEx(hwnd, FWTNC_REMOTEADDRESS, TRUE, L"Remote Address", 220, PH_ALIGN_RIGHT, MAXINT, DT_RIGHT, TRUE);
-    PhAddTreeNewColumnEx(hwnd, FWTNC_REMOTEPORT, TRUE, L"Remote Port", 50, PH_ALIGN_LEFT, MAXINT, DT_LEFT, TRUE);
-    PhAddTreeNewColumn(hwnd, FWTNC_USER, FALSE, L"User", 120, PH_ALIGN_LEFT, MAXINT, DT_PATH_ELLIPSIS);
-    PhAddTreeNewColumnEx(hwnd, FWTNC_TIME, TRUE, L"Time", 30, PH_ALIGN_LEFT, MAXINT, 0, TRUE);
-    PhAddTreeNewColumn(hwnd, FWTNC_RULENAME, TRUE, L"Rule", 200, PH_ALIGN_LEFT, MAXINT, 0);
-    PhAddTreeNewColumn(hwnd, FWTNC_RULEDESCRIPTION, TRUE, L"Description", 180, PH_ALIGN_LEFT, MAXINT, 0);
-    //PhAddTreeNewColumn(hwnd, FWTNC_INDEX, TRUE, L"Index", 10, PH_ALIGN_LEFT, MAXINT, 0);
+    TreeNew_SetRedraw(hwnd, FALSE);
+
+    PhAddTreeNewColumn(hwnd, FW_COLUMN_PROCESSBASENAME, TRUE, L"Name", 140, PH_ALIGN_LEFT, FW_COLUMN_PROCESSBASENAME, DT_PATH_ELLIPSIS);
+    PhAddTreeNewColumn(hwnd, FW_COLUMN_ACTION, TRUE, L"Action", 70, PH_ALIGN_LEFT, FW_COLUMN_ACTION, 0);
+    PhAddTreeNewColumn(hwnd, FW_COLUMN_DIRECTION, TRUE, L"Direction", 40, PH_ALIGN_LEFT, FW_COLUMN_DIRECTION, 0);
+    PhAddTreeNewColumn(hwnd, FW_COLUMN_RULENAME, TRUE, L"Rule", 240, PH_ALIGN_LEFT, FW_COLUMN_RULENAME, 0);
+    PhAddTreeNewColumn(hwnd, FW_COLUMN_RULEDESCRIPTION, FALSE, L"Description", 180, PH_ALIGN_LEFT, FW_COLUMN_RULEDESCRIPTION, 0);
+    PhAddTreeNewColumn(hwnd, FW_COLUMN_PROCESSFILENAME, FALSE, L"File Path", 80, PH_ALIGN_LEFT, FW_COLUMN_PROCESSFILENAME, DT_PATH_ELLIPSIS);
+    PhAddTreeNewColumnEx(hwnd, FW_COLUMN_LOCALADDRESS, TRUE, L"Local Address", 220, PH_ALIGN_RIGHT, FW_COLUMN_LOCALADDRESS, DT_RIGHT, TRUE);
+    PhAddTreeNewColumnEx(hwnd, FW_COLUMN_LOCALPORT, TRUE, L"Local Port", 50, PH_ALIGN_LEFT, FW_COLUMN_LOCALPORT, DT_LEFT, TRUE);
+    PhAddTreeNewColumnEx(hwnd, FW_COLUMN_REMOTEADDRESS, TRUE, L"Remote Address", 220, PH_ALIGN_RIGHT, FW_COLUMN_REMOTEADDRESS, DT_RIGHT, TRUE);
+    PhAddTreeNewColumnEx(hwnd, FW_COLUMN_REMOTEPORT, TRUE, L"Remote Port", 50, PH_ALIGN_LEFT, FW_COLUMN_REMOTEPORT, DT_LEFT, TRUE);
+    PhAddTreeNewColumn(hwnd, FW_COLUMN_PROTOCOL, TRUE, L"Protocol", 60, PH_ALIGN_LEFT, FW_COLUMN_PROTOCOL, 0);
+    PhAddTreeNewColumn(hwnd, FW_COLUMN_USER, FALSE, L"User", 120, PH_ALIGN_LEFT, FW_COLUMN_USER, DT_PATH_ELLIPSIS);
+   
+    LoadSettingsFwTreeList();
 
     TreeNew_SetRedraw(hwnd, TRUE);
-    //TreeNew_SetSort(hwnd, FWTNC_INDEX, DescendingSortOrder);
 
-    //LoadSettingsFwTreeList();
- 
     PhInitializeTreeNewFilterSupport(&FilterSupport, hwnd, FwNodeList);
 
     if (ToolStatusInterface)
@@ -234,14 +226,14 @@ VOID LoadSettingsFwTreeList(
     )
 {
     PPH_STRING settings;
-    PH_INTEGER_PAIR sortSettings;
+    //PH_INTEGER_PAIR sortSettings;
 
     settings = PhGetStringSetting(SETTING_NAME_FW_TREE_LIST_COLUMNS);
     PhCmLoadSettings(FwTreeNewHandle, &settings->sr);
     PhDereferenceObject(settings);
 
-    sortSettings = PhGetIntegerPairSetting(SETTING_NAME_FW_TREE_LIST_SORT);
-    TreeNew_SetSort(FwTreeNewHandle, (ULONG)sortSettings.X, (PH_SORT_ORDER)sortSettings.Y);
+    //sortSettings = PhGetIntegerPairSetting(SETTING_NAME_FW_TREE_LIST_SORT);
+    //TreeNew_SetSort(FwTreeNewHandle, (ULONG)sortSettings.X, (PH_SORT_ORDER)sortSettings.Y);
 }
 
 VOID SaveSettingsFwTreeList(
@@ -249,9 +241,9 @@ VOID SaveSettingsFwTreeList(
     )
 {
     PPH_STRING settings;
-    PH_INTEGER_PAIR sortSettings;
-    ULONG sortColumn;
-    PH_SORT_ORDER sortOrder;
+    //PH_INTEGER_PAIR sortSettings;
+    //ULONG sortColumn;
+    //PH_SORT_ORDER sortOrder;
         
     if (!FwTreeNewCreated)  
         return;
@@ -260,128 +252,88 @@ VOID SaveSettingsFwTreeList(
     PhSetStringSetting2(SETTING_NAME_FW_TREE_LIST_COLUMNS, &settings->sr);
     PhDereferenceObject(settings);
 
-    TreeNew_GetSort(FwTreeNewHandle, &sortColumn, &sortOrder);
-    sortSettings.X = sortColumn;
-    sortSettings.Y = sortOrder;
-    PhSetIntegerPairSetting(SETTING_NAME_FW_TREE_LIST_SORT, sortSettings);
+    //TreeNew_GetSort(FwTreeNewHandle, &sortColumn, &sortOrder);
+    //sortSettings.X = sortColumn;
+    //sortSettings.Y = sortOrder;
+    //PhSetIntegerPairSetting(SETTING_NAME_FW_TREE_LIST_SORT, sortSettings);
 }
 
-PFW_EVENT_NODE AddFwNode(
+PFW_EVENT_ITEM AddFwNode(
     _In_ PFW_EVENT_ITEM FwItem
     )
 {
-    PFW_EVENT_NODE FwNode;
-
-    FwNode = PhAllocate(sizeof(FW_EVENT_NODE));
-    memset(FwNode, 0, sizeof(FW_EVENT_NODE));
-    PhInitializeTreeNewNode(&FwNode->Node);
-
-    FwNode->EventItem = FwItem;
     PhReferenceObject(FwItem);
+    PhInitializeTreeNewNode(&FwItem->Node);
 
-    memset(FwNode->TextCache, 0, sizeof(PH_STRINGREF) * FWTNC_MAXIMUM);
-    FwNode->Node.TextCache = FwNode->TextCache;
-    FwNode->Node.TextCacheSize = FWTNC_MAXIMUM;
+    memset(FwItem->TextCache, 0, sizeof(PH_STRINGREF) * FW_COLUMN_MAXIMUM);
+    FwItem->Node.TextCache = FwItem->TextCache;
+    FwItem->Node.TextCacheSize = FW_COLUMN_MAXIMUM;
 
-    //PhAcquireQueuedLockExclusive(&FwLock);
-    PhAddItemList(FwNodeList, FwNode);
-    //PhReleaseQueuedLockExclusive(&FwLock);
+    PhAcquireQueuedLockExclusive(&FwLock);
+    PhAddItemList(FwNodeList, FwItem);
+    PhReleaseQueuedLockExclusive(&FwLock);
         
     if (FilterSupport.NodeList)
-        FwNode->Node.Visible = PhApplyTreeNewFiltersToNode(&FilterSupport, &FwNode->Node);
+        FwItem->Node.Visible = PhApplyTreeNewFiltersToNode(&FilterSupport, &FwItem->Node);
 
     TreeNew_NodesStructured(FwTreeNewHandle);
 
-    return FwNode;
+    return FwItem;
 }
 
 VOID RemoveFwNode(
-    _In_ PFW_EVENT_NODE FwNode
+    _In_ PFW_EVENT_ITEM FwNode
     )
 {
     ULONG index;
 
-    //PhAcquireQueuedLockExclusive(&FwLock);
-
-    // Remove from the hashtable/list and cleanup.
+    PhAcquireQueuedLockExclusive(&FwLock);
     if ((index = PhFindItemList(FwNodeList, FwNode)) != -1)
-        PhRemoveItemList(FwNodeList, index);
-    
-    //PhReleaseQueuedLockExclusive(&FwLock);
+        PhRemoveItemList(FwNodeList, index); 
+    PhReleaseQueuedLockExclusive(&FwLock);
         
-    if (FwNode->TooltipText)
-        PhDereferenceObject(FwNode->TooltipText);
+    PhClearReference(&FwNode->TooltipText);
+    PhClearReference(&FwNode->ProcessNameString);
+    PhClearReference(&FwNode->ProcessBaseString);
+    PhClearReference(&FwNode->LocalPortString);
+    PhClearReference(&FwNode->LocalAddressString);
+    PhClearReference(&FwNode->RemotePortString);
+    PhClearReference(&FwNode->RemoteAddressString);
+    PhClearReference(&FwNode->FwRuleNameString);
+    PhClearReference(&FwNode->FwRuleDescriptionString);
+    PhClearReference(&FwNode->FwRuleLayerNameString);
+    PhClearReference(&FwNode->FwRuleLayerDescriptionString);
 
-    //if (FwNode->EventItem->TimeString)
-    //    PhDereferenceObject(FwNode->EventItem->TimeString);
-    //if (FwNode->EventItem->UserNameString)
-    //    PhDereferenceObject(FwNode->EventItem->UserNameString);
-    if (FwNode->EventItem->ProcessNameString)
-        PhDereferenceObject(FwNode->EventItem->ProcessNameString);
-    if (FwNode->EventItem->ProcessBaseString)
-        PhDereferenceObject(FwNode->EventItem->ProcessBaseString);
-    if (FwNode->EventItem->LocalPortString)
-        PhDereferenceObject(FwNode->EventItem->LocalPortString);
-    if (FwNode->EventItem->LocalAddressString)
-        PhDereferenceObject(FwNode->EventItem->LocalAddressString);
-    if (FwNode->EventItem->RemotePortString)
-        PhDereferenceObject(FwNode->EventItem->RemotePortString);
-    if (FwNode->EventItem->RemoteAddressString)
-        PhDereferenceObject(FwNode->EventItem->RemoteAddressString);
-    if (FwNode->EventItem->FwRuleNameString)
-        PhDereferenceObject(FwNode->EventItem->FwRuleNameString);
-    if (FwNode->EventItem->FwRuleDescriptionString)
-        PhDereferenceObject(FwNode->EventItem->FwRuleDescriptionString);
-    if (FwNode->EventItem->FwRuleLayerNameString)
-        PhDereferenceObject(FwNode->EventItem->FwRuleLayerNameString);
-    if (FwNode->EventItem->FwRuleLayerDescriptionString)
-        PhDereferenceObject(FwNode->EventItem->FwRuleLayerDescriptionString);
+    if (FwNode->Icon)
+        DestroyIcon(FwNode->Icon);
 
-    if (FwNode->EventItem->Icon)
-        DestroyIcon(FwNode->EventItem->Icon);
-
-    PhDereferenceObject(FwNode->EventItem);
-    PhFree(FwNode);
+    PhDereferenceObject(FwNode);
 
     TreeNew_NodesStructured(FwTreeNewHandle);
 }
 
 VOID UpdateFwNode(
-    _In_ PFW_EVENT_NODE FwNode
+    _In_ PFW_EVENT_ITEM FwNode
     )
 {
-    memset(FwNode->TextCache, 0, sizeof(PH_STRINGREF) * FWTNC_MAXIMUM);
+    memset(FwNode->TextCache, 0, sizeof(PH_STRINGREF) * FW_COLUMN_MAXIMUM);
 
     PhInvalidateTreeNewNode(&FwNode->Node, TN_CACHE_ICON);
     TreeNew_NodesStructured(FwTreeNewHandle);
 }
 
-
-
-#define SORT_FUNCTION(Column) FwTreeNewCompare##Column
-#define BEGIN_SORT_FUNCTION(Column) static int __cdecl FwTreeNewCompare##Column( \
-    _In_ const void *_elem1, \
-    _In_ const void *_elem2 \
-    ) \
-{ \
-    PFW_EVENT_NODE node1 = *(PFW_EVENT_NODE*)_elem1; \
-    PFW_EVENT_NODE node2 = *(PFW_EVENT_NODE*)_elem2; \
-    PFW_EVENT_ITEM fwItem1 = node1->EventItem; \
-    PFW_EVENT_ITEM fwItem2 = node2->EventItem; \
-    int sortResult = 0;
-
-#define END_SORT_FUNCTION \
-    if (sortResult == 0) \
-        sortResult = uint64cmp(fwItem1->Index, fwItem2->Index); \
-    \
-    return PhModifySort(sortResult, FwTreeNewSortOrder); \
-}
-
-BEGIN_SORT_FUNCTION(Index)
+static int __cdecl FwTreeNewCompareIndex(
+    _In_ const void *_elem1,
+    _In_ const void *_elem2
+    ) 
 {
-    sortResult = !uint64cmp(fwItem1->Index, fwItem2->Index);
+    PFW_EVENT_ITEM node1 = *(PFW_EVENT_ITEM*)_elem1;
+    PFW_EVENT_ITEM node2 = *(PFW_EVENT_ITEM*)_elem2;
+
+    int sortResult = uint64cmp(node1->Index, node2->Index);
+
+    return PhModifySort(sortResult, DescendingSortOrder);
 }
-END_SORT_FUNCTION
 
 BOOLEAN NTAPI FwTreeNewCallback(
     _In_ HWND hwnd,
@@ -391,7 +343,7 @@ BOOLEAN NTAPI FwTreeNewCallback(
     _In_opt_ PVOID Context
     )
 {
-    PFW_EVENT_NODE node;
+    PFW_EVENT_ITEM node;
 
     switch (Message)
     {
@@ -401,7 +353,7 @@ BOOLEAN NTAPI FwTreeNewCallback(
 
             if (!getChildren->Node)
             {
-                qsort(FwNodeList->Items, FwNodeList->Count, sizeof(PVOID), SORT_FUNCTION(Index));
+                qsort(FwNodeList->Items, FwNodeList->Count, sizeof(PVOID), FwTreeNewCompareIndex);
 
                 getChildren->Children = (PPH_TREENEW_NODE *)FwNodeList->Items;
                 getChildren->NumberOfChildren = FwNodeList->Count;
@@ -418,19 +370,26 @@ BOOLEAN NTAPI FwTreeNewCallback(
     case TreeNewGetCellText:
         {
             PPH_TREENEW_GET_CELL_TEXT getCellText = (PPH_TREENEW_GET_CELL_TEXT)Parameter1;
-            PFW_EVENT_ITEM fwItem;
 
-            node = (PFW_EVENT_NODE)getCellText->Node;
-            fwItem = node->EventItem;
+            node = (PFW_EVENT_ITEM)getCellText->Node;
 
             switch (getCellText->Id)
-            {            
-            case FWTNC_TIME:
-                getCellText->Text = PhGetStringRef(node->EventItem->TimeString);
-                break;
-            case FWTNC_ACTION:
+            {
+            case FW_COLUMN_PROCESSBASENAME:
                 {
-                    switch (node->EventItem->FwRuleEventType)
+                    if (node->ProcessBaseString)
+                    {
+                        getCellText->Text = PhGetStringRef(node->ProcessBaseString);
+                    }
+                    else
+                    {
+                        PhInitializeStringRef(&getCellText->Text, L"System");
+                    }
+                }
+                break;
+            case FW_COLUMN_ACTION:
+                {
+                    switch (node->FwRuleEventType)
                     {
                     case FWPM_NET_EVENT_TYPE_CLASSIFY_DROP:
                     case FWPM_NET_EVENT_TYPE_CAPABILITY_DROP:
@@ -464,54 +423,13 @@ BOOLEAN NTAPI FwTreeNewCallback(
                     }
                 }
                 break;
-            case FWTNC_RULENAME:
-                getCellText->Text = PhGetStringRef(node->EventItem->FwRuleNameString);
-                break; 
-            case FWTNC_RULEDESCRIPTION:
-                getCellText->Text = PhGetStringRef(node->EventItem->FwRuleDescriptionString);
-                break;
-            case FWTNC_PROCESSBASENAME:
+            case FW_COLUMN_DIRECTION:
                 {
-                    if (node->EventItem->ProcessBaseString)
-                    {
-                        getCellText->Text = PhGetStringRef(node->EventItem->ProcessBaseString);
-                    }
-                    else
-                    {
-                        PhInitializeStringRef(&getCellText->Text, L"System");
-                    }
-                }
-                break;
-            case FWTNC_PROCESSFILENAME:
-                getCellText->Text = PhGetStringRef(node->EventItem->ProcessNameString);
-                break;
-            case FWTNC_USER:
-                getCellText->Text = PhGetStringRef(node->EventItem->UserNameString);
-                break;
-            case FWTNC_LOCALADDRESS:
-                getCellText->Text = PhGetStringRef(node->EventItem->LocalAddressString);
-                break;
-            case FWTNC_LOCALPORT:
-                getCellText->Text = PhGetStringRef(node->EventItem->LocalPortString);
-                break;
-            case FWTNC_REMOTEADDRESS:
-                getCellText->Text = PhGetStringRef(node->EventItem->RemoteAddressString);
-                break;
-            case FWTNC_REMOTEPORT:
-                getCellText->Text = PhGetStringRef(node->EventItem->RemotePortString);
-                break;
-            case FWTNC_PROTOCOL:
-                getCellText->Text = node->EventItem->ProtocalString;
-                break;
-            case FWTNC_DIRECTION:
-                {
-                    if (node->EventItem->Loopback)
-                    {
+                    if (node->Loopback)
                         PhInitializeStringRef(&getCellText->Text, L"Loopback");
-                    }
                     else
                     {
-                        switch (node->EventItem->FwRuleEventDirection)
+                        switch (node->FwRuleEventDirection)
                         {
                         case FWP_DIRECTION_INBOUND:
                             PhInitializeStringRef(&getCellText->Text, L"In");
@@ -526,10 +444,32 @@ BOOLEAN NTAPI FwTreeNewCallback(
                     }
                 }
                 break;
-            case FWTNC_INDEX:
-                {
-                    PhInitializeStringRef(&getCellText->Text, L"");
-                }
+            case FW_COLUMN_RULENAME:
+                getCellText->Text = PhGetStringRef(node->FwRuleNameString);
+                break; 
+            case FW_COLUMN_RULEDESCRIPTION:
+                getCellText->Text = PhGetStringRef(node->FwRuleDescriptionString);
+                break;
+            case FW_COLUMN_PROCESSFILENAME:
+                getCellText->Text = PhGetStringRef(node->ProcessNameString);
+                break;
+            case FW_COLUMN_USER:
+                getCellText->Text = PhGetStringRef(node->UserNameString);
+                break;
+            case FW_COLUMN_LOCALADDRESS:
+                getCellText->Text = PhGetStringRef(node->LocalAddressString);
+                break;
+            case FW_COLUMN_LOCALPORT:
+                getCellText->Text = PhGetStringRef(node->LocalPortString);
+                break;
+            case FW_COLUMN_REMOTEADDRESS:
+                getCellText->Text = PhGetStringRef(node->RemoteAddressString);
+                break;
+            case FW_COLUMN_REMOTEPORT:
+                getCellText->Text = PhGetStringRef(node->RemotePortString);
+                break;
+            case FW_COLUMN_PROTOCOL:
+                getCellText->Text = node->ProtocalString;
                 break;
             default:
                 return FALSE;
@@ -541,19 +481,39 @@ BOOLEAN NTAPI FwTreeNewCallback(
     case TreeNewGetNodeIcon:
         {
             PPH_TREENEW_GET_NODE_ICON getNodeIcon = (PPH_TREENEW_GET_NODE_ICON)Parameter1;
-            node = (PFW_EVENT_NODE)getNodeIcon->Node;
+            node = (PFW_EVENT_ITEM)getNodeIcon->Node;
     
-            if (node->EventItem->Icon)
+            if (node->Icon)
             {
-                getNodeIcon->Icon = node->EventItem->Icon;
+                getNodeIcon->Icon = node->Icon;
             }
             else
             {
-                node->EventItem->Icon = PhGetFileShellIcon(PhGetString(node->EventItem->ProcessFileNameString), L".exe", FALSE);
-                getNodeIcon->Icon = node->EventItem->Icon;
+                node->Icon = PhGetFileShellIcon(PhGetString(node->ProcessFileNameString), L".exe", FALSE);
+                getNodeIcon->Icon = node->Icon;
             }
 
             getNodeIcon->Flags = TN_CACHE;
+        }
+        return TRUE;
+    case TreeNewGetNodeColor:
+        {
+            PPH_TREENEW_GET_NODE_COLOR getNodeColor = (PPH_TREENEW_GET_NODE_COLOR)Parameter1;
+            node = (PFW_EVENT_ITEM)getNodeColor->Node;
+
+            switch (node->FwRuleEventType)
+            {
+            case FWPM_NET_EVENT_TYPE_CLASSIFY_DROP:
+            case FWPM_NET_EVENT_TYPE_CAPABILITY_DROP:
+                getNodeColor->ForeColor = RGB(0xff, 0x0, 0x0);
+                break;
+            case FWPM_NET_EVENT_TYPE_CLASSIFY_ALLOW:
+            case FWPM_NET_EVENT_TYPE_CAPABILITY_ALLOW:
+                getNodeColor->ForeColor = RGB(0x0, 0x0, 0x0);
+                break;
+            }
+
+            getNodeColor->Flags = TN_CACHE;
         }
         return TRUE;
     case TreeNewSortChanged:
@@ -609,15 +569,15 @@ BOOLEAN NTAPI FwTreeNewCallback(
     return FALSE;
 }
 
-PFW_EVENT_NODE GetSelectedFwItem(
+PFW_EVENT_ITEM GetSelectedFwItem(
     VOID
     )
 {
-    PFW_EVENT_NODE FwItem = NULL;
+    PFW_EVENT_ITEM FwItem = NULL;
 
     for (ULONG i = 0; i < FwNodeList->Count; i++)
     {
-        PFW_EVENT_NODE node = (PFW_EVENT_NODE)FwNodeList->Items[i];
+        PFW_EVENT_ITEM node = (PFW_EVENT_ITEM)FwNodeList->Items[i];
 
         if (node->Node.Selected)
         {
@@ -630,7 +590,7 @@ PFW_EVENT_NODE GetSelectedFwItem(
 }
 
 VOID GetSelectedFwItems(
-    _Out_ PFW_EVENT_NODE **FwItems,
+    _Out_ PFW_EVENT_ITEM **FwItems,
     _Out_ PULONG NumberOfFwItems
     )
 {
@@ -638,11 +598,11 @@ VOID GetSelectedFwItems(
 
     for (ULONG i = 0; i < FwNodeList->Count; i++)
     {
-        PFW_EVENT_NODE node = (PFW_EVENT_NODE)FwNodeList->Items[i];
+        PFW_EVENT_ITEM node = (PFW_EVENT_ITEM)FwNodeList->Items[i];
 
         if (node->Node.Selected)
         {
-            PhAddItemList(list, node->EventItem);
+            PhAddItemList(list, node);
         }
     }
 
@@ -660,7 +620,7 @@ VOID DeselectAllFwNodes(
 }
 
 VOID SelectAndEnsureVisibleFwNode(
-    _In_ PFW_EVENT_NODE FwNode
+    _In_ PFW_EVENT_ITEM FwNode
     )
 {
     DeselectAllFwNodes();
@@ -714,7 +674,7 @@ VOID HandleFwCommand(
     {
     case ID_FW_PROPERTIES:
         {
-            PFW_EVENT_NODE fwItem = GetSelectedFwItem();
+            PFW_EVENT_ITEM fwItem = GetSelectedFwItem();
             //PhCreateThread(0, ShowFwRuleProperties, fwItem);
         }
         break;
@@ -723,7 +683,7 @@ VOID HandleFwCommand(
 
 VOID InitializeFwMenu(
     _In_ PPH_EMENU Menu,
-    _In_ PFW_EVENT_NODE* FwItems,
+    _In_ PFW_EVENT_ITEM *FwItems,
     _In_ ULONG NumberOfFwItems
     )
 {
@@ -742,7 +702,7 @@ VOID ShowFwContextMenu(
     _In_ POINT Location
     )
 {
-    PFW_EVENT_NODE* fwItems;
+    PFW_EVENT_ITEM *fwItems;
     ULONG numberOfFwItems;
 
     GetSelectedFwItems(&fwItems, &numberOfFwItems);
@@ -816,7 +776,7 @@ VOID NTAPI OnFwItemAdded(
     )
 {
     PFW_EVENT_ITEM fwItem = (PFW_EVENT_ITEM)Parameter;
-    PFW_EVENT_NODE fwNode;
+    PFW_EVENT_ITEM fwNode;
 
     if (!FwNeedsRedraw)
     {
@@ -832,7 +792,7 @@ VOID NTAPI OnFwItemModified(
     _In_ PVOID Parameter
     )
 {
-    PFW_EVENT_NODE fwNode = (PFW_EVENT_NODE)Parameter;
+    PFW_EVENT_ITEM fwNode = (PFW_EVENT_ITEM)Parameter;
 
     UpdateFwNode(fwNode);
 }
@@ -841,7 +801,7 @@ VOID NTAPI OnFwItemRemoved(
     _In_ PVOID Parameter
     )
 {
-    PFW_EVENT_NODE fwNode = (PFW_EVENT_NODE)Parameter;
+    PFW_EVENT_ITEM fwNode = (PFW_EVENT_ITEM)Parameter;
 
     if (!FwNeedsRedraw)
     {
@@ -865,10 +825,10 @@ VOID NTAPI OnFwItemsUpdated(
     // Text invalidation
     for (ULONG i = 0; i < FwNodeList->Count; i++)
     {
-        PFW_EVENT_NODE node = (PFW_EVENT_NODE)FwNodeList->Items[i];
+        PFW_EVENT_ITEM node = (PFW_EVENT_ITEM)FwNodeList->Items[i];
 
         // The name and file name never change, so we don't invalidate that.
-        memset(&node->TextCache[1], 0, sizeof(PH_STRINGREF) * (FWTNC_MAXIMUM - 2));
+        memset(&node->TextCache[1], 0, sizeof(PH_STRINGREF) * (FW_COLUMN_MAXIMUM - 2));
         // Always get the newest tooltip text from the process tree.
         PhSwapReference(&node->TooltipText, NULL);
     }
@@ -892,27 +852,27 @@ BOOLEAN NTAPI FwSearchFilterCallback(
     _In_opt_ PVOID Context
     )
 {
-    PFW_EVENT_NODE fwNode = (PFW_EVENT_NODE)Node;
+    PFW_EVENT_ITEM fwNode = (PFW_EVENT_ITEM)Node;
     PTOOLSTATUS_WORD_MATCH wordMatch = ToolStatusInterface->WordMatch;
 
     if (PhIsNullOrEmptyString(ToolStatusInterface->GetSearchboxText()))
         return TRUE;
     
-    if (fwNode->EventItem->ProcessNameString)
+    if (fwNode->ProcessNameString)
     {
-        if (wordMatch(&fwNode->EventItem->ProcessNameString->sr))
+        if (wordMatch(&fwNode->ProcessNameString->sr))
             return TRUE;
     }
 
-    if (fwNode->EventItem->LocalAddressString)
+    if (fwNode->LocalAddressString)
     {
-        if (wordMatch(&fwNode->EventItem->LocalAddressString->sr))
+        if (wordMatch(&fwNode->LocalAddressString->sr))
             return TRUE;
     }
 
-    if (fwNode->EventItem->RemoteAddressString)
+    if (fwNode->RemoteAddressString)
     {
-        if (wordMatch(&fwNode->EventItem->RemoteAddressString->sr))
+        if (wordMatch(&fwNode->RemoteAddressString->sr))
             return TRUE;
     }
 
@@ -928,7 +888,7 @@ VOID NTAPI FwToolStatusActivateContent(
     if (Select)
     {
         if (TreeNew_GetFlatNodeCount(FwTreeNewHandle) > 0)
-            SelectAndEnsureVisibleFwNode((PFW_EVENT_NODE)TreeNew_GetFlatNode(FwTreeNewHandle, 0));
+            SelectAndEnsureVisibleFwNode((PFW_EVENT_ITEM)TreeNew_GetFlatNode(FwTreeNewHandle, 0));
     }
 }
 

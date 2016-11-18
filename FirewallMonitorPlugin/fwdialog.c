@@ -29,23 +29,23 @@ INT_PTR CALLBACK OptionsDlgProc(
     _In_ LPARAM lParam
     )
 {
-    PFW_EVENT_NODE context;
+    //PFW_EVENT_ITEM context;
 
     if (uMsg == WM_INITDIALOG)
     {
         SetProp(hwndDlg, L"Context", (HANDLE)lParam);
-        context = (PFW_EVENT_NODE)GetProp(hwndDlg, L"Context");
+        //context = (PFW_EVENT_ITEM)GetProp(hwndDlg, L"Context");
     }
     else
     {
-        context = (PFW_EVENT_NODE)GetProp(hwndDlg, L"Context");
+        //context = (PFW_EVENT_ITEM)GetProp(hwndDlg, L"Context");
 
         if (uMsg == WM_DESTROY)
             RemoveProp(hwndDlg, L"Context");
     }
 
-    if (!context)
-        return FALSE;
+    //if (!context)
+    //    return FALSE;
 
     switch (uMsg)
     {
