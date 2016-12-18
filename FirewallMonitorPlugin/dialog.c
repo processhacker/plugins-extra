@@ -74,12 +74,12 @@ BOOLEAN CALLBACK WfAddRules(
 
     if (FwRule->wszEmbeddedContext)
     {
-        WCHAR localized[MAX_PATH] = L"";
+        WCHAR localized[DOS_MAX_PATH_LENGTH] = L"";
 
         if (SUCCEEDED(SHLoadIndirectString(
             FwRule->wszEmbeddedContext,
             localized,
-            MAX_PATH,
+            DOS_MAX_PATH_LENGTH,
             NULL
             )))
         {
@@ -90,12 +90,12 @@ BOOLEAN CALLBACK WfAddRules(
             //if (SUCCEEDED(SHGetLocalizedName(
             //    FwRule->wszEmbeddedContext, 
             //    FwRule->wszEmbeddedContext, 
-            //    MAX_PATH, 
+            //    DOS_MAX_PATH_LENGTH, 
             //    &id
             //    )))
             //{
-            //ExpandEnvironmentStrings(FwRule->wszEmbeddedContext, module_expanded, MAX_PATH);
-            //LoadString(GetModuleHandle(module_expanded), *id, localized, MAX_PATH);
+            //ExpandEnvironmentStrings(FwRule->wszEmbeddedContext, module_expanded, DOS_MAX_PATH_LENGTH);
+            //LoadString(GetModuleHandle(module_expanded), *id, localized, DOS_MAX_PATH_LENGTH);
             //}
 
             swprintf_s(
@@ -200,7 +200,7 @@ PPH_STRING PhGetSelectedListViewItemText(
 
     if (index != -1)
     {
-        WCHAR textBuffer[MAX_PATH] = L"";
+        WCHAR textBuffer[DOS_MAX_PATH_LENGTH] = L"";
 
         LVITEM item;
         item.mask = LVIF_TEXT;

@@ -66,9 +66,7 @@ VOID MenuItemCallback(
         switch (menuItem->Id)
         {
         case 1:
-            {
-                ShowFwDialog();
-            }
+            ShowFwDialog();
             break;
         }
     }

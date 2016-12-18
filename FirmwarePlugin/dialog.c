@@ -147,7 +147,7 @@ PPH_STRING PhGetSelectedListViewItemText(
 
     if (index != -1)
     {
-        WCHAR textBuffer[MAX_PATH] = L"";
+        WCHAR textBuffer[DOS_MAX_PATH_LENGTH] = L"";
 
         LVITEM item;
         item.mask = LVIF_TEXT;

@@ -7,15 +7,6 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="maxminddb.h">
-      <Filter>Header Files\maxminddb</Filter>
-    </ClInclude>
-    <ClInclude Include="maxminddb_config.h">
-      <Filter>Header Files\maxminddb</Filter>
-    </ClInclude>
-    <ClInclude Include="maxminddb-compat-util.h">
-      <Filter>Header Files\maxminddb</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -36,6 +27,9 @@
     <Filter Include="Resource Files\Images">
       <UniqueIdentifier>{675b6a82-6895-4512-86fc-e00583505b6e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\zlib">
+      <UniqueIdentifier>{92a555f2-ee53-4b8c-8fe0-d89b4eb825aa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -47,15 +41,10 @@
     <ClCompile Include="extra.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="maxminddb.c">
-      <Filter>Source Files\maxminddb</Filter>
-    </ClCompile>
-    <ClCompile Include="country.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="png.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="options.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CHANGELOG.txt" />

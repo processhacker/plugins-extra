@@ -309,7 +309,8 @@ NTSTATUS QueryPluginsCallbackThread(
             entry->UpdatedTime = PhFormatDateTime(&localTime);
         }
 
-        pluginDllPath = PhConcatStrings(3, PhGetString(PhGetApplicationDirectory()), L"Plugins\\", PhGetString(entry->FileName));
+        PPH_STRING directory = PhGetApplicationDirectory();
+        pluginDllPath = PhConcatStrings(3, PhGetString(directory), L"Plugins\\", PhGetString(entry->FileName));
         PhInitializeStringRefLongHint(&pluginBaseName, PhGetString(entry->FileName));
    
         if (PhIsPluginDisabled(&pluginBaseName))

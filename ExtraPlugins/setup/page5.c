@@ -45,30 +45,17 @@ HRESULT CALLBACK RestartTaskDialogCallbackProc(
         {
             if ((INT)wParam == IDYES)
             {
-                SHELLEXECUTEINFO info = { sizeof(SHELLEXECUTEINFO) };
-
-               /* if (PhIsNullOrEmptyString(context->SetupFilePath))
-                    break;*/
-
-                info.lpFile = L"ProcessHacker.exe";
-                info.nShow = SW_SHOW;
-                info.hwnd = hwndDlg;
-                //info.lpParameters = L"-plugin dmex.ExtraPlugins:INSTALL -plugin dmex.ExtraPlugins:hex64value";
-
                 ProcessHacker_PrepareForEarlyShutdown(PhMainWndHandle);
-
-                if (ShellExecuteEx(&info))
-                {
-                    NtTerminateProcess(NtCurrentProcess(), STATUS_SUCCESS);
-                }
-                else
-                {
-                    // Install failed, cancel the shutdown
-                    ProcessHacker_CancelEarlyShutdown(PhMainWndHandle);
-                    // Set button text for next action
-                    //Button_SetText(GetDlgItem(hwndDlg, IDOK), L"Retry");
-                    return S_FALSE;
-                }
+                PhShellProcessHacker(
+                    PhMainWndHandle,
+                    L"-plugin " PLUGIN_NAME L":INSTALL -plugin " PLUGIN_NAME L":hex64value",
+                    SW_SHOW,
+                    0,
+                    PH_SHELL_APP_PROPAGATE_PARAMETERS | PH_SHELL_APP_PROPAGATE_PARAMETERS_IGNORE_VISIBILITY,
+                    0,
+                    NULL
+                    );
+                ProcessHacker_Destroy(PhMainWndHandle);
             }
         }
         break;

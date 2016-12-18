@@ -673,7 +673,7 @@ BOOLEAN NvGpuDriverIsWHQL(VOID)
     //PPH_STRING keySettingsPath;
     PPH_STRING keyServicePath;
 
-    WCHAR displayInstancePath[MAX_PATH] = L"";
+    WCHAR displayInstancePath[DOS_MAX_PATH_LENGTH] = L"";
 
     HDEVINFO deviceInfoHandle = INVALID_HANDLE_VALUE;
     SP_DEVICE_INTERFACE_DATA deviceInterfaceData = { sizeof(SP_DEVICE_INTERFACE_DATA) };
@@ -718,7 +718,7 @@ BOOLEAN NvGpuDriverIsWHQL(VOID)
         //    PPH_STRING guidString = PhFormatGuid(&settingsKey);
         //
         //    ULONG dwType = REG_BINARY;
-        //    LONG length = MAX_PATH;
+        //    LONG length = DOS_MAX_PATH_LENGTH;
         //
         //    if (RegQueryValueEx(
         //        keySettingsHandle,
@@ -751,8 +751,8 @@ BOOLEAN NvGpuDriverIsWHQL(VOID)
             ULONG devicePropertyLength = 0;
             DEVPROPTYPE devicePropertyType = 0;
             HANDLE keyServiceHandle;
-            WCHAR matchingDeviceId[MAX_PATH] = L"";
-            WCHAR deviceServiceName[MAX_PATH] = L"";
+            WCHAR matchingDeviceId[DOS_MAX_PATH_LENGTH] = L"";
+            WCHAR deviceServiceName[DOS_MAX_PATH_LENGTH] = L"";
 
             if (!SetupDiEnumDeviceInterfaces(deviceInfoHandle, 0, &GUID_DEVINTERFACE_DISPLAY_ADAPTER, i, &deviceInterfaceData))
                 break;

@@ -51,13 +51,13 @@ PFW_EVENT_ITEM EtCreateFirewallEntryItem(
     VOID
     )
 {
-    static ULONG itemCount = 0;
+    //static ULONG itemCount = 0;
     PFW_EVENT_ITEM diskItem;
 
     diskItem = PhCreateObject(sizeof(FW_EVENT_ITEM), FwObjectType);
     memset(diskItem, 0, sizeof(FW_EVENT_ITEM));
 
-    diskItem->Index = itemCount++;
+    //diskItem->Index = itemCount++;
 
     return diskItem;
 }

@@ -31,6 +31,7 @@ extern PPH_LIST FwNodeList;
 
 typedef enum _FW_COLUMN_NAME
 {
+    //FW_COLUMN_TIME,
     FW_COLUMN_PROCESSBASENAME,
     FW_COLUMN_ACTION,
     FW_COLUMN_DIRECTION,
@@ -63,29 +64,24 @@ typedef struct _BOOT_WINDOW_CONTEXT
 typedef struct _FW_EVENT_ITEM
 {
     PH_TREENEW_NODE Node;
+    HICON Icon;
 
+    BOOLEAN Loopback;
     UINT16 LocalPort;
     UINT16 RemotePort;
-    ULONG Index;
-
+    UINT32 FwRuleEventDirection;
+    FWPM_NET_EVENT_TYPE FwRuleEventType;
     LARGE_INTEGER AddedTime;
-
+    PH_STRINGREF ProtocalString;
     PPH_STRING TimeString;
     PPH_STRING UserNameString;
-    PH_STRINGREF ProtocalString;
     PPH_STRING ProcessFileNameString;
     PPH_STRING ProcessNameString;
     PPH_STRING ProcessBaseString;
-
     PPH_STRING LocalPortString;
     PPH_STRING LocalAddressString;
     PPH_STRING RemotePortString;
     PPH_STRING RemoteAddressString;
-
-    HICON Icon;
-    BOOLEAN Loopback;
-    UINT32 FwRuleEventDirection;
-    FWPM_NET_EVENT_TYPE FwRuleEventType;
     PPH_STRING FwRuleNameString;
     PPH_STRING FwRuleDescriptionString;
     PPH_STRING FwRuleLayerNameString;

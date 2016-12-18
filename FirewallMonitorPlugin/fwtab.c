@@ -192,25 +192,26 @@ VOID InitializeFwTreeList(
     FwTreeNewHandle = hwnd;
     PhSetControlTheme(FwTreeNewHandle, L"explorer");
 
-    TreeNew_SetCallback(hwnd, FwTreeNewCallback, NULL);
-    TreeNew_SetRedraw(hwnd, FALSE);
+    TreeNew_SetCallback(FwTreeNewHandle, FwTreeNewCallback, NULL);
+    TreeNew_SetRedraw(FwTreeNewHandle, FALSE);
 
-    PhAddTreeNewColumn(hwnd, FW_COLUMN_PROCESSBASENAME, TRUE, L"Name", 140, PH_ALIGN_LEFT, FW_COLUMN_PROCESSBASENAME, DT_PATH_ELLIPSIS);
-    PhAddTreeNewColumn(hwnd, FW_COLUMN_ACTION, TRUE, L"Action", 70, PH_ALIGN_LEFT, FW_COLUMN_ACTION, 0);
-    PhAddTreeNewColumn(hwnd, FW_COLUMN_DIRECTION, TRUE, L"Direction", 40, PH_ALIGN_LEFT, FW_COLUMN_DIRECTION, 0);
-    PhAddTreeNewColumn(hwnd, FW_COLUMN_RULENAME, TRUE, L"Rule", 240, PH_ALIGN_LEFT, FW_COLUMN_RULENAME, 0);
-    PhAddTreeNewColumn(hwnd, FW_COLUMN_RULEDESCRIPTION, FALSE, L"Description", 180, PH_ALIGN_LEFT, FW_COLUMN_RULEDESCRIPTION, 0);
-    PhAddTreeNewColumn(hwnd, FW_COLUMN_PROCESSFILENAME, FALSE, L"File Path", 80, PH_ALIGN_LEFT, FW_COLUMN_PROCESSFILENAME, DT_PATH_ELLIPSIS);
-    PhAddTreeNewColumnEx(hwnd, FW_COLUMN_LOCALADDRESS, TRUE, L"Local Address", 220, PH_ALIGN_RIGHT, FW_COLUMN_LOCALADDRESS, DT_RIGHT, TRUE);
-    PhAddTreeNewColumnEx(hwnd, FW_COLUMN_LOCALPORT, TRUE, L"Local Port", 50, PH_ALIGN_LEFT, FW_COLUMN_LOCALPORT, DT_LEFT, TRUE);
-    PhAddTreeNewColumnEx(hwnd, FW_COLUMN_REMOTEADDRESS, TRUE, L"Remote Address", 220, PH_ALIGN_RIGHT, FW_COLUMN_REMOTEADDRESS, DT_RIGHT, TRUE);
-    PhAddTreeNewColumnEx(hwnd, FW_COLUMN_REMOTEPORT, TRUE, L"Remote Port", 50, PH_ALIGN_LEFT, FW_COLUMN_REMOTEPORT, DT_LEFT, TRUE);
-    PhAddTreeNewColumn(hwnd, FW_COLUMN_PROTOCOL, TRUE, L"Protocol", 60, PH_ALIGN_LEFT, FW_COLUMN_PROTOCOL, 0);
-    PhAddTreeNewColumn(hwnd, FW_COLUMN_USER, FALSE, L"User", 120, PH_ALIGN_LEFT, FW_COLUMN_USER, DT_PATH_ELLIPSIS);
+    PhAddTreeNewColumn(FwTreeNewHandle, FW_COLUMN_PROCESSBASENAME, TRUE, L"Name", 140, PH_ALIGN_LEFT, FW_COLUMN_PROCESSBASENAME, DT_PATH_ELLIPSIS);
+    PhAddTreeNewColumn(FwTreeNewHandle, FW_COLUMN_ACTION, TRUE, L"Action", 70, PH_ALIGN_LEFT, FW_COLUMN_ACTION, 0);
+    PhAddTreeNewColumn(FwTreeNewHandle, FW_COLUMN_DIRECTION, TRUE, L"Direction", 40, PH_ALIGN_LEFT, FW_COLUMN_DIRECTION, 0);
+    PhAddTreeNewColumn(FwTreeNewHandle, FW_COLUMN_RULENAME, TRUE, L"Rule", 240, PH_ALIGN_LEFT, FW_COLUMN_RULENAME, 0);
+    PhAddTreeNewColumn(FwTreeNewHandle, FW_COLUMN_RULEDESCRIPTION, FALSE, L"Description", 180, PH_ALIGN_LEFT, FW_COLUMN_RULEDESCRIPTION, 0);
+    PhAddTreeNewColumn(FwTreeNewHandle, FW_COLUMN_PROCESSFILENAME, FALSE, L"File Path", 80, PH_ALIGN_LEFT, FW_COLUMN_PROCESSFILENAME, DT_PATH_ELLIPSIS);
+    PhAddTreeNewColumnEx(FwTreeNewHandle, FW_COLUMN_LOCALADDRESS, TRUE, L"Local Address", 220, PH_ALIGN_RIGHT, FW_COLUMN_LOCALADDRESS, DT_RIGHT, TRUE);
+    PhAddTreeNewColumnEx(FwTreeNewHandle, FW_COLUMN_LOCALPORT, TRUE, L"Local Port", 50, PH_ALIGN_LEFT, FW_COLUMN_LOCALPORT, DT_LEFT, TRUE);
+    PhAddTreeNewColumnEx(FwTreeNewHandle, FW_COLUMN_REMOTEADDRESS, TRUE, L"Remote Address", 220, PH_ALIGN_RIGHT, FW_COLUMN_REMOTEADDRESS, DT_RIGHT, TRUE);
+    PhAddTreeNewColumnEx(FwTreeNewHandle, FW_COLUMN_REMOTEPORT, TRUE, L"Remote Port", 50, PH_ALIGN_LEFT, FW_COLUMN_REMOTEPORT, DT_LEFT, TRUE);
+    PhAddTreeNewColumn(FwTreeNewHandle, FW_COLUMN_PROTOCOL, TRUE, L"Protocol", 60, PH_ALIGN_LEFT, FW_COLUMN_PROTOCOL, 0);
+    PhAddTreeNewColumn(FwTreeNewHandle, FW_COLUMN_USER, FALSE, L"User", 120, PH_ALIGN_LEFT, FW_COLUMN_USER, DT_PATH_ELLIPSIS);
    
     LoadSettingsFwTreeList();
 
-    TreeNew_SetRedraw(hwnd, TRUE);
+    TreeNew_SetRedraw(FwTreeNewHandle, TRUE);
+    //TreeNew_SetSort(FwTreeNewHandle, 0, DescendingSortOrder);
 
     PhInitializeTreeNewFilterSupport(&FilterSupport, hwnd, FwNodeList);
 
@@ -270,7 +271,7 @@ PFW_EVENT_ITEM AddFwNode(
     FwItem->Node.TextCacheSize = FW_COLUMN_MAXIMUM;
 
     PhAcquireQueuedLockExclusive(&FwLock);
-    PhAddItemList(FwNodeList, FwItem);
+    PhInsertItemList(FwNodeList, 0, FwItem);
     PhReleaseQueuedLockExclusive(&FwLock);
         
     if (FilterSupport.NodeList)
@@ -330,7 +331,7 @@ static int __cdecl FwTreeNewCompareIndex(
     PFW_EVENT_ITEM node1 = *(PFW_EVENT_ITEM*)_elem1;
     PFW_EVENT_ITEM node2 = *(PFW_EVENT_ITEM*)_elem2;
 
-    int sortResult = uint64cmp(node1->Index, node2->Index);
+    int sortResult = !uint64cmp(node1->Node.Index, node2->Node.Index);
 
     return PhModifySort(sortResult, DescendingSortOrder);
 }

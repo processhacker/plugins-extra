@@ -171,17 +171,17 @@ PPH_STRING PhGetSelectedListViewItemText(
 
     if (index != -1)
     {
-        WCHAR textBuffer[MAX_PATH] = L"";
+        WCHAR buffer[DOS_MAX_PATH_LENGTH] = L"";
 
         LVITEM item;
         item.mask = LVIF_TEXT;
         item.iItem = index;
         item.iSubItem = 0;
-        item.pszText = textBuffer;
-        item.cchTextMax = MAX_PATH;
+        item.pszText = buffer;
+        item.cchTextMax = ARRAYSIZE(buffer);
 
         if (ListView_GetItem(hWnd, &item))
-            return PhCreateString(textBuffer);
+            return PhCreateString(buffer);
     }
 
     return NULL;

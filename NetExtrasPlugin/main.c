@@ -51,8 +51,6 @@ LONG NTAPI NetworkServiceSortFunction(
          return PhCompareStringWithNull(extension1->LocalServiceName, extension2->LocalServiceName, TRUE);
     case NETWORK_COLUMN_ID_REMOTE_SERVICE:
          return PhCompareStringWithNull(extension1->RemoteServiceName, extension2->RemoteServiceName, TRUE);
-    case NETWORK_COLUMN_ID_REMOTE_COUNTRY:
-         return PhCompareStringWithNull(extension1->RemoteCountryCode, extension2->RemoteCountryCode, TRUE);
     }
 
     return 0;
@@ -63,7 +61,7 @@ VOID NTAPI LoadCallback(
     _In_opt_ PVOID Context
     )
 {
-    LoadGeoLiteDb();
+    NOTHING;
 }
 
 VOID NTAPI UnloadCallback(
@@ -79,7 +77,7 @@ VOID NTAPI ShowOptionsCallback(
     _In_opt_ PVOID Context
     )
 {
-    //ShowOptionsDialog((HWND)Parameter);
+    NOTHING;
 }
 
 VOID NTAPI NetworkTreeNewInitializingCallback(
@@ -103,13 +101,6 @@ VOID NTAPI NetworkTreeNewInitializingCallback(
     column.Width = 140;
     column.Alignment = PH_ALIGN_LEFT;
     PhPluginAddTreeNewColumn(PluginInstance, info->CmData, &column, NETWORK_COLUMN_ID_REMOTE_SERVICE, NULL, NetworkServiceSortFunction);
-
-    memset(&column, 0, sizeof(PH_TREENEW_COLUMN));
-    column.Text = L"Country";
-    column.Width = 140;
-    column.Alignment = PH_ALIGN_LEFT;
-    column.CustomDraw = TRUE; // Owner-draw this column to show country flags
-    PhPluginAddTreeNewColumn(PluginInstance, info->CmData, &column, NETWORK_COLUMN_ID_REMOTE_COUNTRY, NULL, NetworkServiceSortFunction);
 }
 
 VOID NTAPI NetworkItemCreateCallback(
@@ -135,36 +126,6 @@ VOID NTAPI NetworkItemDeleteCallback(
 
     PhClearReference(&extension->LocalServiceName);
     PhClearReference(&extension->RemoteServiceName);
-    PhClearReference(&extension->RemoteCountryCode);
-    PhClearReference(&extension->RemoteCountryName);
-
-    if (extension->CountryIcon)
-        DestroyIcon(extension->CountryIcon);
-}
-
-VOID NTAPI NetworkNodeCreateCallback(
-    _In_ PVOID Object,
-    _In_ PH_EM_OBJECT_TYPE ObjectType,
-    _In_ PVOID Extension
-    )
-{
-    PPH_NETWORK_NODE networkNode = Object;
-    PNETWORK_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, networkNode->NetworkItem, EmNetworkItemType);
-
-    // Update the country data for this connection
-    if (!extension->CountryValid)
-    {
-        PPH_STRING remoteCountryCode;
-        PPH_STRING remoteCountryName;
-
-        if (LookupCountryCode(networkNode->NetworkItem->RemoteEndpoint.Address, &remoteCountryCode, &remoteCountryName))
-        {
-            PhSwapReference(&extension->RemoteCountryCode, remoteCountryCode);
-            PhSwapReference(&extension->RemoteCountryName, remoteCountryName);
-        }
-
-        extension->CountryValid = TRUE;
-    }
 }
 
 VOID NTAPI TreeNewMessageCallback(
@@ -195,91 +156,6 @@ VOID NTAPI TreeNewMessageCallback(
                     getCellText->Text = PhGetStringRef(extension->RemoteServiceName);
                     break;
                 }
-            }
-        }
-        break;
-    case TreeNewCustomDraw:
-        {
-            PPH_TREENEW_CUSTOM_DRAW customDraw = message->Parameter1;
-            PPH_NETWORK_NODE networkNode = (PPH_NETWORK_NODE)customDraw->Node;
-            PNETWORK_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, networkNode->NetworkItem, EmNetworkItemType);
-            HDC hdc = customDraw->Dc;
-            RECT rect = customDraw->CellRect;
-
-            // Check if this is the country column
-            if (message->SubId != NETWORK_COLUMN_ID_REMOTE_COUNTRY)
-                break;
-
-            // Check if there's something to draw
-            if (rect.right - rect.left <= 1)
-            {
-                // nothing to draw
-                break;
-            }
-            
-            // Padding
-            rect.left += 5;
-
-            // Draw the column data
-            if (GeoDbLoaded && extension->RemoteCountryCode && extension->RemoteCountryName)
-            {
-                if (!extension->CountryIcon)
-                {                
-                    HBITMAP countryBitmap;
-
-                    if (countryBitmap = LoadImageFromResources(16, 11, extension->RemoteCountryCode))
-                    {
-                        HDC screenDc = CreateIC(L"DISPLAY", NULL, NULL, NULL);
-                        HBITMAP screenBitmap = CreateCompatibleBitmap(screenDc, 16, 11);
-
-                        ICONINFO iconInfo = { 0 };
-                        iconInfo.fIcon = TRUE;
-                        iconInfo.hbmColor = countryBitmap;
-                        iconInfo.hbmMask = screenBitmap;
-
-                        extension->CountryIcon = CreateIconIndirect(&iconInfo);
-
-                        DeleteObject(screenBitmap);
-                        DeleteDC(screenDc);
-                        DeleteObject(countryBitmap);
-                    }
-                }
- 
-                if (extension->CountryIcon)
-                {
-                    DrawIconEx(
-                        hdc,
-                        rect.left,
-                        rect.top + ((rect.bottom - rect.top) - 11) / 2,
-                        extension->CountryIcon,
-                        16,
-                        11,
-                        0,
-                        NULL,
-                        DI_NORMAL
-                        );
-
-                    rect.left += 16 + 2;
-                }
-
-                DrawText(
-                    hdc, 
-                    extension->RemoteCountryName->Buffer,
-                    (INT)extension->RemoteCountryName->Length / 2,
-                    &rect,
-                    DT_LEFT | DT_VCENTER | DT_SINGLELINE
-                    );
-            }
-
-            if (!GeoDbLoaded)
-            {
-                DrawText(
-                    hdc,
-                    L"Geoip database error.",
-                    -1,
-                    &rect,
-                    DT_LEFT | DT_VCENTER | DT_SINGLELINE
-                    );
             }
         }
         break;
@@ -346,13 +222,6 @@ LOGICAL DllMain(
                 sizeof(NETWORK_EXTENSION),
                 NetworkItemCreateCallback,
                 NetworkItemDeleteCallback
-                );
-            PhPluginSetObjectExtension(
-                PluginInstance,
-                EmNetworkNodeType,
-                sizeof(NETWORK_EXTENSION),
-                NetworkNodeCreateCallback,
-                NULL
                 );
         }
         break;

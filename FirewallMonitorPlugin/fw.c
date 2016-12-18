@@ -1,9 +1,7 @@
 #include "fwmon.h"
 #include "wf.h"
 
-BOOLEAN IsFwApiInitialized = FALSE;
 HMODULE FwApiLibraryHandle = NULL;
-
 _FWStatusMessageFromStatusCode FWStatusMessageFromStatusCode_I;
 _FWOpenPolicyStore FWOpenPolicyStore_I;
 _FWClosePolicyStore FWClosePolicyStore_I;
@@ -15,31 +13,6 @@ FW_POLICY_STORE_HANDLE PolicyStoreHandles[4];
 #define GPRSOP_POLICY_STORE PolicyStoreHandles[1]
 #define DYNAMIC_POLICY_STORE PolicyStoreHandles[2]
 #define DEFAULT_POLICY_STORE PolicyStoreHandles[3]
-
-VOID BuildQueryForDirection(FW_QUERY query, FW_DIRECTION direction)
-{
-    FW_MATCH_VALUE fw_match_value = { 0 };
-    FW_QUERY_CONDITION fw_query_conditionArray[1];
-
-    fw_query_conditionArray[0].matchKey = FW_MATCH_KEY_DIRECTION;
-    fw_query_conditionArray[0].matchType = FW_MATCH_TYPE_EQUAL;
-
-    fw_match_value.type = FW_DATA_TYPE_UINT32;
-
-    if (direction != FW_DIR_BOTH)
-    {
-        query.dwNumEntries = 1;
-        fw_match_value.uInt32 = direction;
-        fw_query_conditionArray[0].matchValue = fw_match_value;
-    }
-}
-
-BOOLEAN IsFirewallApiInitialized(
-    VOID
-    )
-{
-    return IsFwApiInitialized;
-}
 
 BOOLEAN InitializeFirewallApi(
     VOID
@@ -103,8 +76,6 @@ VOID FreeFirewallApi(
 
     if (FWClosePolicyStore_I && PolicyStoreHandles[3])
         FWClosePolicyStore_I(PolicyStoreHandles[3]);
-
-    IsFwApiInitialized = FALSE;
 }
 
 BOOLEAN ValidateFirewallConnectivity(
@@ -156,8 +127,6 @@ VOID EnumerateFirewallRules(
     }
 
     //FW_PROFILE_TYPE_CURRENT
-    //result = FWEnumFirewallRules_I(DYNAMIC_POLICY_STORE, wFilteredByStatus, FW_PROFILE_TYPE_CURRENT, wFlags, &NumRules, &pRule);
-
     result = FWEnumFirewallRules_I(
         storeHandle,
         FW_RULE_STATUS_CLASS_OK,

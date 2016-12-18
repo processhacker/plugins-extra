@@ -2228,10 +2228,6 @@ typedef BOOLEAN (CALLBACK *PFW_WALK_RULES)(
     _In_ PVOID Context
     );
 
-BOOLEAN IsFirewallApiInitialized(
-    VOID
-    );
-
 BOOLEAN InitializeFirewallApi(
     VOID
     );
