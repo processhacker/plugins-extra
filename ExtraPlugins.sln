@@ -28,8 +28,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NvGpuPlugin", "NvGpuPlugin\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DbgViewPlugin", "DbgViewPlugin\DbgViewPlugin.vcxproj", "{AAD42A11-92A7-4918-A76A-862528185199}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetExtrasPlugin", "NetExtrasPlugin\NetExtrasPlugin.vcxproj", "{B2F55139-7984-498F-98CB-AC25A3E08CCC}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TaskbarExtPlugin", "TaskbarExtPlugin\TaskbarExtPlugin.vcxproj", "{58E266DF-088C-470D-9EC8-403B40042373}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SecurityExplorer", "SecurityExplorerPlugin\SecurityExplorer.vcxproj", "{0DCBC570-B4E3-482A-9872-8BB5678F5E5C}"
@@ -144,14 +142,6 @@ Global
 		{AAD42A11-92A7-4918-A76A-862528185199}.Release|Win32.Build.0 = Release|Win32
 		{AAD42A11-92A7-4918-A76A-862528185199}.Release|x64.ActiveCfg = Release|x64
 		{AAD42A11-92A7-4918-A76A-862528185199}.Release|x64.Build.0 = Release|x64
-		{B2F55139-7984-498F-98CB-AC25A3E08CCC}.Debug|Win32.ActiveCfg = Debug|Win32
-		{B2F55139-7984-498F-98CB-AC25A3E08CCC}.Debug|Win32.Build.0 = Debug|Win32
-		{B2F55139-7984-498F-98CB-AC25A3E08CCC}.Debug|x64.ActiveCfg = Debug|x64
-		{B2F55139-7984-498F-98CB-AC25A3E08CCC}.Debug|x64.Build.0 = Debug|x64
-		{B2F55139-7984-498F-98CB-AC25A3E08CCC}.Release|Win32.ActiveCfg = Release|Win32
-		{B2F55139-7984-498F-98CB-AC25A3E08CCC}.Release|Win32.Build.0 = Release|Win32
-		{B2F55139-7984-498F-98CB-AC25A3E08CCC}.Release|x64.ActiveCfg = Release|x64
-		{B2F55139-7984-498F-98CB-AC25A3E08CCC}.Release|x64.Build.0 = Release|x64
 		{58E266DF-088C-470D-9EC8-403B40042373}.Debug|Win32.ActiveCfg = Debug|Win32
 		{58E266DF-088C-470D-9EC8-403B40042373}.Debug|Win32.Build.0 = Debug|Win32
 		{58E266DF-088C-470D-9EC8-403B40042373}.Debug|x64.ActiveCfg = Debug|x64

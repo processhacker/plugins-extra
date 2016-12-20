@@ -105,9 +105,6 @@
     <ClCompile Include="plugin.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="searchbox.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="setup\uninstall.c">
       <Filter>Source Files\pages</Filter>
     </ClCompile>

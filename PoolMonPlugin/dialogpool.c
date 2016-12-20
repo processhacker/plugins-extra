@@ -21,6 +21,7 @@
  */
 
 #include "main.h"
+#include "..\..\plugins\include\commonutil.h"
 
 static HWND PoolTagDialogHandle = NULL;
 static HANDLE PoolTagDialogThreadHandle = NULL;
@@ -214,13 +215,12 @@ INT_PTR CALLBACK PoolMonDlgProc(
             PhRegisterDialog(hwndDlg);
             PhCenterWindow(hwndDlg, PhMainWndHandle);
 
+            CreateSearchControl(hwndDlg, context->SearchboxHandle, L"Search Pool Tags (Ctrl+K)");
             PmInitializePoolTagTree(context);
 
             PhInitializeLayoutManager(&context->LayoutManager, hwndDlg);
-            PhAddLayoutItem(&context->LayoutManager, context->TreeNewHandle, NULL, PH_ANCHOR_ALL);
-            PhAddLayoutItem(&context->LayoutManager, context->SearchboxHandle, NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_LEFT);
-            PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDC_CLEAR), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_LEFT);
-            PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDCANCEL), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_RIGHT);
+            PhAddLayoutItem(&context->LayoutManager, context->SearchboxHandle, NULL, PH_ANCHOR_TOP | PH_ANCHOR_LEFT);
+            PhAddLayoutItem(&context->LayoutManager, context->TreeNewHandle, NULL, PH_ANCHOR_ALL);           
             PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
             
             context->SearchboxText = PhReferenceEmptyString();
@@ -241,7 +241,9 @@ INT_PTR CALLBACK PoolMonDlgProc(
                 ProcessesUpdatedCallback,
                 context,
                 &context->ProcessesUpdatedCallbackRegistration
-                );
+                );          
+                
+            SendMessage(hwndDlg, WM_NEXTDLGCTL, (WPARAM)context->TreeNewHandle, TRUE);
         }
         break;
     case WM_SIZE:

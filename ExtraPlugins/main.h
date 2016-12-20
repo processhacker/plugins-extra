@@ -39,6 +39,7 @@
 
 #include "resource.h"
 #include "json-c/json.h"
+#include "..\..\plugins\include\commonutil.h"
 
 #define IDD_WCT_MENUITEM 1000
 #define PH_UPDATEISERRORED (WM_APP + 501)
@@ -57,7 +58,6 @@
 #define SETTING_NAME_WINDOW_SIZE (PLUGIN_NAME L".WindowSize")
 #define SETTING_NAME_LAST_CLEANUP (PLUGIN_NAME L".LastCleanupCheckTime")
 
-#define ID_SEARCH_CLEAR (WM_APP + 8001)
 #define ID_UPDATE_ADD (WM_APP + 8002)
 #define ID_UPDATE_COUNT (WM_APP + 8003)
 
@@ -348,56 +348,6 @@ BOOLEAN UpdaterVerifySignature(
 
 VOID UpdaterDestroyHash(
     _Inout_ PUPDATER_HASH_CONTEXT Context
-    );
-
-
-
-VOID CreateSearchControl(
-    _In_ HWND Parent,
-    _In_ HWND WindowHandle,
-    _In_ UINT CommandID
-    );
-
-typedef struct _EDIT_CONTEXT
-{
-    UINT CommandID;
-
-    union
-    {
-        ULONG Flags;
-        struct
-        {
-            ULONG Hot : 1;
-            ULONG Pushed : 1;
-            ULONG Spare : 30;
-        };
-    };
-   
-    LONG CXWidth;
-    INT CXBorder;
-    INT ImageWidth;
-    INT ImageHeight;
-    HWND WindowHandle;
-    HFONT WindowFont;
-    HICON BitmapActive;
-    HICON BitmapInactive;
-    HBRUSH BrushNormal;
-    HBRUSH BrushPushed;
-    HBRUSH BrushHot;
-
-} EDIT_CONTEXT, *PEDIT_CONTEXT;
-
-HBITMAP LoadImageFromResources(
-    _In_ UINT Width,
-    _In_ UINT Height,
-    _In_ PCWSTR Name,
-    _In_ BOOLEAN RGBAImage
-    );
-
-HICON BitmapToIcon(
-    _In_ HBITMAP BitmapHandle,
-    _In_ INT Width,
-    _In_ INT Height
     );
 
 #endif

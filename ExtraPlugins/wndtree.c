@@ -314,9 +314,9 @@ BOOLEAN NTAPI PluginsTreeNewCallback(
                         {
                             HBITMAP bitmapActive;
 
-                            if (bitmapActive = LoadImageFromResources(17, 17, MAKEINTRESOURCE(IDB_SETTINGS_PNG), TRUE))
+                            if (bitmapActive = LoadImageFromResources(PluginInstance->DllBase, 17, 17, MAKEINTRESOURCE(IDB_SETTINGS_PNG), TRUE))
                             {
-                                node->Icon = BitmapToIcon(bitmapActive, 17, 17);
+                                node->Icon = CommonBitmapToIcon(bitmapActive, 17, 17);
                                 DeleteObject(bitmapActive);
                             }
                         }

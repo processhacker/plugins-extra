@@ -249,7 +249,7 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
             context->SearchHandle = GetDlgItem(hwndDlg, IDC_SEARCHBOX);
             context->SearchboxText = PhReferenceEmptyString();
 
-            CreateSearchControl(hwndDlg, context->SearchHandle, ID_SEARCH_CLEAR);
+            CreateSearchControl(hwndDlg, context->SearchHandle, L"Search Plugins (Ctrl+K)");
 
             if (SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(LOGFONT), &logFont, 0))
             {
@@ -340,17 +340,17 @@ INT_PTR CALLBACK CloudPluginsDlgProc(
 
             switch (GET_WM_COMMAND_ID(wParam, lParam))
             {
-            case ID_SEARCH_CLEAR:
-                {
-                    if (context->SearchHandle)
-                    {
-                        SetFocus(context->SearchHandle);
-                        Static_SetText(context->SearchHandle, L"");
+            //case ID_SEARCH_CLEAR:
+            //    {
+            //        if (context->SearchHandle)
+            //        {
+            //            SetFocus(context->SearchHandle);
+            //            Static_SetText(context->SearchHandle, L"");
 
-                        UpdateTreeView(context);
-                    }
-                }
-                break;
+            //            UpdateTreeView(context);
+            //        }
+            //    }
+            //    break;
             case IDC_INSTALLED:
                 {
                     context->Type = PLUGIN_STATE_LOCAL;
