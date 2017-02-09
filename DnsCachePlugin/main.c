@@ -40,99 +40,95 @@ VOID EnumDnsCacheTable(
 {
     PDNS_CACHE_ENTRY dnsCacheDataTable = NULL;
 
-    __try
+    if (!DnsGetCacheDataTable_I(&dnsCacheDataTable))
+        goto CleanupExit;
+
+    while (dnsCacheDataTable)
     {
-        if (!DnsGetCacheDataTable_I(&dnsCacheDataTable))
-            __leave;
+        PDNS_RECORD dnsQueryResultPtr = NULL;
+        DNS_STATUS dnsStatus = DnsQuery(
+            dnsCacheDataTable->Name,
+            dnsCacheDataTable->Type,
+            DNS_QUERY_NO_WIRE_QUERY | 32768, // Undocumented flags
+            NULL,
+            &dnsQueryResultPtr,
+            NULL
+            );
 
-        while (dnsCacheDataTable)
+        if (dnsStatus == ERROR_SUCCESS)
         {
-            PDNS_RECORD dnsQueryResultPtr = NULL;
+            PDNS_RECORD dnsRecordPtr = dnsQueryResultPtr;
 
-            DNS_STATUS dnsStatus = DnsQuery(
-                dnsCacheDataTable->Name,
-                dnsCacheDataTable->Type,
-                DNS_QUERY_NO_WIRE_QUERY | 32768, // Undocumented flags
-                NULL,
-                &dnsQueryResultPtr,
-                NULL
-                );
-
-            if (dnsStatus == ERROR_SUCCESS)
+            while (dnsRecordPtr)
             {
-                PDNS_RECORD dnsRecordPtr = dnsQueryResultPtr;
+                INT itemIndex = MAXINT;
+                ULONG ipAddrStringLength = INET6_ADDRSTRLEN;
+                WCHAR ipAddrString[INET6_ADDRSTRLEN] = L"";
 
-                while (dnsRecordPtr)
+                itemIndex = PhAddListViewItem(hwndDlg, MAXINT,
+                    PhaFormatString(L"%s", dnsCacheDataTable->Name)->Buffer,
+                    NULL
+                    );
+
+                if (dnsRecordPtr->wType == DNS_TYPE_A)
                 {
-                    INT itemIndex = MAXINT;
-                    ULONG ipAddrStringLength = INET6_ADDRSTRLEN;
-                    TCHAR ipAddrString[INET6_ADDRSTRLEN] = L"";
+                    IN_ADDR ipv4Address = { 0 };
 
-                    itemIndex = PhAddListViewItem(hwndDlg, MAXINT,
-                        PhaFormatString(L"%s", dnsCacheDataTable->Name)->Buffer,
-                        NULL
+                    ipv4Address.s_addr = dnsRecordPtr->Data.A.IpAddress;
+
+                    RtlIpv4AddressToString(&ipv4Address, ipAddrString);
+
+                    PhSetListViewSubItem(hwndDlg, itemIndex, 1, PhaFormatString(L"A")->Buffer);
+                    PhSetListViewSubItem(hwndDlg, itemIndex, 2, PhaFormatString(L"%s", ipAddrString)->Buffer);
+                }
+                else if (dnsRecordPtr->wType == DNS_TYPE_AAAA)
+                {
+                    IN6_ADDR ipv6Address = { 0 };
+
+                    memcpy_s(
+                        ipv6Address.s6_addr,
+                        sizeof(ipv6Address.s6_addr),
+                        dnsRecordPtr->Data.AAAA.Ip6Address.IP6Byte,
+                        sizeof(dnsRecordPtr->Data.AAAA.Ip6Address.IP6Byte)
                         );
 
-                    if (dnsRecordPtr->wType == DNS_TYPE_A)
-                    {
-                        IN_ADDR ipv4Address = { 0 };
+                    RtlIpv6AddressToString(&ipv6Address, ipAddrString);
 
-                        ipv4Address.s_addr = dnsRecordPtr->Data.A.IpAddress;
-
-                        RtlIpv4AddressToString(&ipv4Address, ipAddrString);
-
-                        PhSetListViewSubItem(hwndDlg, itemIndex, 1, PhaFormatString(L"A")->Buffer);
-                        PhSetListViewSubItem(hwndDlg, itemIndex, 2, PhaFormatString(L"%s", ipAddrString)->Buffer);
-                    }
-                    else if (dnsRecordPtr->wType == DNS_TYPE_AAAA)
-                    {
-                        IN6_ADDR ipv6Address = { 0 };
-
-                        memcpy_s(
-                            ipv6Address.s6_addr,
-                            sizeof(ipv6Address.s6_addr),
-                            dnsRecordPtr->Data.AAAA.Ip6Address.IP6Byte,
-                            sizeof(dnsRecordPtr->Data.AAAA.Ip6Address.IP6Byte)
-                            );
-
-                        RtlIpv6AddressToString(&ipv6Address, ipAddrString);
-
-                        PhSetListViewSubItem(hwndDlg, itemIndex, 1, PhaFormatString(L"AAAA")->Buffer);
-                        PhSetListViewSubItem(hwndDlg, itemIndex, 2, PhaFormatString(L"%s", ipAddrString)->Buffer);
-                    }
-                    else if (dnsRecordPtr->wType == DNS_TYPE_PTR)
-                    {
-                        PhSetListViewSubItem(hwndDlg, itemIndex, 1, PhaFormatString(L"PTR")->Buffer);
-                        PhSetListViewSubItem(hwndDlg, itemIndex, 2, PhaFormatString(L"%s", dnsRecordPtr->Data.PTR.pNameHost)->Buffer);
-                    }
-                    else if (dnsRecordPtr->wType == DNS_TYPE_CNAME)
-                    {
-                        PhSetListViewSubItem(hwndDlg, itemIndex, 1, PhaFormatString(L"CNAME")->Buffer);
-                        PhSetListViewSubItem(hwndDlg, itemIndex, 2, PhaFormatString(L"%s", dnsRecordPtr->Data.CNAME.pNameHost)->Buffer);
-                    }
-                    else
-                    {
-                        PhSetListViewSubItem(hwndDlg, itemIndex, 1, PhaFormatString(L"UNKNOWN")->Buffer);
-                        PhSetListViewSubItem(hwndDlg, itemIndex, 2, PhaFormatString(L"")->Buffer);
-                    }
-
-                    PhSetListViewSubItem(hwndDlg, itemIndex, 3, PhaFormatString(L"%lu", dnsRecordPtr->dwTtl)->Buffer);
-
-                    dnsRecordPtr = dnsRecordPtr->pNext;
+                    PhSetListViewSubItem(hwndDlg, itemIndex, 1, PhaFormatString(L"AAAA")->Buffer);
+                    PhSetListViewSubItem(hwndDlg, itemIndex, 2, PhaFormatString(L"%s", ipAddrString)->Buffer);
+                }
+                else if (dnsRecordPtr->wType == DNS_TYPE_PTR)
+                {
+                    PhSetListViewSubItem(hwndDlg, itemIndex, 1, PhaFormatString(L"PTR")->Buffer);
+                    PhSetListViewSubItem(hwndDlg, itemIndex, 2, PhaFormatString(L"%s", dnsRecordPtr->Data.PTR.pNameHost)->Buffer);
+                }
+                else if (dnsRecordPtr->wType == DNS_TYPE_CNAME)
+                {
+                    PhSetListViewSubItem(hwndDlg, itemIndex, 1, PhaFormatString(L"CNAME")->Buffer);
+                    PhSetListViewSubItem(hwndDlg, itemIndex, 2, PhaFormatString(L"%s", dnsRecordPtr->Data.CNAME.pNameHost)->Buffer);
+                }
+                else
+                {
+                    PhSetListViewSubItem(hwndDlg, itemIndex, 1, PhaFormatString(L"UNKNOWN")->Buffer);
+                    PhSetListViewSubItem(hwndDlg, itemIndex, 2, PhaFormatString(L"")->Buffer);
                 }
 
-                DnsRecordListFree(dnsQueryResultPtr, DnsFreeRecordList);
+                PhSetListViewSubItem(hwndDlg, itemIndex, 3, PhaFormatString(L"%lu", dnsRecordPtr->dwTtl)->Buffer);
+
+                dnsRecordPtr = dnsRecordPtr->pNext;
             }
 
-            dnsCacheDataTable = dnsCacheDataTable->Next;
+            DnsRecordListFree(dnsQueryResultPtr, DnsFreeRecordList);
         }
+
+        dnsCacheDataTable = dnsCacheDataTable->Next;
     }
-    __finally
+
+CleanupExit:
+
+    if (dnsCacheDataTable)
     {
-        if (dnsCacheDataTable)
-        {
-            DnsRecordListFree(dnsCacheDataTable, DnsFreeRecordList);
-        }
+        DnsRecordListFree(dnsCacheDataTable, DnsFreeRecordList);
     }
 }
 
@@ -348,7 +344,6 @@ VOID NTAPI MainMenuInitializingCallback(
 {
     PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
     PPH_EMENU_ITEM systemMenu;
-    PPH_EMENU_ITEM bootMenuItem;
 
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
@@ -359,7 +354,7 @@ VOID NTAPI MainMenuInitializingCallback(
         PhInsertEMenuItem(menuInfo->Menu, systemMenu = PhPluginCreateEMenuItem(PluginInstance, 0, 0, L"System", NULL), -1);
     }
 
-    PhInsertEMenuItem(systemMenu, bootMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, DNSCACHE_MENUITEM, L"DNS Cache Table", NULL), -1);
+    PhInsertEMenuItem(systemMenu, PhPluginCreateEMenuItem(PluginInstance, 0, DNSCACHE_MENUITEM, L"DNS Cache Table", NULL), -1);
 }
 
 VOID NTAPI MenuItemCallback(
