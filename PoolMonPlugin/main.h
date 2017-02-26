@@ -134,7 +134,8 @@ typedef struct _POOLTAG_CONTEXT
     PPH_STRING SearchboxText;
     PH_TN_FILTER_SUPPORT FilterSupport;
     PPH_TN_FILTER_ENTRY TreeFilterEntry;
-    
+
+    PH_QUEUED_LOCK PoolTagListLock;
     PPH_LIST PoolTagDbList;
     PPH_HASHTABLE PoolTagDbHashtable;  
 

@@ -273,8 +273,10 @@ VOID LoadPoolTagDatabase(
                     poolTagString->Length
                     );
 
+                PhAcquireQueuedLockExclusive(&Context->PoolTagListLock);
                 PhAddEntryHashtable(Context->PoolTagDbHashtable, &entry);
                 PhAddItemList(Context->PoolTagDbList, entry);
+                PhReleaseQueuedLockExclusive(&Context->PoolTagListLock);
 
                 PhDereferenceObject(description);
                 PhDereferenceObject(binaryName);
@@ -291,6 +293,8 @@ VOID FreePoolTagDatabase(
     _In_ PPOOLTAG_CONTEXT Context
     )
 {
+    PhAcquireQueuedLockExclusive(&Context->PoolTagListLock);
+
     for (ULONG i = 0; i < Context->PoolTagDbList->Count; i++)
     {
         PPOOL_TAG_LIST_ENTRY entry = Context->PoolTagDbList->Items[i];
@@ -299,9 +303,11 @@ VOID FreePoolTagDatabase(
         PhDereferenceObject(entry->BinaryNameString);
         PhFree(entry);
     }
-
+ 
     PhClearHashtable(Context->PoolTagDbHashtable);
     PhClearList(Context->PoolTagDbList);
+
+    PhReleaseQueuedLockExclusive(&Context->PoolTagListLock);
 }
 
 VOID UpdatePoolTagBinaryName(

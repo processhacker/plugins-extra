@@ -73,7 +73,7 @@ VOID ShowDebugWarning(
                     &flags,
                     sizeof(ULONG),
                     NULL
-                );
+                    );
 
                 if (!NT_SUCCESS(status = NtRemoveProcessDebug(processHandle, debugObjectHandle)))
                     PhShowStatus(ParentWindowHandle, L"Unable to detach the process", status, 0);

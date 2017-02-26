@@ -425,7 +425,7 @@ BOOLEAN NTAPI PmPoolTagTreeNewCallback(
             switch (node->PoolItem->Type)
             {
             case TPOOLTAG_TREE_ITEM_TYPE_OBJECT:
-                getNodeColor->BackColor = RGB(204, 255, 255);
+                getNodeColor->BackColor = RGB(255, 192, 203); //RGB(204, 255, 255);
                 break;
             case TPOOLTAG_TREE_ITEM_TYPE_DRIVER:
                 getNodeColor->BackColor = RGB(170, 204, 255);
