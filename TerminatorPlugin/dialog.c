@@ -91,43 +91,22 @@ VOID InitializeKph2(
     )
 {
     NTSTATUS status;
-    PPH_STRING directory;
-    PPH_STRING path;
-    PPH_STRING kprocesshackerFileName;
     KPH_PARAMETERS parameters;
 
     if (Kph2IsConnected())
         return;
 
-    directory = PH_AUTO(PhGetApplicationDirectory()); 
-    path = PhIsExecutingInWow64() ? PhaCreateString(KPH_PATH32) : PhaCreateString(KPH_PATH64);
-    kprocesshackerFileName = PH_AUTO(PhConcatStringRef2(&directory->sr, &path->sr));
-
-    // Require SeDebugPrivilege for all KPH connections.
     parameters.SecurityLevel = KphSecurityPrivilegeCheck;
     parameters.CreateDynamicConfiguration = TRUE;
-    
-    // Install the service
-    if (NT_SUCCESS(status = Kph2InstallEx(KPH_DEVICE_SHORT_NAME, kprocesshackerFileName->Buffer, &parameters)))
+
+    if (!NT_SUCCESS(status = Kph2Install(&parameters)))
     {
-        if (!NT_SUCCESS(status = Kph2Connect(KPH_DEVICE_NAME)))
-        {
-            PhShowStatus(NULL, L"Unable to connect to KProcessHacker2", status, 0);
-        }
+        PhShowStatus(NULL, L"Unable to install KProcessHacker2", status, 0);
     }
-    else
+
+    if (!NT_SUCCESS(status = Kph2Connect()))
     {
-        if (WIN32_FROM_NTSTATUS(status) == ERROR_SERVICE_MARKED_FOR_DELETE)
-        {
-            if (!NT_SUCCESS(status = Kph2Connect(KPH_DEVICE_NAME)))
-            {
-                PhShowStatus(NULL, L"Unable to connect to KProcessHacker2", status, 0);
-            }
-        }
-        else
-        {
-            PhShowStatus(NULL, L"Unable to install KProcessHacker2", status, 0);
-        }
+        PhShowStatus(NULL, L"Unable to connect KProcessHacker2", status, 0);
     }
 }
 
@@ -137,17 +116,14 @@ VOID ShutdownAndDeleteKph2(
 {
     NTSTATUS status;
 
-    if (Kph2IsConnected())
+    if (Kph2IsConnected() && !NT_SUCCESS(status = Kph2Disconnect()))
     {
-        if (!NT_SUCCESS(status = Kph2Disconnect()))
-        {
-            PhShowStatus(NULL, L"Unable to disconnect KProcessHacker2", status, 0);
-        }
+        PhShowStatus(NULL, L"Unable to disconnect KProcessHacker2", status, 0);
     }
 
-    if (!NT_SUCCESS(status = Kph2Uninstall(KPH_DEVICE_SHORT_NAME)))
+    if (!NT_SUCCESS(status = Kph2Uninstall()))
     {
-        if (WIN32_FROM_NTSTATUS(status) != ERROR_SERVICE_DOES_NOT_EXIST)
+        if (status != STATUS_OBJECT_NAME_NOT_FOUND)
         {
             PhShowStatus(NULL, L"Unable to uninstall KProcessHacker2", status, 0);
         }
@@ -263,7 +239,10 @@ INT_PTR CALLBACK PhpProcessTerminatorDlgProc(
                 EndDialog(hwndDlg, IDOK);
                 break;
             case IDC_RUNSELECTED:
-                {
+                {    
+                    //if (!ShowKphWarning(ParentWindowHandle))
+                    //    return;
+
                     InitializeKph2();
 
                     if (PhShowConfirmMessage(hwndDlg, L"run", L"the selected terminator tests", NULL, FALSE))
@@ -344,9 +323,6 @@ VOID PhShowProcessTerminatorDialog(
     _In_ PPH_PROCESS_ITEM ProcessItem
     )
 {
-    if (!ShowKphWarning(ParentWindowHandle))
-        return;
-
     ShowDebugWarning(ParentWindowHandle, ProcessItem);
 
     DialogBoxParam(

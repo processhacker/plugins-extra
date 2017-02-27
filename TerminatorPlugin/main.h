@@ -24,8 +24,8 @@
 #define _T_H_
 
 #define PLUGIN_NAME L"dmex.TerminatorPlugin"
-#define KPH_PATH32 L"plugins\\kph2\\kprocesshacker2_x32.sys"
-#define KPH_PATH64 L"plugins\\kph2\\kprocesshacker2_x64.sys"
+#define KPH_PATH32 L"plugins\\plugindata\\kprocesshacker2_x32.sys"
+#define KPH_PATH64 L"plugins\\plugindata\\kprocesshacker2_x64.sys"
 #define TERMINATOR_MENU_ITEM 1
 
 #define CINTERFACE

@@ -16,22 +16,7 @@ typedef struct _KPH_PARAMETERS
 NTSTATUS
 NTAPI
 Kph2Connect(
-    _In_opt_ PWSTR DeviceName
-    );
-
-NTSTATUS
-NTAPI
-Kph2Connect2(
-    _In_opt_ PWSTR DeviceName,
-    _In_ PWSTR FileName
-    );
-
-NTSTATUS
-NTAPI
-Kph2Connect2Ex(
-    _In_opt_ PWSTR DeviceName,
-    _In_ PWSTR FileName,
-    _In_opt_ PKPH_PARAMETERS Parameters
+    VOID
     );
 
 NTSTATUS
@@ -49,29 +34,19 @@ Kph2IsConnected(
 NTSTATUS
 NTAPI
 Kph2SetParameters(
-    _In_opt_ PWSTR DeviceName,
     _In_ PKPH_PARAMETERS Parameters
     );
 
 NTSTATUS
 NTAPI
 Kph2Install(
-    _In_opt_ PWSTR DeviceName,
-    _In_ PWSTR FileName
-    );
-
-NTSTATUS
-NTAPI
-Kph2InstallEx(
-    _In_opt_ PWSTR DeviceName,
-    _In_ PWSTR FileName,
-    _In_opt_ PKPH_PARAMETERS Parameters
+    _In_ PKPH_PARAMETERS Parameters
     );
 
 NTSTATUS
 NTAPI
 Kph2Uninstall(
-    _In_opt_ PWSTR DeviceName
+    VOID
     );
 
 NTSTATUS

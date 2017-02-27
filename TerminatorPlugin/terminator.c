@@ -3,7 +3,7 @@
  *   Terminator Plugin
  *
  * Copyright (C) 2010-2011 wj32
- * Copyright (C) 2016 dmex
+ * Copyright (C) 2016-2017 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -24,16 +24,6 @@
 #include "main.h"
 #include "phapi.h"
 #include "kph2user.h"
-
-static PVOID GetExitProcessFunction(
-    VOID
-    )
-{
-    if (WindowsVersion >= WINDOWS_VISTA)
-        return PhGetModuleProcAddress(L"ntdll.dll", "RtlExitUserProcess");
-
-    return PhGetModuleProcAddress(L"kernel32.dll", "ExitProcess");
-}
 
 NTSTATUS NTAPI TerminatorTP1(
     _In_ HANDLE ProcessId
@@ -77,7 +67,7 @@ NTSTATUS NTAPI TerminatorTP2(
             0,
             0,
             0,
-            (PUSER_THREAD_START_ROUTINE)GetExitProcessFunction(),
+            PhGetModuleProcAddress(L"ntdll.dll", "RtlExitUserProcess"),
             NULL,
             NULL,
             NULL
@@ -151,9 +141,6 @@ NTSTATUS NTAPI TerminatorTT2(
     PVOID processes;
     PSYSTEM_PROCESS_INFORMATION process;
     CONTEXT context;
-    PVOID exitProcess;
-
-    exitProcess = GetExitProcessFunction();
 
     if (!NT_SUCCESS(status = PhEnumProcesses(&processes)))
         return status;
@@ -179,12 +166,12 @@ NTSTATUS NTAPI TerminatorTT2(
 #ifdef _M_IX86
             context.ContextFlags = CONTEXT_CONTROL;
             Ph2GetThreadContext(threadHandle, &context);
-            context.Eip = (ULONG)exitProcess;
+            context.Eip = (ULONG)PhGetModuleProcAddress(L"ntdll.dll", "RtlExitUserProcess");
             Ph2SetThreadContext(threadHandle, &context);
 #else
             context.ContextFlags = CONTEXT_CONTROL;
             Ph2GetThreadContext(threadHandle, &context);
-            context.Rip = (ULONG64)exitProcess;
+            context.Rip = (ULONG64)PhGetModuleProcAddress(L"ntdll.dll", "RtlExitUserProcess");
             Ph2SetThreadContext(threadHandle, &context);
 #endif
 

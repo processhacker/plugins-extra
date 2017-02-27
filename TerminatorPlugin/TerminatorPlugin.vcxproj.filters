@@ -18,9 +18,6 @@
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="termator.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="kph2.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -31,6 +28,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="dialog.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="terminator.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

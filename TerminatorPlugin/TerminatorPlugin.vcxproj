@@ -68,7 +68,7 @@
     <ClCompile Include="kph2.c" />
     <ClCompile Include="kph2data.c" />
     <ClCompile Include="phapi.c" />
-    <ClCompile Include="termator.c" />
+    <ClCompile Include="terminator.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
