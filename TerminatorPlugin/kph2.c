@@ -23,6 +23,7 @@
 
 #include "main.h"
 #include "kph2user.h"
+#include <hndlinfo.h>
 
 HANDLE PhKph2Handle = NULL;
 
@@ -179,119 +180,252 @@ SetValuesEnd:
     return status;
 }
 
-NTSTATUS Kph2Install(
-    _In_ PKPH_PARAMETERS Parameters
+static NTSTATUS Kph2Extract(
+    _In_ PPH_STRING KphFileName
     )
 {
-    static UNICODE_STRING keyName = RTL_CONSTANT_STRING(L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\kph2");
-    static PH_STRINGREF keyShort = PH_STRINGREF_INIT(L"System\\CurrentControlSet\\Services\\kph2");
-    NTSTATUS status;
-    ULONG parameters;
-    ULONG disposition;
-    HANDLE tokenHandle = NULL;
-    HANDLE keyHandle = NULL;
-    PPH_STRING directory = NULL;
-    PPH_STRING path = NULL;
-    PPH_STRING kprocesshackerFileName = NULL;
-    UNICODE_STRING fileName;
-    UNICODE_STRING valueName;
+    NTSTATUS status = STATUS_FAIL_CHECK;
+    HANDLE fileHandle = NULL;
+    HANDLE sectionHandle = NULL;
+    PVOID viewBase = NULL;
+    PVOID fileResource;
+    HRSRC resourceHandle;
+    HGLOBAL fileResourceHandle;
+    SIZE_T viewSize = 0;
+    SIZE_T resourceLength;
+    LARGE_INTEGER maximumSize;
 
-    directory = PhGetApplicationDirectory();
-    path = PhIsExecutingInWow64() ? PhCreateString(KPH_PATH32) : PhCreateString(KPH_PATH64);
-    kprocesshackerFileName = PhConcatStringRef2(&directory->sr, &path->sr);
-
-    if (NT_SUCCESS(NtOpenProcessToken(
-        NtCurrentProcess(),
-        TOKEN_ADJUST_PRIVILEGES,
-        &tokenHandle
-        )))
-    {
-        PhSetTokenPrivilege(tokenHandle, L"SeLoadDriverPrivilege", NULL, SE_PRIVILEGE_ENABLED);
-        NtClose(tokenHandle);
-    }
-
-    if (!NT_SUCCESS(status = PhCreateKey(
-        &keyHandle,
-        KEY_WRITE,
-        PH_KEY_LOCAL_MACHINE,
-        &keyShort,
-        0,
-        0,
-        &disposition
+    if (!(resourceHandle = FindResource(
+        PluginInstance->DllBase,
+        PhIsExecutingInWow64() ? MAKEINTRESOURCE(IDR_KPH2_32) : MAKEINTRESOURCE(IDR_KPH2_64),
+        RT_RCDATA
         )))
     {
         goto CleanupExit;
     }
 
-    if (!NT_SUCCESS(status = RtlDosPathNameToNtPathName_U_WithStatus(
-        kprocesshackerFileName->Buffer,
-        &fileName,
+    if (!(fileResourceHandle = LoadResource(PluginInstance->DllBase, resourceHandle)))
+        goto CleanupExit;
+
+    if (!(fileResource = LockResource(fileResourceHandle)))
+        goto CleanupExit;
+
+    resourceLength = (SIZE_T)SizeofResource(PluginInstance->DllBase, resourceHandle);
+    maximumSize.QuadPart = resourceLength;
+
+    if (!NT_SUCCESS(status = PhCreateFileWin32(
+        &fileHandle,
+        PhGetString(KphFileName),
+        FILE_ALL_ACCESS,
+        0,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        FILE_OVERWRITE_IF,
+        FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
+        )))
+    {
+        goto CleanupExit;
+    }
+
+    if (!NT_SUCCESS(status = NtCreateSection(
+        &sectionHandle,
+        SECTION_ALL_ACCESS,
         NULL,
+        &maximumSize,
+        PAGE_READWRITE,
+        SEC_COMMIT,
+        fileHandle
+        )))
+    {
+        goto CleanupExit;
+    }
+
+    if (!NT_SUCCESS(status = NtMapViewOfSection(
+        sectionHandle,
+        NtCurrentProcess(),
+        &viewBase,
+        0,
+        0,
+        NULL,
+        &viewSize,
+        ViewShare,
+        0,
+        PAGE_READWRITE
+        )))
+    {
+        goto CleanupExit;
+    }
+
+    RtlCopyMemory(viewBase, fileResource, resourceLength);
+
+CleanupExit:
+
+    if (viewBase)
+        NtUnmapViewOfSection(NtCurrentProcess(), viewBase);
+
+    if (sectionHandle)
+        NtClose(sectionHandle);
+
+    if (fileHandle)
+        NtClose(fileHandle);
+
+    if (resourceHandle)
+        FreeResource(resourceHandle);
+
+    return status;
+}
+
+NTSTATUS Kph2Install(
+    _In_ PKPH_PARAMETERS Parameters
+    )
+{
+    static PH_STRINGREF keyNameSr = PH_STRINGREF_INIT(L"System\\CurrentControlSet\\Services\\kph2");
+    NTSTATUS status;
+    ULONG parameters;
+    ULONG disposition;
+    HANDLE tokenHandle = NULL;
+    HANDLE keyHandle = NULL;
+    PPH_STRING directory;
+    PPH_STRING path;
+    PPH_STRING kphFileName;
+    PPH_STRING keyPathName = NULL;
+    UNICODE_STRING fileName = { 0 };
+    UNICODE_STRING valueName;
+    UNICODE_STRING keyNameUs;
+
+    directory = PhGetApplicationDirectory();
+    path = PhIsExecutingInWow64() ? PhCreateString(KPH_PATH32) : PhCreateString(KPH_PATH64);
+    kphFileName = PhConcatStringRef2(&directory->sr, &path->sr);
+
+    if (!RtlDoesFileExists_U(kphFileName->Buffer))
+    {
+        if (!NT_SUCCESS(status = Kph2Extract(kphFileName)))
+            goto CleanupExit;
+    }
+    
+    if (NT_SUCCESS(status = NtOpenProcessToken(
+        NtCurrentProcess(),
+        TOKEN_ADJUST_PRIVILEGES,
+        &tokenHandle
+        )))
+    {
+        PhSetTokenPrivilege(tokenHandle, SE_LOAD_DRIVER_NAME, NULL, SE_PRIVILEGE_ENABLED);
+        NtClose(tokenHandle);
+    }
+
+    if (!NT_SUCCESS(status = PhOpenKey(
+        &keyHandle, 
+        KEY_READ,
+        NULL, 
+        &keyNameSr, 
+        0
+        )))
+    {
+        if (!NT_SUCCESS(status = PhCreateKey(
+            &keyHandle,
+            KEY_WRITE,
+            PH_KEY_LOCAL_MACHINE,
+            &keyNameSr,
+            0,
+            0,
+            &disposition
+            )))
+        {
+            goto CleanupExit;
+        }
+
+        if (!NT_SUCCESS(status = RtlDosPathNameToNtPathName_U_WithStatus(
+            kphFileName->Buffer,
+            &fileName,
+            NULL,
+            NULL
+            )))
+        {
+            goto CleanupExit;
+        }
+
+        RtlInitUnicodeString(&valueName, L"Type");
+        parameters = SERVICE_KERNEL_DRIVER;
+        if (!NT_SUCCESS(status = NtSetValueKey(
+            keyHandle,
+            &valueName,
+            0,
+            REG_DWORD,
+            &parameters,
+            sizeof(ULONG)
+            )))
+        {
+            goto CleanupExit;
+        }
+
+        RtlInitUnicodeString(&valueName, L"ErrorControl");
+        parameters = SERVICE_KERNEL_DRIVER;
+        if (!NT_SUCCESS(status = NtSetValueKey(
+            keyHandle,
+            &valueName,
+            0,
+            REG_DWORD,
+            &parameters,
+            sizeof(ULONG)
+            )))
+        {
+            goto CleanupExit;
+        }
+
+        RtlInitUnicodeString(&valueName, L"Start");
+        parameters = SERVICE_DEMAND_START;
+        if (!NT_SUCCESS(status = NtSetValueKey(
+            keyHandle,
+            &valueName,
+            0,
+            REG_DWORD,
+            &parameters,
+            sizeof(ULONG)
+            )))
+        {
+            goto CleanupExit;
+        }
+
+        RtlInitUnicodeString(&valueName, L"ImagePath");
+        if (!NT_SUCCESS(status = NtSetValueKey(
+            keyHandle,
+            &valueName,
+            0,
+            REG_EXPAND_SZ,
+            fileName.Buffer,
+            (ULONG)fileName.MaximumLength
+            )))
+        {
+            goto CleanupExit;
+        }
+    }
+
+    if (Parameters && !NT_SUCCESS(status = Kph2SetParameters(Parameters)))
+        goto CleanupExit;
+
+    if (!NT_SUCCESS(status = PhGetHandleInformation(
+        NtCurrentProcess(),
+        keyHandle,
+        -1,
+        NULL,
+        NULL,
+        &keyPathName,
         NULL
         )))
     {
         goto CleanupExit;
     }
 
-    RtlInitUnicodeString(&valueName, L"Type");
-    parameters = SERVICE_KERNEL_DRIVER;
-    if (!NT_SUCCESS(status = NtSetValueKey(
-        keyHandle,
-        &valueName,
-        0,
-        REG_DWORD,
-        &parameters,
-        sizeof(ULONG)
-        )))
-    {
+    if (!PhStringRefToUnicodeString(&keyPathName->sr, &keyNameUs))
         goto CleanupExit;
-    }
 
-    RtlInitUnicodeString(&valueName, L"ErrorControl");
-    parameters = SERVICE_KERNEL_DRIVER;
-    if (!NT_SUCCESS(status = NtSetValueKey(
-        keyHandle,
-        &valueName,
-        0,
-        REG_DWORD,
-        &parameters,
-        sizeof(ULONG)
-        )))
-    {
-        goto CleanupExit;
-    }
+    //if (!NT_SUCCESS(status = NtUnloadDriver(&keyNameUs)))
+    //    status = STATUS_SUCCESS;
 
-    RtlInitUnicodeString(&valueName, L"Start");
-    parameters = SERVICE_DEMAND_START;
-    if (!NT_SUCCESS(status = NtSetValueKey(
-        keyHandle,
-        &valueName,
-        0,
-        REG_DWORD,
-        &parameters,
-        sizeof(ULONG)
-        )))
-    {
-        goto CleanupExit;
-    }
-
-    RtlInitUnicodeString(&valueName, L"ImagePath");
-    if (!NT_SUCCESS(status = NtSetValueKey(
-        keyHandle,
-        &valueName,
-        0, 
-        REG_EXPAND_SZ,
-        fileName.Buffer,
-        (ULONG)fileName.MaximumLength
-        )))
-    {
-        goto CleanupExit;
-    }
-
-    if ((status = NtLoadDriver(&keyName)) == STATUS_IMAGE_ALREADY_LOADED)
+    if ((status = NtLoadDriver(&keyNameUs)) == STATUS_IMAGE_ALREADY_LOADED)
         status = STATUS_SUCCESS;
 
 CleanupExit:
+
     if (keyHandle)
         NtClose(keyHandle);
 
@@ -301,8 +435,11 @@ CleanupExit:
     if (path)
         PhDereferenceObject(path);
 
-    if (kprocesshackerFileName)
-        PhDereferenceObject(kprocesshackerFileName);
+    if (kphFileName)
+        PhDereferenceObject(kphFileName);
+
+    if (keyPathName)
+        PhDereferenceObject(keyPathName);
 
     if (fileName.Buffer)
         RtlFreeHeap(GetProcessHeap(), 0, fileName.Buffer);
@@ -314,26 +451,46 @@ NTSTATUS Kph2Uninstall(
     VOID
     )
 {
-    static UNICODE_STRING keyName = RTL_CONSTANT_STRING(L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\kph2");
-    static PH_STRINGREF keyShort = PH_STRINGREF_INIT(L"System\\CurrentControlSet\\Services\\kph2");
+    static PH_STRINGREF keyNameSr = PH_STRINGREF_INIT(L"System\\CurrentControlSet\\Services\\kph2");
     NTSTATUS status;
     HANDLE keyHandle;
+    PPH_STRING keyPathName;
+    UNICODE_STRING keyNameUs;
 
     if (!NT_SUCCESS(status = PhOpenKey(
         &keyHandle,
-        KEY_ALL_ACCESS, // KEY_WRITE | DELETE
+        KEY_WRITE | DELETE,
         PH_KEY_LOCAL_MACHINE,
-        &keyShort,
+        &keyNameSr,
         0
         )))
     {
         return status;
     }
 
-    status = NtUnloadDriver(&keyName);
+    if (!NT_SUCCESS(status = PhGetHandleInformation(
+        NtCurrentProcess(),
+        keyHandle,
+        -1,
+        NULL,
+        NULL,
+        &keyPathName,
+        NULL
+        )))
+    {
+        NtClose(keyHandle);
+        return status;
+    }
 
-    NtDeleteKey(keyHandle);
+    PhStringRefToUnicodeString(&keyPathName->sr, &keyNameUs);
+
+    if (NT_SUCCESS(status = NtUnloadDriver(&keyNameUs)))
+    {
+        NtDeleteKey(keyHandle);
+    }
+
     NtClose(keyHandle);
+    PhDereferenceObject(keyPathName);
     return status;
 }
 

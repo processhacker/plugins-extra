@@ -84,5 +84,9 @@
     <ClInclude Include="phapi.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="resources\kprocesshacker2_x32.sys" />
+    <None Include="resources\kprocesshacker2_x64.sys" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -130,6 +130,16 @@ BEGIN
     0
 END
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RCDATA
+//
+
+IDR_KPH2_32             RCDATA                  "resources\\kprocesshacker2_x32.sys"
+
+IDR_KPH2_64             RCDATA                  "resources\\kprocesshacker2_x64.sys"
+
 #endif    // English (Australia) resources
 /////////////////////////////////////////////////////////////////////////////
 

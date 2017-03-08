@@ -59,4 +59,8 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="resources\kprocesshacker2_x32.sys" />
+    <None Include="resources\kprocesshacker2_x64.sys" />
+  </ItemGroup>
 </Project>

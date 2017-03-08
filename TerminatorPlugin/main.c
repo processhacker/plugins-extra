@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Terminator Plugin
  *
- * Copyright (C) 2016 dmex
+ * Copyright (C) 2016-2017 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -85,7 +85,7 @@ LOGICAL DllMain(
 
         info->DisplayName = L"Terminator";
         info->Description = L"Terminator";
-        info->Author = L"dmex";
+        info->Author = L"wj32, dmex";
 
         PhRegisterCallback(
             PhGetPluginCallback(PluginInstance, PluginCallbackMenuItem),
