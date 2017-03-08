@@ -20,12 +20,14 @@
  * along with Process Hacker.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma comment(lib, "cfgmgr32.lib")
+#pragma comment(lib, "Setupapi.lib")
+
 #define INITGUID
 #include "main.h"
 #include "nvapi\nvapi.h"
 #include "nvidia.h"
-
-#pragma comment(lib, "Setupapi.lib")
+#include <cfgmgr32.h>
 #include <Setupapi.h>
 #include <Ntddvdeo.h>
 #include <devpkey.h>
@@ -93,21 +95,15 @@ BOOLEAN InitializeNvApi(VOID)
         return FALSE;
 #endif
     
-    // Retrieve the NvAPI_QueryInterface function address
     if (!(NvAPI_QueryInterface = PhGetProcedureAddress(NvApiLibrary, "nvapi_QueryInterface", 0)))
         return FALSE;
 
-    // Initialization functions
     if (!(NvAPI_Initialize = NvAPI_QueryInterface(0x150E828UL)))
         return FALSE;
     if (!(NvAPI_Unload = NvAPI_QueryInterface(0xD22BDD7EUL)))
         return FALSE;
-
-    // Error functions
     if (!(NvAPI_GetErrorMessage = NvAPI_QueryInterface(0x6C2D048CUL)))
         return FALSE;
-
-    // Handle functions
     if (!(NvAPI_EnumPhysicalGPUs = NvAPI_QueryInterface(0xE5AC921FUL)))
         return FALSE;
     if (!(NvAPI_EnumNvidiaDisplayHandle = NvAPI_QueryInterface(0x9ABDD40DUL)))
@@ -141,7 +137,6 @@ BOOLEAN InitializeNvApi(VOID)
     NvAPI_GPU_GetRamMaker = NvAPI_QueryInterface(0x42AEA16AUL);
     NvAPI_GPU_GetFoundry = NvAPI_QueryInterface(0x5D857A00UL);
 
-
     //NvAPI_GetDisplayDriverMemoryInfo = NvAPI_QueryInterface(0x774AA982);
     //NvAPI_GetPhysicalGPUsFromDisplay = NvAPI_QueryInterface(0x34EF9506);
     NvAPI_GetDisplayDriverVersion = NvAPI_QueryInterface(0xF951A4D1UL);
@@ -162,45 +157,33 @@ BOOLEAN InitializeNvApi(VOID)
     NvAPI_GPU_GetFBWidthAndLocation = NvAPI_QueryInterface(0x11104158UL);
     NvAPI_GPU_ClientPowerTopologyGetStatus = NvAPI_QueryInterface(0x0EDCF624EUL);
 
-    typedef NvAPI_Status(__cdecl *_NvAPI_GetDisplayDriverBuildTitle)(_In_ NvDisplayHandle hNvDisplay, NvAPI_ShortString pDriverBuildTitle);
-    _NvAPI_GetDisplayDriverBuildTitle NvAPI_GetDisplayDriverBuildTitle;
-    NvAPI_GetDisplayDriverBuildTitle = NvAPI_QueryInterface(0x7562E947);
-
-    typedef NvAPI_Status(__cdecl *_NvAPI_GetDisplayDriverCompileType)(_In_ NvDisplayHandle hNvDisplay, NvU32* pDriverCompileType);
-    _NvAPI_GetDisplayDriverCompileType NvAPI_GetDisplayDriverCompileType;
-    NvAPI_GetDisplayDriverCompileType = NvAPI_QueryInterface(0x988AEA78);
-
-    typedef NvAPI_Status(__cdecl *_NvAPI_GetDisplayDriverSecurityLevel)(_In_ NvDisplayHandle hNvDisplay, NvU32* pDriverSecurityLevel);
-    _NvAPI_GetDisplayDriverSecurityLevel NvAPI_GetDisplayDriverSecurityLevel;
-    NvAPI_GetDisplayDriverSecurityLevel = NvAPI_QueryInterface(0x9D772BBA);
-
-    typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetVPECount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pVPECount);
-    _NvAPI_GPU_GetVPECount NvAPI_GPU_GetVPECount;
-    NvAPI_GPU_GetVPECount = NvAPI_QueryInterface(0xD8CBF37B);
-
-    //typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetExtendedMinorRevision)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pRamBankCount);
+    typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverBuildTitle)(_In_ NvDisplayHandle hNvDisplay, NvAPI_ShortString pDriverBuildTitle);
+    typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverCompileType)(_In_ NvDisplayHandle hNvDisplay, NvU32* pDriverCompileType);
+    typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverSecurityLevel)(_In_ NvDisplayHandle hNvDisplay, NvU32* pDriverSecurityLevel);
+    typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetVPECount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pVPECount);
+    typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetSerialNumber)(_In_ NvPhysicalGpuHandle hPhysicalGPU, PBYTE pRamBankCount);
+    //typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetExtendedMinorRevision)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pRamBankCount);
     //_NvAPI_GPU_GetExtendedMinorRevision NvAPI_GPU_GetExtendedMinorRevision;
     //NvAPI_GPU_GetExtendedMinorRevision = NvAPI_QueryInterface(0x025F17421);
+    //typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetTargetID)(_In_ NvPhysicalGpuHandle hPhysicalGPU, PBYTE pRamBankCount);
+    //_NvAPI_GPU_GetTargetID NvAPI_GPU_GetTargetID;
+    //NvAPI_GPU_GetTargetID = NvAPI_QueryInterface(0x35B5FD2F);
+    _NvAPI_GPU_GetSerialNumber NvAPI_GPU_GetSerialNumber;
+    _NvAPI_GPU_GetVPECount NvAPI_GPU_GetVPECount;
+    _NvAPI_GetDisplayDriverBuildTitle NvAPI_GetDisplayDriverBuildTitle;
+    _NvAPI_GetDisplayDriverCompileType NvAPI_GetDisplayDriverCompileType;
+    _NvAPI_GetDisplayDriverSecurityLevel NvAPI_GetDisplayDriverSecurityLevel;
 
-    //typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetSerialNumber)(_In_ NvPhysicalGpuHandle hPhysicalGPU, PBYTE pRamBankCount);
-    //_NvAPI_GPU_GetSerialNumber NvAPI_GPU_GetSerialNumber;
-    //NvAPI_GPU_GetSerialNumber = NvAPI_QueryInterface(0x14B83A5F);
-
-    typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetTargetID)(_In_ NvPhysicalGpuHandle hPhysicalGPU, PBYTE pRamBankCount);
-    _NvAPI_GPU_GetTargetID NvAPI_GPU_GetTargetID;
-    NvAPI_GPU_GetTargetID = NvAPI_QueryInterface(0x35B5FD2F);
+    NvAPI_GetDisplayDriverBuildTitle = NvAPI_QueryInterface(0x7562E947);
+    NvAPI_GetDisplayDriverCompileType = NvAPI_QueryInterface(0x988AEA78);
+    NvAPI_GetDisplayDriverSecurityLevel = NvAPI_QueryInterface(0x9D772BBA);
+    NvAPI_GPU_GetVPECount = NvAPI_QueryInterface(0xD8CBF37B);
+    NvAPI_GPU_GetSerialNumber = NvAPI_QueryInterface(0x14B83A5F);
 
     if (NvAPI_Initialize() == NVAPI_OK)
     {
         NvGpuEnumPhysicalHandles();
         NvGpuEnumDisplayHandles();
-
-        BYTE buffer[260] = { 0 };
-        NvAPI_Status status = NvAPI_GPU_GetTargetID(
-            NvGpuPhysicalHandleList->Items[0],
-            buffer
-            );
-
         return TRUE;
     }
 
@@ -213,13 +196,13 @@ BOOLEAN DestroyNvApi(VOID)
 
     if (NvGpuDisplayHandleList)
     {
-        //PhClearList(NvGpuDisplayHandleList);
+        PhClearList(NvGpuDisplayHandleList);
         PhDereferenceObject(NvGpuDisplayHandleList);
     }
 
     if (NvGpuPhysicalHandleList)
     {
-        //PhClearList(NvGpuPhysicalHandleList);
+        PhClearList(NvGpuPhysicalHandleList);
         PhDereferenceObject(NvGpuPhysicalHandleList);
     }
 
@@ -241,8 +224,7 @@ PPH_STRING NvGpuQueryDriverVersion(VOID)
 
         if (NvAPI_SYS_GetDriverAndBranchVersion(&driverVersion, driverAndBranchString) == NVAPI_OK)
         {
-            return PhFormatString(
-                L"%lu.%lu [%hs]", 
+            return PhFormatString(L"%lu.%lu [%hs]", 
                 driverVersion / 100, 
                 driverVersion % 100, 
                 driverAndBranchString
@@ -256,8 +238,7 @@ PPH_STRING NvGpuQueryDriverVersion(VOID)
 
         if (NvAPI_GetDisplayDriverVersion(NvGpuDisplayHandleList->Items[0], &nvDisplayDriverVersion) == NVAPI_OK)
         {
-            return PhFormatString(
-                L"%lu.%lu [%hs]", 
+            return PhFormatString(L"%lu.%lu [%hs]", 
                 nvDisplayDriverVersion.drvVersion / 100, 
                 nvDisplayDriverVersion.drvVersion % 100,
                 nvDisplayDriverVersion.szBuildBranchString
@@ -332,8 +313,8 @@ PPH_STRING NvGpuQueryRevision(VOID)
 
 PPH_STRING NvGpuQueryRamType(VOID)
 {
-    PPH_STRING ramTypeString = NULL;
-    PPH_STRING ramMakerString = NULL;
+    PWSTR ramTypeString = NULL;
+    PWSTR ramMakerString = NULL;
     NV_RAM_TYPE nvRamType = NV_RAM_TYPE_NONE;
     NV_RAM_MAKER nvRamMaker = NV_RAM_MAKER_NONE;
 
@@ -350,75 +331,75 @@ PPH_STRING NvGpuQueryRamType(VOID)
     switch (nvRamType)
     {
     case NV_RAM_TYPE_SDRAM:
-        ramTypeString = PhaCreateString(L"SDRAM");
+        ramTypeString = L"SDRAM";
         break;
     case NV_RAM_TYPE_DDR1:
-        ramTypeString = PhaCreateString(L"DDR1");
+        ramTypeString = L"DDR1";
         break;
     case NV_RAM_TYPE_DDR2:
-        ramTypeString = PhaCreateString(L"DDR2");
+        ramTypeString = L"DDR2";
         break;
     case NV_RAM_TYPE_GDDR2:
-        ramTypeString = PhaCreateString(L"GDDR2");
+        ramTypeString = L"GDDR2";
         break;
     case NV_RAM_TYPE_GDDR3:
-        ramTypeString = PhaCreateString(L"GDDR3");
+        ramTypeString = L"GDDR3";
         break;
     case NV_RAM_TYPE_GDDR4:
-        ramTypeString = PhaCreateString(L"GDDR4");
+        ramTypeString = L"GDDR4";
         break;
     case NV_RAM_TYPE_DDR3:
-        ramTypeString = PhaCreateString(L"DDR3");
+        ramTypeString = L"DDR3";
         break;
     case NV_RAM_TYPE_GDDR5:
-        ramTypeString = PhaCreateString(L"GDDR5");
+        ramTypeString = L"GDDR5";
         break;
     case NV_RAM_TYPE_LPDDR2:
-        ramTypeString = PhaCreateString(L"LPDDR2");
+        ramTypeString = L"LPDDR2";
         break;
     default:
-        ramTypeString = PhaFormatString(L"Unknown: %lu", nvRamType);
+        ramTypeString = PhaFormatString(L"%lu", nvRamType)->Buffer;
         break;
     }
 
     switch (nvRamMaker)
     {
     case NV_RAM_MAKER_SAMSUNG:
-        ramMakerString = PhaCreateString(L"Samsung");
+        ramMakerString = L"Samsung";
         break;
     case NV_RAM_MAKER_QIMONDA:
-        ramMakerString = PhaCreateString(L"Qimonda");
+        ramMakerString = L"Qimonda";
         break;
     case NV_RAM_MAKER_ELPIDA:
-        ramMakerString = PhaCreateString(L"Elpida");
+        ramMakerString = L"Elpida";
         break;
     case NV_RAM_MAKER_ETRON:
-        ramMakerString = PhaCreateString(L"Etron");
+        ramMakerString = L"Etron";
         break;
     case NV_RAM_MAKER_NANYA:
-        ramMakerString = PhaCreateString(L"Nanya");
+        ramMakerString = L"Nanya";
         break;
     case NV_RAM_MAKER_HYNIX:
-        ramMakerString = PhaCreateString(L"Hynix");
+        ramMakerString = L"Hynix";
         break;
     case NV_RAM_MAKER_MOSEL:
-        ramMakerString = PhaCreateString(L"Mosel");
+        ramMakerString = L"Mosel";
         break;
     case NV_RAM_MAKER_WINBOND:
-        ramMakerString = PhaCreateString(L"Winbond");
+        ramMakerString = L"Winbond";
         break;
     case NV_RAM_MAKER_ELITE:
-        ramMakerString = PhaCreateString(L"Elite");
+        ramMakerString = L"Elite";
         break;
     case NV_RAM_MAKER_MICRON:
-        ramMakerString = PhaCreateString(L"Micron");
+        ramMakerString = L"Micron";
         break;
     default:
-        ramMakerString = PhaFormatString(L"Unknown: %lu", nvRamMaker);
+        ramMakerString = PhaFormatString(L"%lu", nvRamMaker)->Buffer;
         break;
     }
 
-    return PhFormatString(L"%s (%s)", ramTypeString->Buffer, ramMakerString->Buffer);
+    return PhFormatString(L"%s (%s)", ramTypeString, ramMakerString);
 }
 
 PPH_STRING NvGpuQueryFoundry(VOID)
@@ -444,7 +425,7 @@ PPH_STRING NvGpuQueryFoundry(VOID)
             case NV_FOUNDRY_TOSHIBA:
                 return PhCreateString(L"Toshiba Corporation");
             default:
-                return PhFormatString(L"Unknown: %lu", nvFoundryType);
+                return PhFormatString(L"%lu", nvFoundryType);
             }
         }
     }
@@ -474,22 +455,20 @@ PPH_STRING NvGpuQueryRopsCount(VOID)
 {
     if (NvAPI_GPU_GetPartitionCount)
     {
-        NvU32 pCount = 0;
+        NvU32 value = 0;
 
-        if (NvAPI_GPU_GetPartitionCount(NvGpuPhysicalHandleList->Items[0], &pCount) == NVAPI_OK)
+        if (NvAPI_GPU_GetPartitionCount(NvGpuPhysicalHandleList->Items[0], &value) == NVAPI_OK)
         {
             if (GpuArchType >= 0x120)
             {
-                return PhFormatString(L"%lu", pCount * 16);
+                return PhFormatString(L"%lu", value * 16);
             }
             else if (GpuArchType >= 0x0c0)
             {
-                return PhFormatString(L"%lu", pCount * 8);
+                return PhFormatString(L"%lu", value * 8);
             }
-            else
-            {
-                return PhFormatString(L"%lu", pCount * 4);
-            }
+             
+            return PhFormatString(L"%lu", value * 4);
         }
     }
 
@@ -500,11 +479,11 @@ PPH_STRING NvGpuQueryShaderCount(VOID)
 {
     if (NvAPI_GPU_GetGpuCoreCount)
     {
-        NvU32 pCount = 0;
+        NvU32 value = 0;
 
-        if (NvAPI_GPU_GetGpuCoreCount(NvGpuPhysicalHandleList->Items[0], &pCount) == NVAPI_OK)
+        if (NvAPI_GPU_GetGpuCoreCount(NvGpuPhysicalHandleList->Items[0], &value) == NVAPI_OK)
         {
-            return PhFormatString(L"%lu Unified", pCount);
+            return PhFormatString(L"%lu Unified", value);
         }
     }
 
@@ -534,12 +513,12 @@ PPH_STRING NvGpuQueryBusWidth(VOID)
 {
     if (NvAPI_GPU_GetFBWidthAndLocation)
     {
-        NvU32 pWidth = 0;
-        NvU32 pLocation = 0;
+        NvU32 width = 0;
+        NvU32 location = 0;
 
-        if (NvAPI_GPU_GetFBWidthAndLocation(NvGpuPhysicalHandleList->Items[0], &pWidth, &pLocation) == NVAPI_OK)
+        if (NvAPI_GPU_GetFBWidthAndLocation(NvGpuPhysicalHandleList->Items[0], &width, &location) == NVAPI_OK)
         {
-            return PhFormatString(L"%lu Bit", pWidth);
+            return PhFormatString(L"%lu Bit", width);
         }
     }
 
@@ -557,12 +536,9 @@ PPH_STRING NvGpuQueryPcbValue(VOID)
         {
             for (NvU32 i = 0; i < nvPowerTopologyStatus.count; i++)
             {
-                NV_POWER_TOPOLOGY_2 powerTopology = nvPowerTopologyStatus.unknown[i];
+                NV_POWER_TOPOLOGY_2 powerTopology = nvPowerTopologyStatus.unknown[i]; 
 
-                if (powerTopology.flags == NV_POWER_TOPOLOGY_FLAG_UNKNOWN2)
-                {
-                    return PhFormatString(L"PMU: %.2f%%", (FLOAT)powerTopology.unknown.unknown2 / 1000);
-                }
+                return PhFormatString(L"%lu", powerTopology.unknown.unknown2);    
             }
         }
     }
@@ -659,243 +635,263 @@ PPH_STRING NvGpuQueryDriverSettings(VOID)
 }
 
 
-
 BOOLEAN NvGpuDriverIsWHQL(VOID)
 {
     BOOLEAN nvGpuDriverIsWHQL = FALSE;
+    HANDLE keyHandle = NULL;
+    HANDLE keyServiceHandle = NULL;
+    PWSTR deviceInterfaceList = NULL;
+    ULONG deviceInterfaceListLength = 0;
+    PWSTR deviceInterface;
+    PPH_STRING keyPath = NULL;
+    PPH_STRING matchingDeviceIdString;
+    PPH_STRING keyServicePath;
     NvAPI_LongString nvNameAnsiString = "";
 
-    HANDLE keyHandle;
-    //HANDLE keySettingsHandle;
+    if (!NvAPI_GetDisplayDriverRegistryPath)
+        goto CleanupExit;
 
-    PPH_STRING keyPath;
-    PPH_STRING matchingDeviceIdString;
-    //PPH_STRING keySettingsPath;
-    PPH_STRING keyServicePath;
+    if (NvAPI_GetDisplayDriverRegistryPath(NvGpuDisplayHandleList->Items[0], nvNameAnsiString) != NVAPI_OK)
+        goto CleanupExit;
 
-    WCHAR displayInstancePath[DOS_MAX_PATH_LENGTH] = L"";
+    keyPath = PhConvertMultiByteToUtf16(nvNameAnsiString);
 
-    HDEVINFO deviceInfoHandle = INVALID_HANDLE_VALUE;
-    SP_DEVICE_INTERFACE_DATA deviceInterfaceData = { sizeof(SP_DEVICE_INTERFACE_DATA) };
-    SP_DEVINFO_DATA deviceInfoData = { sizeof(SP_DEVINFO_DATA) };
-    PSP_DEVICE_INTERFACE_DETAIL_DATA deviceInterfaceDetail = NULL;
-    ULONG deviceInfoLength = 0;
-
-    __try
+    if (!NT_SUCCESS(PhOpenKey(
+        &keyHandle,
+        KEY_READ,
+        PH_KEY_LOCAL_MACHINE,
+        &keyPath->sr,
+        0
+        )))
     {
-        if (!NvAPI_GetDisplayDriverRegistryPath)
-            __leave;
+        goto CleanupExit;
+    }
 
-        if (NvAPI_GetDisplayDriverRegistryPath(NvGpuDisplayHandleList->Items[0], nvNameAnsiString) != NVAPI_OK)
-            __leave;
+    matchingDeviceIdString = PhQueryRegistryString(keyHandle, L"MatchingDeviceId");
+    //keySettingsPath = PhConcatStrings2(keyPath->Buffer, L"\\VolatileSettings");
 
-        keyPath = PhConvertMultiByteToUtf16(nvNameAnsiString);
+    //if (NT_SUCCESS(PhOpenKey(
+    //    &keySettingsHandle,
+    //    KEY_READ,
+    //    PH_KEY_LOCAL_MACHINE,
+    //    &keySettingsPath->sr,
+    //    0
+    //    )))
+    //{
+    //    GUID settingsKey = GUID_DEVINTERFACE_DISPLAY_ADAPTER;
+    //    PPH_STRING guidString = PhFormatGuid(&settingsKey);
+    //
+    //    ULONG dwType = REG_BINARY;
+    //    LONG length = DOS_MAX_PATH_LENGTH;
+    //
+    //    if (RegQueryValueEx(
+    //        keySettingsHandle,
+    //        guidString->Buffer,
+    //        0,
+    //        &dwType,
+    //        (PBYTE)displayInstancePath,
+    //        &length
+    //        ) != ERROR_SUCCESS)
+    //    {
+    //        //__leave;
+    //    }
+    //
+    //    NtClose(keySettingsHandle);
+    //    PhDereferenceObject(guidString);
+    //}
 
-        if (!NT_SUCCESS(PhOpenKey(
-            &keyHandle,
+    if (CM_Get_Device_Interface_List_Size(
+        &deviceInterfaceListLength,
+        (PGUID)&GUID_DEVINTERFACE_DISPLAY_ADAPTER,
+        NULL,
+        CM_GET_DEVICE_INTERFACE_LIST_PRESENT
+        ) != CR_SUCCESS)
+    {
+        return FALSE;
+    }
+
+    deviceInterfaceList = PhAllocate(deviceInterfaceListLength * sizeof(WCHAR));
+    memset(deviceInterfaceList, 0, deviceInterfaceListLength * sizeof(WCHAR));
+
+    if (CM_Get_Device_Interface_List(
+        (PGUID)&GUID_DEVINTERFACE_DISPLAY_ADAPTER,
+        NULL,
+        deviceInterfaceList,
+        deviceInterfaceListLength,
+        CM_GET_DEVICE_INTERFACE_LIST_PRESENT
+        ) != CR_SUCCESS)
+    {
+        PhFree(deviceInterfaceList);
+        return FALSE;
+    }
+
+    for (deviceInterface = deviceInterfaceList; *deviceInterface; deviceInterface += PhCountStringZ(deviceInterface) + 1)
+    {
+        CONFIGRET result;
+        PPH_STRING string;
+        ULONG bufferSize;
+        DEVPROPTYPE devicePropertyType;
+        DEVINST deviceInstanceHandle;
+        ULONG deviceInstanceIdLength = MAX_DEVICE_ID_LEN;
+        WCHAR deviceInstanceId[MAX_DEVICE_ID_LEN];
+
+        if (CM_Get_Device_Interface_Property(
+            deviceInterface,
+            &DEVPKEY_Device_InstanceId,
+            &devicePropertyType,
+            (PBYTE)deviceInstanceId,
+            &deviceInstanceIdLength,
+            0
+            ) != CR_SUCCESS)
+        {
+            continue;
+        }
+
+        if (CM_Locate_DevNode(&deviceInstanceHandle, deviceInstanceId, CM_LOCATE_DEVNODE_NORMAL)!= CR_SUCCESS)
+            continue;
+
+        bufferSize = 0x40;
+        string = PhCreateStringEx(NULL, bufferSize);
+
+        if ((result = CM_Get_DevNode_Property(
+            deviceInstanceHandle,
+            &DEVPKEY_Device_MatchingDeviceId,
+            &devicePropertyType,
+            (PBYTE)string->Buffer,
+            &bufferSize,
+            0
+            )) != CR_SUCCESS)
+        {
+            PhDereferenceObject(string);
+            string = PhCreateStringEx(NULL, bufferSize);
+
+            result = CM_Get_DevNode_Property(
+                deviceInstanceHandle,
+                &DEVPKEY_Device_MatchingDeviceId,
+                &devicePropertyType,
+                (PBYTE)string->Buffer,
+                &bufferSize,
+                0
+                );
+        }
+
+        if (result != CR_SUCCESS)
+        {
+            PhDereferenceObject(string);
+            continue;
+        }
+
+        PhTrimToNullTerminatorString(string);
+
+        if (!PhEqualString(string, matchingDeviceIdString, TRUE))
+        {
+            PhDereferenceObject(string);
+            continue;
+        }
+
+        bufferSize = 0x40;
+        PhDereferenceObject(string);
+        string = PhCreateStringEx(NULL, bufferSize);
+
+        if ((result = CM_Get_DevNode_Property(
+            deviceInstanceHandle,
+            &DEVPKEY_Device_Service,
+            &devicePropertyType,
+            (PBYTE)string->Buffer,
+            &bufferSize,
+            0
+            )) != CR_SUCCESS)
+        {
+            PhDereferenceObject(string);
+            string = PhCreateStringEx(NULL, bufferSize);
+
+            result = CM_Get_DevNode_Property(
+                deviceInstanceHandle,
+                &DEVPKEY_Device_Service,
+                &devicePropertyType,
+                (PBYTE)string->Buffer,
+                &bufferSize,
+                0
+                );
+        }
+
+        if (result != CR_SUCCESS)
+        {
+            PhDereferenceObject(string);
+            continue;
+        }
+
+        keyServicePath = PhConcatStrings2(L"System\\CurrentControlSet\\Services\\", string->Buffer);
+
+        if (NT_SUCCESS(PhOpenKey(
+            &keyServiceHandle,
             KEY_READ,
             PH_KEY_LOCAL_MACHINE,
-            &keyPath->sr,
+            &keyServicePath->sr,
             0
             )))
         {
-            __leave;
-        }
+            PPH_STRING driverNtPathString;
+            PPH_STRING driverDosPathString = NULL;
 
-        matchingDeviceIdString = PhQueryRegistryString(keyHandle, L"MatchingDeviceId");
-
-        //keySettingsPath = PhConcatStrings2(keyPath->Buffer, L"\\VolatileSettings");
-
-        //if (NT_SUCCESS(PhOpenKey(
-        //    &keySettingsHandle,
-        //    KEY_READ,
-        //    PH_KEY_LOCAL_MACHINE,
-        //    &keySettingsPath->sr,
-        //    0
-        //    )))
-        //{
-        //    GUID settingsKey = GUID_DEVINTERFACE_DISPLAY_ADAPTER;
-        //    PPH_STRING guidString = PhFormatGuid(&settingsKey);
-        //
-        //    ULONG dwType = REG_BINARY;
-        //    LONG length = DOS_MAX_PATH_LENGTH;
-        //
-        //    if (RegQueryValueEx(
-        //        keySettingsHandle,
-        //        guidString->Buffer,
-        //        0,
-        //        &dwType,
-        //        (PBYTE)displayInstancePath,
-        //        &length
-        //        ) != ERROR_SUCCESS)
-        //    {
-        //        //__leave;
-        //    }
-        //
-        //    NtClose(keySettingsHandle);
-        //    PhDereferenceObject(guidString);
-        //}
-
-        if ((deviceInfoHandle = SetupDiGetClassDevs(
-            &GUID_DEVINTERFACE_DISPLAY_ADAPTER, 
-            NULL, 
-            NULL, 
-            DIGCF_PRESENT | DIGCF_DEVICEINTERFACE
-            )) == INVALID_HANDLE_VALUE)
-        {
-            __leave;
-        }
-
-        for (ULONG i = 0; i < 1000; i++)
-        {
-            ULONG devicePropertyLength = 0;
-            DEVPROPTYPE devicePropertyType = 0;
-            HANDLE keyServiceHandle;
-            WCHAR matchingDeviceId[DOS_MAX_PATH_LENGTH] = L"";
-            WCHAR deviceServiceName[DOS_MAX_PATH_LENGTH] = L"";
-
-            if (!SetupDiEnumDeviceInterfaces(deviceInfoHandle, 0, &GUID_DEVINTERFACE_DISPLAY_ADAPTER, i, &deviceInterfaceData))
-                break;
-
-            if (SetupDiGetDeviceInterfaceDetail(
-                deviceInfoHandle,
-                &deviceInterfaceData, 
-                0, 
-                0, 
-                &deviceInfoLength, 
-                &deviceInfoData
-                ) || GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+            if (driverNtPathString = PhQueryRegistryString(keyServiceHandle, L"ImagePath"))
             {
-                continue;
+                driverDosPathString = PhGetFileName(driverNtPathString);
+                PhDereferenceObject(driverNtPathString);
             }
 
-            deviceInterfaceDetail = PhAllocate(deviceInfoLength);
-            deviceInterfaceDetail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
-
-            if (!SetupDiGetDeviceInterfaceDetail(
-                deviceInfoHandle, 
-                &deviceInterfaceData, 
-                deviceInterfaceDetail, 
-                deviceInfoLength, 
-                &deviceInfoLength,
-                &deviceInfoData
-                ))
+            if (driverDosPathString)
             {
-                continue;
-            }
+                PPH_STRING fileSignerName = NULL;
+                //PH_MAPPED_IMAGE fileMappedImage;
+                //
+                //if (NT_SUCCESS(PhLoadMappedImage(driverDosPathString->Buffer, NULL, TRUE, &fileMappedImage)))
+                //{
+                //    LARGE_INTEGER time;
+                //    SYSTEMTIME systemTime;
+                //    PPH_STRING string;
+                //
+                //    RtlSecondsSince1970ToTime(fileMappedImage.NtHeaders->FileHeader.TimeDateStamp, &time);
+                //    PhLargeIntegerToLocalSystemTime(&systemTime, &time);
+                //
+                //    string = PhFormatDateTime(&systemTime);
+                //    //SetDlgItemText(hwndDlg, IDC_TIMESTAMP, string->Buffer);
+                //    PhDereferenceObject(string);
+                //
+                //    PhUnloadMappedImage(&fileMappedImage);
+                //}
 
-            if (!SetupDiGetDeviceProperty(
-                deviceInfoHandle,
-                &deviceInfoData,
-                &DEVPKEY_Device_MatchingDeviceId,
-                &devicePropertyType,
-                (PBYTE)&matchingDeviceId,
-                sizeof(matchingDeviceId),
-                &devicePropertyLength,
-                0
-                ))
-            {
-                continue;
-            }
-
-
-            //if (PhEqualStringZ(deviceInterfaceDetail->DevicePath, displayInstancePath, TRUE))
-            if (!PhEqualStringZ(matchingDeviceId, matchingDeviceIdString->Buffer, TRUE))
-                continue;
-
-            if (!SetupDiGetDeviceProperty(
-                deviceInfoHandle,
-                &deviceInfoData,
-                &DEVPKEY_Device_Service,
-                &devicePropertyType,
-                (PBYTE)&deviceServiceName,
-                sizeof(deviceServiceName),
-                &devicePropertyLength,
-                0
-                ))
-            {
-                continue;
-            }
-
-            keyServicePath = PhConcatStrings2(L"System\\CurrentControlSet\\Services\\", deviceServiceName);
-
-            if (NT_SUCCESS(PhOpenKey(
-                &keyServiceHandle,
-                KEY_READ,
-                PH_KEY_LOCAL_MACHINE,
-                &keyServicePath->sr,
-                0
-                )))
-            {
-                PPH_STRING driverNtPathString = NULL;
-                PPH_STRING driverDosPathString = NULL;
-
-                if (driverNtPathString = PhQueryRegistryString(keyServiceHandle, L"ImagePath"))
+                if (PhVerifyFile(driverDosPathString->Buffer, &fileSignerName) == VrTrusted)
                 {
-                    driverDosPathString = PhGetFileName(driverNtPathString);
-                    PhDereferenceObject(driverNtPathString);
+                    //if (PhEqualString2(fileSignerName, L"Microsoft Windows Hardware Compatibility Publisher", TRUE))  
+                    nvGpuDriverIsWHQL = TRUE;   
                 }
 
-                if (driverDosPathString)
-                {
-                    PPH_STRING fileSignerName = NULL;
-                    //PH_MAPPED_IMAGE fileMappedImage;
-                    //
-                    //if (NT_SUCCESS(PhLoadMappedImage(driverDosPathString->Buffer, NULL, TRUE, &fileMappedImage)))
-                    //{
-                    //    LARGE_INTEGER time;
-                    //    SYSTEMTIME systemTime;
-                    //    PPH_STRING string;
-                    //
-                    //    RtlSecondsSince1970ToTime(fileMappedImage.NtHeaders->FileHeader.TimeDateStamp, &time);
-                    //    PhLargeIntegerToLocalSystemTime(&systemTime, &time);
-                    //
-                    //    string = PhFormatDateTime(&systemTime);
-                    //    //SetDlgItemText(hwndDlg, IDC_TIMESTAMP, string->Buffer);
-                    //    PhDereferenceObject(string);
-                    //
-                    //    PhUnloadMappedImage(&fileMappedImage);
-                    //}
+                if (fileSignerName)
+                    PhDereferenceObject(fileSignerName);
 
-                    if (PhVerifyFile(driverDosPathString->Buffer, &fileSignerName) == VrTrusted)
-                    {
-                        if (PhEqualString2(fileSignerName, L"Microsoft Windows Hardware Compatibility Publisher", TRUE))
-                        {
-                            nvGpuDriverIsWHQL = TRUE;
-                        }
-                    }
-
-                    if (fileSignerName)
-                        PhDereferenceObject(fileSignerName);
-
-                    PhDereferenceObject(driverDosPathString);
-                }
-
-                NtClose(keyServiceHandle);
+                PhDereferenceObject(driverDosPathString);
             }
+
+            NtClose(keyServiceHandle);
         }
     }
-    __finally
+
+CleanupExit:
+
+    if (keyHandle)
     {
-        if (deviceInfoHandle != INVALID_HANDLE_VALUE)
-        {
-            SetupDiDestroyDeviceInfoList(deviceInfoHandle);
-        }
+        NtClose(keyHandle);
+    }
 
-        if (keyHandle)
-        {
-            NtClose(keyHandle);
-        }
+    if (deviceInterfaceList)
+    {
+        PhFree(deviceInterfaceList);
+    }
 
-        if (deviceInterfaceDetail)
-        {
-            PhFree(deviceInterfaceDetail);
-        }
-
-        if (keyPath)
-        {
-            PhDereferenceObject(keyPath);
-        }
+    if (keyPath)
+    {
+        PhDereferenceObject(keyPath);
     }
 
     return nvGpuDriverIsWHQL;
@@ -933,7 +929,6 @@ VOID NvGpuUpdateValues(VOID)
     NV_GPU_THERMAL_SETTINGS thermalSettings = { NV_GPU_THERMAL_SETTINGS_VER };
     NV_GPU_CLOCK_FREQUENCIES clkFreqs  = { NV_GPU_CLOCK_FREQUENCIES_VER };
     NV_CLOCKS_INFO clocksInfo = { NV_CLOCKS_INFO_VER };
-    NV_VOLTAGE_DOMAINS voltageDomains = { NV_VOLTAGE_DOMAIN_INFO_VER };
 
     if (NvAPI_GPU_GetMemoryInfo(NvGpuDisplayHandleList->Items[0], &memoryInfo) == NVAPI_OK)
     {
@@ -987,6 +982,15 @@ VOID NvGpuUpdateValues(VOID)
                 GpuCurrentShaderClock = (ULONG)(clocksInfo.clocks[30] * 0.001f);
         }
     }
+}
+
+VOID NvGpuUpdateVoltage(VOID)
+{
+    NV_VOLTAGE_DOMAINS voltageDomains;
+    //Nv120 clockInfo = { NV_PERF_CLOCKS_INFO_VER };
+
+    memset(&voltageDomains, 0, sizeof(NV_VOLTAGE_DOMAINS));
+    voltageDomains.version = NV_VOLTAGE_DOMAIN_INFO_VER;
 
     if (NvAPI_GPU_GetVoltageDomainsStatus(NvGpuPhysicalHandleList->Items[0], &voltageDomains) == NVAPI_OK)
     {
@@ -1006,13 +1010,5 @@ VOID NvGpuUpdateValues(VOID)
     //    GpuPerfDecreaseReason = NV_GPU_PERF_DECREASE_REASON_UNKNOWN;
     //}
 
-    //NvU32 totalApps = 0;
-    //NV_ACTIVE_APPS activeApps[NVAPI_MAX_PROCESSES] = { NV_ACTIVE_APPS_INFO_VER };
-    //NvAPI_GPU_QueryActiveApps(NvGpuPhysicalHandleList->Items[0], activeApps, &totalApps);
-
-    //NV_VOLTAGES voltages = { NV_VOLTAGES_INFO_VER };
-    //NvAPI_GPU_GetVoltages(NvGpuPhysicalHandleList->Items[0], &voltages);
-
-    //Nv120 clockInfo = { NV_PERF_CLOCKS_INFO_VER };
     //NvAPI_GPU_GetPerfClocks(NvGpuPhysicalHandleList->Items[0], 0, &clockInfo);
 }

@@ -580,6 +580,8 @@ VOID NvGpuUpdatePanel(
     _Inout_ PPH_NVGPU_SYSINFO_CONTEXT Context
     )
 {
+    NvGpuUpdateVoltage();
+
     SetDlgItemText(Context->GpuPanel, IDC_CLOCK_CORE, PhaFormatString(L"%lu MHz", GpuCurrentCoreClock)->Buffer);
     SetDlgItemText(Context->GpuPanel, IDC_CLOCK_MEMORY, PhaFormatString(L"%lu MHz", GpuCurrentMemoryClock)->Buffer);
     SetDlgItemText(Context->GpuPanel, IDC_CLOCK_SHADER, PhaFormatString(L"%lu MHz", GpuCurrentShaderClock)->Buffer);
@@ -748,11 +750,6 @@ BOOLEAN NvGpuSectionCallback(
             if (context->WindowHandle)
             {
                 PostMessage(context->WindowHandle, MSG_UPDATE, 0, 0);
-            }
-
-            if (context->DetailsHandle)
-            {
-                PostMessage(context->DetailsHandle, MSG_UPDATE, 0, 0);
             }
         }
         return TRUE;

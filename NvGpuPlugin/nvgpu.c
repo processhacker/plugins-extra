@@ -34,7 +34,6 @@ VOID NvGpuInitialize(
     ULONG sampleCount;
 
     sampleCount = PhGetIntegerSetting(L"SampleCount");
-
     PhInitializeCircularBuffer_FLOAT(&GpuUtilizationHistory, sampleCount);
     PhInitializeCircularBuffer_ULONG(&GpuMemoryHistory, sampleCount);
     PhInitializeCircularBuffer_FLOAT(&GpuBoardHistory, sampleCount);

@@ -35,12 +35,7 @@ VOID NTAPI LoadCallback(
     _In_opt_ PVOID Context
     )
 {
-    if (PhGetIntegerSetting(SETTING_NAME_ENABLE_MONITORING))
-    {
-        NvApiInitialized = InitializeNvApi();
-    }
-
-    if (NvApiInitialized)
+    if (NvApiInitialized = InitializeNvApi())
     {
         NvGpuInitialize();
     }
@@ -59,7 +54,7 @@ VOID NTAPI ShowOptionsCallback(
     _In_opt_ PVOID Context
     )
 {
-    ShowOptionsDialog((HWND)Parameter);
+    NOTHING;
 }
 
 VOID NTAPI ProcessesUpdatedCallback(
@@ -99,7 +94,6 @@ LOGICAL DllMain(
             PPH_PLUGIN_INFORMATION info;
             PH_SETTING_CREATE settings[] =
             {
-                { IntegerSettingType, SETTING_NAME_ENABLE_MONITORING, L"1" },
                 { IntegerSettingType, SETTING_NAME_ENABLE_FAHRENHEIT, L"0" }
             };
 

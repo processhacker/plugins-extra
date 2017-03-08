@@ -33,15 +33,15 @@
 #define NVAPI_MAX_PROCESSES         128
 
 // rev
-typedef PVOID (__cdecl *_NvAPI_QueryInterface)(NvU32 FunctionOffset);
+typedef PVOID (WINAPIV *_NvAPI_QueryInterface)(NvU32 FunctionOffset);
 _NvAPI_QueryInterface NvAPI_QueryInterface;
 
 // rev
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetShaderPipeCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pShaderPipeCount);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetShaderPipeCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pShaderPipeCount);
 _NvAPI_GPU_GetShaderPipeCount NvAPI_GPU_GetShaderPipeCount;
 
 // rev
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetShaderSubPipeCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pShaderSubPipeCount);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetShaderSubPipeCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pShaderSubPipeCount);
 _NvAPI_GPU_GetShaderSubPipeCount NvAPI_GPU_GetShaderSubPipeCount;
 
 
@@ -61,7 +61,7 @@ typedef enum _NV_RAM_TYPE
 } NV_RAM_TYPE;
 
 // rev 
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetRamType)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NV_RAM_TYPE* pRamType);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetRamType)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NV_RAM_TYPE* pRamType);
 _NvAPI_GPU_GetRamType NvAPI_GPU_GetRamType;
 
 
@@ -82,15 +82,15 @@ typedef enum _NV_RAM_MAKER
 } NV_RAM_MAKER;
 
 // rev 
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetRamType)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NV_RAM_MAKER* pRamMaker);
-_NvAPI_GPU_GetRamType NvAPI_GPU_GetRamMaker;
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetRamMaker)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NV_RAM_MAKER* pRamMaker);
+_NvAPI_GPU_GetRamMaker NvAPI_GPU_GetRamMaker;
 
 // rev 
-typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetRamBusWidth)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pRamBusWidth);
+typedef NvAPI_Status(WINAPIV *_NvAPI_GPU_GetRamBusWidth)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pRamBusWidth);
 _NvAPI_GPU_GetRamBusWidth NvAPI_GPU_GetRamBusWidth;
 
 // rev 
-typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetRamBankCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pRamBankCount);
+typedef NvAPI_Status(WINAPIV *_NvAPI_GPU_GetRamBankCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pRamBankCount);
 _NvAPI_GPU_GetRamBankCount NvAPI_GPU_GetRamBankCount;
 
 
@@ -107,18 +107,18 @@ typedef enum _NV_FOUNDRY
 } NV_FOUNDRY;
 
 // rev 
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetFoundry)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NV_FOUNDRY* pFoundry);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetFoundry)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NV_FOUNDRY* pFoundry);
 _NvAPI_GPU_GetFoundry NvAPI_GPU_GetFoundry;
 
 
 
 // rev
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetFBWidthAndLocation)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pWidth, NvU32* pLocation);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetFBWidthAndLocation)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pWidth, NvU32* pLocation);
 _NvAPI_GPU_GetFBWidthAndLocation NvAPI_GPU_GetFBWidthAndLocation;
 
 
 // rev  (This has a different offset than the NvAPI_GPU_GetMemoryInfo function despite both returning the same struct).
-typedef NvAPI_Status (__cdecl *_NvAPI_GetDisplayDriverMemoryInfo)(_In_ NvDisplayHandle NvDispHandle, _Inout_ NV_DISPLAY_DRIVER_MEMORY_INFO* pMemoryInfo);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverMemoryInfo)(_In_ NvDisplayHandle NvDispHandle, _Inout_ NV_DISPLAY_DRIVER_MEMORY_INFO* pMemoryInfo);
 _NvAPI_GetDisplayDriverMemoryInfo NvAPI_GetDisplayDriverMemoryInfo;
 
 
@@ -242,7 +242,7 @@ typedef struct _NV_GPU_COOLER_POLICY_TABLE
 //                  pCoolerInfo(OUT) - Array of cooler settings.
 //
 ///////////////////////////////////////////////////////////////////////////////
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetCoolerSettings)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 coolerIndex, NV_GPU_COOLER_SETTINGS* pCoolerInfo);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetCoolerSettings)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 coolerIndex, NV_GPU_COOLER_SETTINGS* pCoolerInfo);
 _NvAPI_GPU_GetCoolerSettings NvAPI_GPU_GetCoolerSettings;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -262,7 +262,7 @@ _NvAPI_GPU_GetCoolerSettings NvAPI_GPU_GetCoolerSettings;
 //                  pCoolerLevels(IN) - Updated cooler level and cooler policy.
 //
 ///////////////////////////////////////////////////////////////////////////////
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_SetCoolerLevels)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 coolerIndex, NV_GPU_SETCOOLER_LEVEL *pCoolerLevels);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_SetCoolerLevels)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 coolerIndex, NV_GPU_SETCOOLER_LEVEL *pCoolerLevels);
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -275,7 +275,7 @@ typedef NvAPI_Status (__cdecl *_NvAPI_GPU_SetCoolerLevels)(_In_ NvPhysicalGpuHan
 //                  CoolerCount - Number of coolers to restore.
 //
 ///////////////////////////////////////////////////////////////////////////////
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_RestoreCoolerSettings)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pCoolerIndex, NvU32 coolerCount);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_RestoreCoolerSettings)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pCoolerIndex, NvU32 coolerCount);
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -289,7 +289,7 @@ typedef NvAPI_Status (__cdecl *_NvAPI_GPU_RestoreCoolerSettings)(_In_ NvPhysical
 //                  count(OUT) - Count of the number of valid levels for the selected policy.
 //
 ///////////////////////////////////////////////////////////////////////////////
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetCoolerPolicyTable)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 coolerIndex, NV_GPU_COOLER_POLICY_TABLE *pCoolerTable, NvU32 *count);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetCoolerPolicyTable)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 coolerIndex, NV_GPU_COOLER_POLICY_TABLE *pCoolerTable, NvU32 *count);
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -303,7 +303,7 @@ typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetCoolerPolicyTable)(_In_ NvPhysicalG
 //                  count(IN) - Number of valid levels in the policy table.
 //
 ///////////////////////////////////////////////////////////////////////////////
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_SetCoolerPolicyTable)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 coolerIndex, NV_GPU_COOLER_POLICY_TABLE *pCoolerTable, NvU32 count);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_SetCoolerPolicyTable)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 coolerIndex, NV_GPU_COOLER_POLICY_TABLE *pCoolerTable, NvU32 count);
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -318,7 +318,7 @@ typedef NvAPI_Status (__cdecl *_NvAPI_GPU_SetCoolerPolicyTable)(_In_ NvPhysicalG
 //                  policy - restore for the selected policy
 //
 ///////////////////////////////////////////////////////////////////////////////
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_RestoreCoolerPolicyTable)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pCoolerIndex, NvU32 coolerCount, NV_COOLER_POLICY policy);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_RestoreCoolerPolicyTable)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pCoolerIndex, NvU32 coolerCount, NV_COOLER_POLICY policy);
 
 
 
@@ -332,7 +332,7 @@ typedef struct _NV_USAGES_INFO
 #define NV_USAGES_INFO_VER  MAKE_NVAPI_VERSION(NV_USAGES_INFO, 1)
 
 // rev
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetUsages)(_In_ NvPhysicalGpuHandle hPhysicalGpu, _Inout_ NV_USAGES_INFO* pUsagesInfo);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetUsages)(_In_ NvPhysicalGpuHandle hPhysicalGpu, _Inout_ NV_USAGES_INFO* pUsagesInfo);
 _NvAPI_GPU_GetUsages NvAPI_GPU_GetUsages;
 
 
@@ -347,7 +347,7 @@ typedef struct _NV_CLOCKS_INFO
 #define NV_CLOCKS_INFO_VER  MAKE_NVAPI_VERSION(NV_CLOCKS_INFO, 2)
 
 // rev
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetAllClocks)(_In_ NvPhysicalGpuHandle hPhysicalGpu, _Inout_ NV_CLOCKS_INFO* pClocksInfo);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetAllClocks)(_In_ NvPhysicalGpuHandle hPhysicalGpu, _Inout_ NV_CLOCKS_INFO* pClocksInfo);
 _NvAPI_GPU_GetAllClocks NvAPI_GPU_GetAllClocks;
 
 
@@ -368,7 +368,7 @@ typedef struct _NV_VOLTAGE_DOMAINS
 #define NV_VOLTAGE_DOMAIN_INFO_VER  MAKE_NVAPI_VERSION(NV_VOLTAGE_DOMAINS, 1)
 
 // rev
-typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetVoltageDomainsStatus)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_VOLTAGE_DOMAINS* pVoltageDomainsStatus);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetVoltageDomainsStatus)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_VOLTAGE_DOMAINS* pVoltageDomainsStatus);
 _NvAPI_GPU_GetVoltageDomainsStatus NvAPI_GPU_GetVoltageDomainsStatus;
 
 
@@ -399,7 +399,7 @@ typedef struct _NV_VOLTAGES
 #define NV_VOLTAGES_INFO_VER  MAKE_NVAPI_VERSION(NV_VOLTAGES, 1)
 
 // rev
-typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetVoltages)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_VOLTAGES* pPerfVoltages);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetVoltages)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_VOLTAGES* pPerfVoltages);
 _NvAPI_GPU_GetVoltages NvAPI_GPU_GetVoltages;
 
 
@@ -438,7 +438,7 @@ typedef struct _NV_PERF_CLOCKS
 #define NV_PERF_CLOCKS_INFO_VER   MAKE_NVAPI_VERSION(NV_PERF_CLOCKS, 1)
 
 // rev
-typedef NvAPI_Status(__cdecl *_NvAPI_GPU_GetPerfClocks)(_In_ NvPhysicalGpuHandle hPhysicalGPU, INT i, _Inout_ NV_PERF_CLOCKS* pPerfClocks);
+typedef NvAPI_Status(WINAPIV *_NvAPI_GPU_GetPerfClocks)(_In_ NvPhysicalGpuHandle hPhysicalGPU, INT i, _Inout_ NV_PERF_CLOCKS* pPerfClocks);
 _NvAPI_GPU_GetPerfClocks NvAPI_GPU_GetPerfClocks;
 
 
@@ -454,7 +454,7 @@ typedef struct _NV_ACTIVE_APP
 #define NV_ACTIVE_APPS_INFO_VER   MAKE_NVAPI_VERSION(NV_ACTIVE_APP, 2)
 
 // rev
-typedef NvAPI_Status(__cdecl *_NvAPI_GPU_QueryActiveApps)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_ACTIVE_APP pActiveApps[NVAPI_MAX_PROCESSES], _Inout_ NvU32* pTotal);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_QueryActiveApps)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_ACTIVE_APP pActiveApps[NVAPI_MAX_PROCESSES], _Inout_ NvU32* pTotal);
 _NvAPI_GPU_QueryActiveApps NvAPI_GPU_QueryActiveApps;
 
 
@@ -488,19 +488,17 @@ typedef enum _LevelInfo
 } LevelInfo;
 
 // rev
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetPowerMizerInfo)(_In_ NvPhysicalGpuHandle hPhysicalGPU, PowerSourceInfo powerSourceInfo, SelectSource select, LevelInfo* pLevelInfo);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetPowerMizerInfo)(_In_ NvPhysicalGpuHandle hPhysicalGPU, PowerSourceInfo powerSourceInfo, SelectSource select, LevelInfo* pLevelInfo);
 _NvAPI_GPU_GetPowerMizerInfo NvAPI_GPU_GetPowerMizerInfo;
 
-
-
 // rev
-typedef NvAPI_Status (__cdecl *_NvAPI_GetDisplayDriverRegistryPath)(_In_ NvDisplayHandle hNvDisplay, _Inout_ NvAPI_LongString szDriverRegistryPath);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverRegistryPath)(_In_ NvDisplayHandle hNvDisplay, _Inout_ NvAPI_LongString szDriverRegistryPath);
 _NvAPI_GetDisplayDriverRegistryPath NvAPI_GetDisplayDriverRegistryPath;
 
 
 
 // rev
-//typedef NvAPI_Status (__cdecl *_NvAPI_RestartDisplayDriver)(_In_ NvU32 NvDriverIndex);
+//typedef NvAPI_Status (WINAPIV *_NvAPI_RestartDisplayDriver)(_In_ NvU32 NvDriverIndex);
 //_NvAPI_RestartDisplayDriver NvAPI_RestartDisplayDriver;
 
 
@@ -519,12 +517,12 @@ typedef struct _NV_POWER_TOPOLOGY_1
 
     //public uint UInt32_0
     //{
-    //    get { return this.unknown1 & 1u; }
+    //    return this.unknown1 & 1u;
     //}
 
     //public uint UInt32_1
     //{
-    //    get { return (this.unknown1 & 4294967294u) / 2u; }
+    //    return (this.unknown1 & 4294967294u) / 2u;
     //}
 } NV_POWER_TOPOLOGY_1;
 
@@ -545,13 +543,13 @@ typedef struct _NV_POWER_TOPOLOGY_STATUS
 
 #define NV_POWER_TOPOLOGY_STATUS_VER   MAKE_NVAPI_VERSION(NV_POWER_TOPOLOGY_STATUS, 1)
 
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_ClientPowerTopologyGetStatus)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_POWER_TOPOLOGY_STATUS* pClientPowerTopologyStatus);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_ClientPowerTopologyGetStatus)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_POWER_TOPOLOGY_STATUS* pClientPowerTopologyStatus);
 _NvAPI_GPU_ClientPowerTopologyGetStatus NvAPI_GPU_ClientPowerTopologyGetStatus;
 
 
 
 // rev
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetShortName)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NvAPI_ShortString szName);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetShortName)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NvAPI_ShortString szName);
 _NvAPI_GPU_GetShortName NvAPI_GPU_GetShortName;
 
 
@@ -565,13 +563,13 @@ typedef struct _NV_ARCH_INFO
 #define NV_ARCH_INFO_VER   MAKE_NVAPI_VERSION(NV_ARCH_INFO, 2)
 
 // rev
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetArchInfo)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_ARCH_INFO* pArchInfo);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetArchInfo)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_ARCH_INFO* pArchInfo);
 _NvAPI_GPU_GetArchInfo NvAPI_GPU_GetArchInfo;
 
 
 
 // rev
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetPartitionCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Out_ NvU32* pCount);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetPartitionCount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Out_ NvU32* pCount);
 _NvAPI_GPU_GetPartitionCount NvAPI_GPU_GetPartitionCount;
 
 
@@ -597,7 +595,7 @@ typedef struct _NV_PCIE_INFO
 
 #define NV_PCIE_INFO_VER   MAKE_NVAPI_VERSION(NV_PCIE_INFO, 2)
 
-typedef NvAPI_Status (__cdecl *_NvAPI_GPU_GetPCIEInfo)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_PCIE_INFO* pPciInfo);
+typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetPCIEInfo)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_PCIE_INFO* pPciInfo);
 _NvAPI_GPU_GetPCIEInfo NvAPI_GPU_GetPCIEInfo;
 
 

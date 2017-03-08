@@ -38,9 +38,6 @@
     <ClCompile Include="graph.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="options.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="nvidia.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -58,10 +55,5 @@
     <ResourceCompile Include="NvGpuPlugin.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="resources\NVLogo_2D.png">
-      <Filter>Resource Files</Filter>
-    </Image>
   </ItemGroup>
 </Project>

@@ -2,7 +2,7 @@
 * Process Hacker Extra Plugins -
 *   Nvidia GPU Plugin
 *
-* Copyright (C) 2015 dmex
+* Copyright (C) 2015-2016 dmex
 *
 * This file is part of Process Hacker.
 *
@@ -23,29 +23,18 @@
 #include "main.h"
 
 VOID NvUpdateDetails(
-    _Inout_ PPH_NVGPU_SYSINFO_CONTEXT Context
+    _In_ HWND DetailsHandle
     )
 {
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT1, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryName()))->Buffer);
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT2, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryShortName()))->Buffer);
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT3, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryVbiosVersionString()))->Buffer);
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT4, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryRevision()))->Buffer);
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT5, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryDeviceId()))->Buffer);
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT6, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryRopsCount()))->Buffer);
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT7, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryShaderCount()))->Buffer);
-    //SetDlgItemText(Context->DetailsHandle, IDC_EDIT8, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryPciInfo()))->Buffer);
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT9, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryBusWidth()))->Buffer);
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT10, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryDriverVersion()))->Buffer);
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT11, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryPcbValue()))->Buffer);
-
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT12, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryDriverSettings()))->Buffer);
-
-
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT14, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryRamType()))->Buffer);
-    //SetDlgItemText(Context->DetailsHandle, IDC_EDIT13, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryRamMaker()))->Buffer);
-
-    //SetDlgItemText(Context->DetailsHandle, IDC_EDIT13, NvGpuDriverIsWHQL() ? L"WHQL" : L"");
-    SetDlgItemText(Context->DetailsHandle, IDC_EDIT13, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryFoundry()))->Buffer);  
+    SetDlgItemText(DetailsHandle, IDC_EDIT1, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryName()))->Buffer);
+    SetDlgItemText(DetailsHandle, IDC_EDIT2, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryShortName()))->Buffer);
+    SetDlgItemText(DetailsHandle, IDC_EDIT3, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryVbiosVersionString()))->Buffer);
+    SetDlgItemText(DetailsHandle, IDC_EDIT4, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryRevision()))->Buffer);
+    SetDlgItemText(DetailsHandle, IDC_EDIT5, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryDeviceId()))->Buffer);
+    SetDlgItemText(DetailsHandle, IDC_EDIT6, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryRopsCount()))->Buffer);
+    SetDlgItemText(DetailsHandle, IDC_EDIT10, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryDriverVersion()))->Buffer);
+    SetDlgItemText(DetailsHandle, IDC_EDIT14, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryRamType()))->Buffer);
+    //SetDlgItemText(DetailsHandle, IDC_EDIT13, NvGpuDriverIsWHQL() ? L"WHQL" : L"");
 }
 
 INT_PTR CALLBACK DetailsDlgProc(
@@ -80,21 +69,10 @@ INT_PTR CALLBACK DetailsDlgProc(
     {
     case WM_INITDIALOG:
         {
-            context->DetailsHandle = hwndDlg;
-
+            SetWindowText(hwndDlg, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryName()))->Buffer);
             PhCenterWindow(hwndDlg, GetParent(hwndDlg));
 
-            HBITMAP bitmapRefresh = NULL;
-            bitmapRefresh = LoadImageFromResources(96, 64, MAKEINTRESOURCE(IDB_NV_LOGO_PNG));
-            SendMessage(GetDlgItem(hwndDlg, IDC_NVIMAGE), STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)bitmapRefresh);
-            DeleteObject(bitmapRefresh);
-
-            NvUpdateDetails(context);
-        }
-        break;
-    case WM_DESTROY:
-        {
-            context->DetailsHandle = NULL;
+            NvUpdateDetails(hwndDlg);
         }
         break;
     case WM_COMMAND:
@@ -106,11 +84,6 @@ INT_PTR CALLBACK DetailsDlgProc(
                 EndDialog(hwndDlg, IDOK);
                 break;
             }
-        }
-        break;
-    case MSG_UPDATE:
-        {
-            NvUpdateDetails(context);
         }
         break;
     }

@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Nvidia GPU Plugin
  *
- * Copyright (C) 2015 dmex
+ * Copyright (C) 2015-2016 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -24,7 +24,6 @@
 #define _NVGPU_H_
 
 #define PLUGIN_NAME L"dmex.NvGpuPlugin"
-#define SETTING_NAME_ENABLE_MONITORING (PLUGIN_NAME L".Enabled")
 #define SETTING_NAME_ENABLE_FAHRENHEIT (PLUGIN_NAME L".EnableFahrenheit")
 
 #define CINTERFACE
@@ -33,7 +32,6 @@
 #include <phappresource.h>
 #include <verify.h>
 #include <windowsx.h>
-
 #include "resource.h"
 
 #define MSG_UPDATE (WM_APP + 1)
@@ -56,7 +54,6 @@ extern ULONG GpuCurrentVoltage;
 
 BOOLEAN InitializeNvApi(VOID);
 BOOLEAN DestroyNvApi(VOID);
-
 PPH_STRING NvGpuQueryDriverVersion(VOID);
 PPH_STRING NvGpuQueryVbiosVersionString(VOID);
 PPH_STRING NvGpuQueryName(VOID);
@@ -69,19 +66,16 @@ PPH_STRING NvGpuQueryRopsCount(VOID);
 PPH_STRING NvGpuQueryShaderCount(VOID);
 PPH_STRING NvGpuQueryPciInfo(VOID);
 PPH_STRING NvGpuQueryBusWidth(VOID);
-PPH_STRING NvGpuQueryPcbValue(VOID);
 PPH_STRING NvGpuQueryDriverSettings(VOID);
 PPH_STRING NvGpuQueryFanSpeed(VOID);
-
 BOOLEAN NvGpuDriverIsWHQL(VOID);
-
 VOID NvGpuUpdateValues(VOID);
+VOID NvGpuUpdateVoltage(VOID);
 
 typedef struct _PH_NVGPU_SYSINFO_CONTEXT
 {
     PPH_STRING GpuName;
     HWND WindowHandle;
-    HWND DetailsHandle;
     PPH_SYSINFO_SECTION Section;
     PH_LAYOUT_MANAGER LayoutManager;
 
@@ -102,9 +96,7 @@ typedef struct _PH_NVGPU_SYSINFO_CONTEXT
     PH_GRAPH_STATE MemGraphState;
     PH_GRAPH_STATE SharedGraphState;
     PH_GRAPH_STATE BusGraphState;
-
 } PH_NVGPU_SYSINFO_CONTEXT, *PPH_NVGPU_SYSINFO_CONTEXT;
-
 
 extern PH_CIRCULAR_BUFFER_FLOAT GpuUtilizationHistory;
 extern PH_CIRCULAR_BUFFER_ULONG GpuMemoryHistory;
@@ -119,19 +111,8 @@ VOID NvGpuUpdate(
     VOID
     );
 
-
 VOID NvGpuSysInfoInitializing(
     _In_ PPH_PLUGIN_SYSINFO_POINTERS Pointers
-    );
-
-HBITMAP LoadImageFromResources(
-    _In_ UINT Width,
-    _In_ UINT Height,
-    _In_ PCWSTR Name
-    );
-
-VOID ShowOptionsDialog(
-    _In_ HWND ParentHandle
     );
 
 VOID ShowDetailsDialog(
