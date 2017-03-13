@@ -23,7 +23,6 @@
 #include "main.h"
 
 PPH_PLUGIN PluginInstance;
-
 PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
 PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
 PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;

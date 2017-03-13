@@ -23,8 +23,26 @@
 #include "main.h"
 
 PPH_PLUGIN PluginInstance;
-static PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
-static PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginLoadCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginUnloadCallbackRegistration;
+PH_CALLBACK_REGISTRATION PluginMenuItemCallbackRegistration;
+PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
+
+VOID NTAPI LoadCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    NOTHING;
+}
+
+VOID NTAPI UnloadCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    NOTHING;
+}
 
 VOID NTAPI MainMenuInitializingCallback(
     _In_opt_ PVOID Parameter,
@@ -85,6 +103,18 @@ LOGICAL DllMain(
             info->Description = L"Plugin for viewing Win32 debug output via the Tools menu.";
             info->HasOptions = FALSE;
 
+            PhRegisterCallback(
+                PhGetPluginCallback(PluginInstance, PluginCallbackLoad),
+                LoadCallback,
+                NULL,
+                &PluginLoadCallbackRegistration
+                );
+            PhRegisterCallback(
+                PhGetPluginCallback(PluginInstance, PluginCallbackUnload),
+                UnloadCallback,
+                NULL,
+                &PluginUnloadCallbackRegistration
+                );
             PhRegisterCallback(
                 PhGetGeneralCallback(GeneralCallbackMainMenuInitializing),
                 MainMenuInitializingCallback,

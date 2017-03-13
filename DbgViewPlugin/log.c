@@ -253,7 +253,7 @@ BOOLEAN DbgCreateSecurityAttributes(
     )
 {
     Context->SecurityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
-    Context->SecurityAttributes.bInheritHandle = TRUE;
+    Context->SecurityAttributes.bInheritHandle = FALSE;
 
     if (ConvertStringSecurityDescriptorToSecurityDescriptor(
         L"D:(A;;GRGWGX;;;WD)(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGWGX;;;AN)(A;;GRGWGX;;;RC)(A;;GRGWGX;;;S-1-15-2-1)S:(ML;;NW;;;LW)",

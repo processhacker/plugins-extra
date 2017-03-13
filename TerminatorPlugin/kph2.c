@@ -27,6 +27,25 @@
 
 HANDLE PhKph2Handle = NULL;
 
+PPH_STRING Kph2GetPluginDirectory(
+    VOID
+    )
+{
+    PPH_STRING directory;
+    PPH_STRING path;
+    PPH_STRING kphFileName;
+
+    directory = PhGetApplicationDirectory();
+    path = PhIsExecutingInWow64() ? PhCreateString(KPH_PATH32) : PhCreateString(KPH_PATH64);
+
+    kphFileName = PhConcatStringRef2(&directory->sr, &path->sr);
+  
+    PhDereferenceObject(path);
+    PhDereferenceObject(directory);
+
+    return kphFileName;
+}
+
 NTSTATUS Kph2Connect(
     VOID
     )
@@ -161,7 +180,14 @@ NTSTATUS Kph2SetParameters(
 
         if (NT_SUCCESS(Kph2InitializeDynamicPackage(&configuration.Packages[0])))
         {
-            status = NtSetValueKey(parametersKeyHandle, &valueName, 0, REG_BINARY, &configuration, sizeof(KPH_DYN_CONFIGURATION));
+            status = NtSetValueKey(
+                parametersKeyHandle, 
+                &valueName, 
+                0, 
+                REG_BINARY, 
+                &configuration, 
+                sizeof(KPH_DYN_CONFIGURATION)
+                );
         }
     }
 
@@ -278,23 +304,17 @@ NTSTATUS Kph2Install(
     _In_ PKPH_PARAMETERS Parameters
     )
 {
-    static PH_STRINGREF keyNameSr = PH_STRINGREF_INIT(L"System\\CurrentControlSet\\Services\\kph2");
+    static UNICODE_STRING objectName = RTL_CONSTANT_STRING(L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\kph2");
     NTSTATUS status;
     ULONG parameters;
-    ULONG disposition;
     HANDLE tokenHandle = NULL;
     HANDLE keyHandle = NULL;
-    PPH_STRING directory;
-    PPH_STRING path;
     PPH_STRING kphFileName;
-    PPH_STRING keyPathName = NULL;
     UNICODE_STRING fileName = { 0 };
     UNICODE_STRING valueName;
-    UNICODE_STRING keyNameUs;
+    OBJECT_ATTRIBUTES objectAttributes;
 
-    directory = PhGetApplicationDirectory();
-    path = PhIsExecutingInWow64() ? PhCreateString(KPH_PATH32) : PhCreateString(KPH_PATH64);
-    kphFileName = PhConcatStringRef2(&directory->sr, &path->sr);
+    kphFileName = Kph2GetPluginDirectory();
 
     if (!RtlDoesFileExists_U(kphFileName->Buffer))
     {
@@ -312,116 +332,104 @@ NTSTATUS Kph2Install(
         NtClose(tokenHandle);
     }
 
-    if (!NT_SUCCESS(status = PhOpenKey(
-        &keyHandle, 
-        KEY_READ,
-        NULL, 
-        &keyNameSr, 
-        0
-        )))
-    {
-        if (!NT_SUCCESS(status = PhCreateKey(
-            &keyHandle,
-            KEY_WRITE,
-            PH_KEY_LOCAL_MACHINE,
-            &keyNameSr,
-            0,
-            0,
-            &disposition
-            )))
-        {
-            goto CleanupExit;
-        }
+    InitializeObjectAttributes(
+        &objectAttributes,
+        &objectName,
+        OBJ_CASE_INSENSITIVE,
+        NULL,
+        NULL
+        );
 
-        if (!NT_SUCCESS(status = RtlDosPathNameToNtPathName_U_WithStatus(
-            kphFileName->Buffer,
-            &fileName,
-            NULL,
-            NULL
-            )))
-        {
-            goto CleanupExit;
-        }
+    status = NtCreateKey(
+        &keyHandle,
+        KEY_WRITE, //KEY_ALL_ACCESS,
+        &objectAttributes,
+        0,
+        NULL,
+        0,
+        NULL
+        );
 
-        RtlInitUnicodeString(&valueName, L"Type");
-        parameters = SERVICE_KERNEL_DRIVER;
-        if (!NT_SUCCESS(status = NtSetValueKey(
-            keyHandle,
-            &valueName,
-            0,
-            REG_DWORD,
-            &parameters,
-            sizeof(ULONG)
-            )))
-        {
-            goto CleanupExit;
-        }
-
-        RtlInitUnicodeString(&valueName, L"ErrorControl");
-        parameters = SERVICE_KERNEL_DRIVER;
-        if (!NT_SUCCESS(status = NtSetValueKey(
-            keyHandle,
-            &valueName,
-            0,
-            REG_DWORD,
-            &parameters,
-            sizeof(ULONG)
-            )))
-        {
-            goto CleanupExit;
-        }
-
-        RtlInitUnicodeString(&valueName, L"Start");
-        parameters = SERVICE_DEMAND_START;
-        if (!NT_SUCCESS(status = NtSetValueKey(
-            keyHandle,
-            &valueName,
-            0,
-            REG_DWORD,
-            &parameters,
-            sizeof(ULONG)
-            )))
-        {
-            goto CleanupExit;
-        }
-
-        RtlInitUnicodeString(&valueName, L"ImagePath");
-        if (!NT_SUCCESS(status = NtSetValueKey(
-            keyHandle,
-            &valueName,
-            0,
-            REG_EXPAND_SZ,
-            fileName.Buffer,
-            (ULONG)fileName.MaximumLength
-            )))
-        {
-            goto CleanupExit;
-        }
-    }
-
-    if (Parameters && !NT_SUCCESS(status = Kph2SetParameters(Parameters)))
+    if (!NT_SUCCESS(status))
         goto CleanupExit;
 
-    if (!NT_SUCCESS(status = PhGetHandleInformation(
-        NtCurrentProcess(),
-        keyHandle,
-        -1,
+    if (!NT_SUCCESS(status = RtlDosPathNameToNtPathName_U_WithStatus(
+        kphFileName->Buffer,
+        &fileName,
         NULL,
-        NULL,
-        &keyPathName,
         NULL
         )))
     {
         goto CleanupExit;
     }
 
-    if (!PhStringRefToUnicodeString(&keyPathName->sr, &keyNameUs))
+    RtlInitUnicodeString(&valueName, L"Type");
+    parameters = SERVICE_KERNEL_DRIVER;
+    if (!NT_SUCCESS(status = NtSetValueKey(
+        keyHandle,
+        &valueName,
+        0,
+        REG_DWORD,
+        &parameters,
+        sizeof(ULONG)
+        )))
+    {
         goto CleanupExit;
+    }
 
-    //if (!NT_SUCCESS(status = NtUnloadDriver(&keyNameUs)))
-    //    status = STATUS_SUCCESS;
+    RtlInitUnicodeString(&valueName, L"ErrorControl");
+    parameters = SERVICE_ERROR_NORMAL;
+    if (!NT_SUCCESS(status = NtSetValueKey(
+        keyHandle,
+        &valueName,
+        0,
+        REG_DWORD,
+        &parameters,
+        sizeof(ULONG)
+        )))
+    {
+        goto CleanupExit;
+    }
 
-    if ((status = NtLoadDriver(&keyNameUs)) == STATUS_IMAGE_ALREADY_LOADED)
+    RtlInitUnicodeString(&valueName, L"Start");
+    parameters = SERVICE_DEMAND_START;
+    if (!NT_SUCCESS(status = NtSetValueKey(
+        keyHandle,
+        &valueName,
+        0,
+        REG_DWORD,
+        &parameters,
+        sizeof(ULONG)
+        )))
+    {
+        goto CleanupExit;
+    }
+
+    RtlInitUnicodeString(&valueName, L"ImagePath");
+    if (!NT_SUCCESS(status = NtSetValueKey(
+        keyHandle,
+        &valueName,
+        0,
+        REG_EXPAND_SZ,
+        fileName.Buffer,
+        (ULONG)fileName.MaximumLength
+        )))
+    {
+        goto CleanupExit;
+    }
+
+    if (Parameters)
+    {
+        if (!NT_SUCCESS(status = Kph2SetParameters(Parameters)))
+            goto CleanupExit;
+    }
+
+#ifdef _DEBUG
+    if (!NT_SUCCESS(status = NtUnloadDriver(&objectName)))
+        status = STATUS_SUCCESS;
+#endif
+
+    if ((status = NtLoadDriver(&objectName)) == STATUS_IMAGE_ALREADY_LOADED)
         status = STATUS_SUCCESS;
 
 CleanupExit:
@@ -429,17 +437,8 @@ CleanupExit:
     if (keyHandle)
         NtClose(keyHandle);
 
-    if (directory)
-        PhDereferenceObject(directory);
-
-    if (path)
-        PhDereferenceObject(path);
-
     if (kphFileName)
         PhDereferenceObject(kphFileName);
-
-    if (keyPathName)
-        PhDereferenceObject(keyPathName);
 
     if (fileName.Buffer)
         RtlFreeHeap(GetProcessHeap(), 0, fileName.Buffer);
@@ -451,46 +450,39 @@ NTSTATUS Kph2Uninstall(
     VOID
     )
 {
-    static PH_STRINGREF keyNameSr = PH_STRINGREF_INIT(L"System\\CurrentControlSet\\Services\\kph2");
+    static UNICODE_STRING objectName = RTL_CONSTANT_STRING(L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\kph2");
     NTSTATUS status;
     HANDLE keyHandle;
-    PPH_STRING keyPathName;
-    UNICODE_STRING keyNameUs;
+    OBJECT_ATTRIBUTES objectAttributes;
 
-    if (!NT_SUCCESS(status = PhOpenKey(
-        &keyHandle,
-        KEY_WRITE | DELETE,
-        PH_KEY_LOCAL_MACHINE,
-        &keyNameSr,
-        0
-        )))
-    {
-        return status;
-    }
-
-    if (!NT_SUCCESS(status = PhGetHandleInformation(
-        NtCurrentProcess(),
-        keyHandle,
-        -1,
+    InitializeObjectAttributes(
+        &objectAttributes,
+        &objectName,
+        OBJ_CASE_INSENSITIVE,
         NULL,
-        NULL,
-        &keyPathName,
         NULL
-        )))
-    {
-        NtClose(keyHandle);
+        );
+
+    status = NtCreateKey(
+        &keyHandle,
+        KEY_ALL_ACCESS,
+        &objectAttributes,
+        0,
+        NULL,
+        0,
+        NULL
+        );
+
+    if (!NT_SUCCESS(status))
         return status;
-    }
 
-    PhStringRefToUnicodeString(&keyPathName->sr, &keyNameUs);
+    status = NtUnloadDriver(&objectName);
 
-    if (NT_SUCCESS(status = NtUnloadDriver(&keyNameUs)))
-    {
+    if (NT_SUCCESS(status))
         NtDeleteKey(keyHandle);
-    }
 
     NtClose(keyHandle);
-    PhDereferenceObject(keyPathName);
+
     return status;
 }
 
