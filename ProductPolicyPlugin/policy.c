@@ -75,6 +75,30 @@ static PPH_LIST wind_pol_unpack(_In_ PBYTE blob)
     return policyEntryList;
 }
 
+VOID QueryLicenseValue(_In_ PWSTR Name, _In_ ULONG Type)
+{
+    UNICODE_STRING us;
+    ULONG type = Type;
+    ULONG bufferLength = 0;
+    PVOID buffer;
+
+    RtlInitUnicodeString(&us, Name);
+
+    if (NT_SUCCESS(NtQueryLicenseValue(&us, &type, NULL, 0, &bufferLength)))
+        return;
+
+    buffer = PhAllocate(bufferLength);
+    memset(buffer, 0, bufferLength);
+
+    if (!NT_SUCCESS(NtQueryLicenseValue(&us, &type, buffer, bufferLength, &bufferLength)))
+    {
+        PhFree(buffer);
+        return;
+    }
+
+    PhFree(buffer);
+}
+
 PPH_LIST QueryProductPolicies(VOID)
 {
     static PH_STRINGREF policyKeyName = PH_STRINGREF_INIT(L"System\\CurrentControlSet\\Control\\ProductOptions");
@@ -123,6 +147,8 @@ PPH_LIST QueryProductPolicies(VOID)
     {
         PNT_POLICY_ENTRY entry;
         wind_pol_ent* e = policyEntries->Items[i];
+
+        //QueryLicenseValue(e->Name, e->DataType);
 
         entry = PhAllocate(sizeof(NT_POLICY_ENTRY));
         memset(entry, 0, sizeof(NT_POLICY_ENTRY));
