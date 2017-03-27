@@ -26,24 +26,24 @@
 // dmex: copied from https://github.com/vyvojar/poldump
 typedef struct _wind_pol_hdr 
 {
-    ULONG cbSize; 	// Size of everything.
-    ULONG data_sz; 	// Always sz-0x18.
-    ULONG endpad; 	// End padding. Usually 4.
-    ULONG tainted; 	// 1 if tainted.
-    ULONG pad1; 	// Always 1
+    ULONG Size; 	// Size of everything.
+    ULONG DataLength; 	// Always sz-0x18.
+    ULONG Endpad; 	// End padding. Usually 4.
+    ULONG Tainted; 	// 1 if tainted.
+    ULONG Padding; 	// Always 1
 } wind_pol_hdr;
 
 // Policy entry
 // dmex: modified based on https://github.com/vyvojar/poldump
 typedef struct _wind_pol_ent 
 {
-    USHORT cbSize; 	    // Size of whole entry.
+    USHORT Size; 	    // Size of whole entry.
     USHORT NameLength;  // Size of the following field, in bytes.
-    USHORT type; 	    // Field type
+    USHORT DataType; 	// Field type
     USHORT DataLength;  // Field size
-    ULONG flags; 	    // Field flags
-    ULONG pad0; 	    // Always 0
-    WCHAR name[1]; 	    // WCHAR name, NOT zero terminated!
+    ULONG DataFlags; 	// Field flags
+    ULONG Padding; 	    // Always 0
+    WCHAR Name[1]; 	    // WCHAR name, NOT zero terminated!
 } wind_pol_ent;
 
 // dmex: modified based on https://github.com/vyvojar/poldump
@@ -51,16 +51,16 @@ static PPH_LIST wind_pol_unpack(_In_ PBYTE blob)
 {
     PPH_LIST policyEntryList;
     wind_pol_hdr* h = (PVOID)blob;
-    wind_pol_ent* e = PTR_ADD_OFFSET(blob, sizeof(wind_pol_hdr));
-    PVOID endptr = PTR_ADD_OFFSET(e, h->data_sz);
+    wind_pol_ent* e = PTR_ADD_OFFSET(h, sizeof(wind_pol_hdr));
+    PVOID endptr = PTR_ADD_OFFSET(e, h->DataLength);
 
-    if (h->cbSize >= USHRT_MAX)
+    if (h->Size >= USHRT_MAX)
         return NULL;
-    if (h->endpad != 4)
+    if (h->Endpad != 0x4)
         return NULL;
-    if (h->data_sz + 0x18 != h->cbSize)
+    if (h->DataLength + 0x18 != h->Size)
         return NULL;
-    if (blob[h->cbSize - 4] != 0x45)
+    if (blob[h->Size - 0x4] != 0x45)
         return NULL;
 
     policyEntryList = PhCreateList(0x200);
@@ -69,7 +69,7 @@ static PPH_LIST wind_pol_unpack(_In_ PBYTE blob)
     {
         PhAddItemList(policyEntryList, e);
 
-        e = PTR_ADD_OFFSET(e, e->cbSize);
+        e = PTR_ADD_OFFSET(e, e->Size);
     }
 
     return policyEntryList;
@@ -79,11 +79,11 @@ PPH_LIST QueryProductPolicies(VOID)
 {
     static PH_STRINGREF policyKeyName = PH_STRINGREF_INIT(L"System\\CurrentControlSet\\Control\\ProductOptions");
     static PH_STRINGREF policyValueName = PH_STRINGREF_INIT(L"ProductPolicy");
-    HANDLE keyHandle;
+    HANDLE keyHandle = NULL;
     PVOID valueBuffer = NULL;
-    PKEY_VALUE_PARTIAL_INFORMATION buffer;
-    PPH_LIST policyList;
-    PPH_LIST policyEntries;
+    PKEY_VALUE_PARTIAL_INFORMATION buffer = NULL;
+    PPH_LIST policyList = NULL;
+    PPH_LIST policyEntries = NULL;
 
     if (!NT_SUCCESS(PhOpenKey(
         &keyHandle,
@@ -97,9 +97,9 @@ PPH_LIST QueryProductPolicies(VOID)
     }
 
     if (NT_SUCCESS(PhQueryValueKey(
-        keyHandle, 
-        &policyValueName, 
-        KeyValuePartialInformation, 
+        keyHandle,
+        &policyValueName,
+        KeyValuePartialInformation,
         &buffer
         )))
     {
@@ -123,26 +123,22 @@ PPH_LIST QueryProductPolicies(VOID)
     {
         PNT_POLICY_ENTRY entry;
         wind_pol_ent* e = policyEntries->Items[i];
-        
+
         entry = PhAllocate(sizeof(NT_POLICY_ENTRY));
         memset(entry, 0, sizeof(NT_POLICY_ENTRY));
 
-        entry->Name = PhCreateStringEx(e->name, e->NameLength);
+        entry->Name = PhCreateStringEx(e->Name, e->NameLength);
 
-        switch (e->type)
+        switch (e->DataType)
         {
-        case REG_DWORD: 
-            entry->Value = PhFormatUInt64(*(ULONG*)PTR_ADD_OFFSET(e->name, e->NameLength), TRUE);
+        case REG_DWORD:
+            entry->Value = PhFormatUInt64(*(ULONG*)PTR_ADD_OFFSET(e->Name, e->NameLength), TRUE);
             break;
         case REG_SZ:
-            entry->Value = PhCreateStringEx((PWSTR)PTR_ADD_OFFSET(e->name, e->NameLength), e->DataLength);
+            entry->Value = PhCreateStringEx((PWSTR)PTR_ADD_OFFSET(e->Name, e->NameLength), e->DataLength);
             break;
         case REG_BINARY:
-            {
-                PBYTE value = (PBYTE)PTR_ADD_OFFSET(e->name, e->NameLength);
-
-                entry->Value = PhBufferToHexString(value, e->DataLength);
-            }
+            entry->Value = PhBufferToHexString((PBYTE)PTR_ADD_OFFSET(e->Name, e->NameLength), e->DataLength);
             break;
         }
 

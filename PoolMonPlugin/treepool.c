@@ -419,20 +419,20 @@ BOOLEAN NTAPI PmPoolTagTreeNewCallback(
         return TRUE;
     case TreeNewGetNodeColor:
         {
-            PPH_TREENEW_GET_NODE_COLOR getNodeColor = (PPH_TREENEW_GET_NODE_COLOR)Parameter1;
-            node = (PPOOLTAG_ROOT_NODE)getNodeColor->Node;
+            //PPH_TREENEW_GET_NODE_COLOR getNodeColor = (PPH_TREENEW_GET_NODE_COLOR)Parameter1;
+            //node = (PPOOLTAG_ROOT_NODE)getNodeColor->Node;
 
-            switch (node->PoolItem->Type)
-            {
-            case TPOOLTAG_TREE_ITEM_TYPE_OBJECT:
-                getNodeColor->BackColor = RGB(255, 192, 203); //RGB(204, 255, 255);
-                break;
-            case TPOOLTAG_TREE_ITEM_TYPE_DRIVER:
-                getNodeColor->BackColor = RGB(170, 204, 255);
-                break; 
-            }
+            //switch (node->PoolItem->Type)
+            //{
+            //case TPOOLTAG_TREE_ITEM_TYPE_OBJECT:
+            //    getNodeColor->BackColor = RGB(255, 192, 203); //RGB(204, 255, 255);
+            //    break;
+            //case TPOOLTAG_TREE_ITEM_TYPE_DRIVER:
+            //    getNodeColor->BackColor = RGB(170, 204, 255);
+            //    break; 
+            //}
 
-            getNodeColor->Flags = TN_CACHE | TN_AUTO_FORECOLOR;
+            //getNodeColor->Flags = TN_CACHE | TN_AUTO_FORECOLOR;
         }
         return TRUE;
     case TreeNewSortChanged:

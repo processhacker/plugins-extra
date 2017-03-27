@@ -39,7 +39,7 @@ static HWND ListViewWndHandle;
 static PH_LAYOUT_MANAGER LayoutManager;
 static PPH_PLUGIN PluginInstance;
 
-NTSTATUS PhEnumAtomTable(
+NTSTATUS EnumAtomTable(
     _Out_ PATOM_TABLE_INFORMATION* AtomTable
     )
 {
@@ -69,7 +69,7 @@ NTSTATUS PhEnumAtomTable(
     return status;
 }
 
-NTSTATUS PhQueryAtomTableEntry(
+NTSTATUS QueryAtomTableEntry(
     _In_ RTL_ATOM Atom,
     _Out_ PATOM_BASIC_INFORMATION* AtomInfo
     )
@@ -104,7 +104,7 @@ VOID LoadAtomTable(VOID)
 {
     PATOM_TABLE_INFORMATION atomTable = NULL;
 
-    if (!NT_SUCCESS(PhEnumAtomTable(&atomTable)))
+    if (!NT_SUCCESS(EnumAtomTable(&atomTable)))
         return;
 
     ExtendedListView_SetRedraw(ListViewWndHandle, FALSE);
@@ -114,7 +114,7 @@ VOID LoadAtomTable(VOID)
     {
         PATOM_BASIC_INFORMATION atomInfo = NULL;
 
-        if (!NT_SUCCESS(PhQueryAtomTableEntry(atomTable->Atoms[i], &atomInfo)))
+        if (!NT_SUCCESS(QueryAtomTableEntry(atomTable->Atoms[i], &atomInfo)))
         {
             PhAddListViewItem(ListViewWndHandle, MAXINT, PhaFormatString(L"(Error) #%lu", i)->Buffer, NULL);
             continue;
@@ -239,14 +239,14 @@ VOID ShowStatusMenu(
                         {
                             PATOM_TABLE_INFORMATION atomTable = NULL;
 
-                            if (!NT_SUCCESS(PhEnumAtomTable(&atomTable)))
+                            if (!NT_SUCCESS(EnumAtomTable(&atomTable)))
                                 return;
 
                             for (ULONG i = 0; i < atomTable->NumberOfAtoms; i++)
                             {
                                 PATOM_BASIC_INFORMATION atomInfo = NULL;
 
-                                if (!NT_SUCCESS(PhQueryAtomTableEntry(atomTable->Atoms[i], &atomInfo)))
+                                if (!NT_SUCCESS(QueryAtomTableEntry(atomTable->Atoms[i], &atomInfo)))
                                     continue;
 
                                 if (!PhEqualStringZ(atomInfo->Name, cacheEntryName->Buffer, TRUE))
@@ -262,7 +262,7 @@ VOID ShowStatusMenu(
                                     PhFree(atomInfo);
                                     atomInfo = NULL;
 
-                                    if (!NT_SUCCESS(PhQueryAtomTableEntry(atomTable->Atoms[i], &atomInfo)))
+                                    if (!NT_SUCCESS(QueryAtomTableEntry(atomTable->Atoms[i], &atomInfo)))
                                         break;
 
                                 } while (atomInfo->UsageCount >= 1);

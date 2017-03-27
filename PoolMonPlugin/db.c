@@ -323,10 +323,8 @@ VOID UpdatePoolTagBinaryName(
         PoolEntry->BinaryNameString = client->BinaryNameString;
         PoolEntry->DescriptionString = client->DescriptionString;
 
-        if (PhStartsWithString2(PoolEntry->BinaryNameString, L"nt!", FALSE))
-        {
-            PoolEntry->Type = TPOOLTAG_TREE_ITEM_TYPE_OBJECT;
-        }
+        //if (PhStartsWithString2(PoolEntry->BinaryNameString, L"nt!", FALSE))
+        //    PoolEntry->Type = TPOOLTAG_TREE_ITEM_TYPE_OBJECT;
 
         //if (PhEndsWithString2(PoolEntry->BinaryNameString, L".sys", FALSE))
             //PoolEntry->Type = TPOOLTAG_TREE_ITEM_TYPE_DRIVER;
