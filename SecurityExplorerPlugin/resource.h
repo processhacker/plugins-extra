@@ -6,9 +6,9 @@
 #define IDD_SESSIONS                    102
 #define IDD_USERS                       103
 #define IDD_GROUPS                      104
+#define IDD_CREDENTIALS                 105
 #define IDC_EDITPOLICYSECURITY          1001
 #define IDC_ACCOUNTS                    1002
-#define IDC_DELETE                      1003
 #define IDC_ACCOUNT_DELETE              1003
 #define IDC_PRIVILEGES                  1004
 #define IDC_ACCOUNT_SECURITY            1005

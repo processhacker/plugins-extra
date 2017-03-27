@@ -33,6 +33,9 @@
     <ClCompile Include="groups.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="creds.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="explorer.h">

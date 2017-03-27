@@ -64,6 +64,7 @@
     <Import Project="..\ExtraPlugins.props" />
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="creds.c" />
     <ClCompile Include="explorer.c" />
     <ClCompile Include="groups.c" />
     <ClCompile Include="main.c" />
