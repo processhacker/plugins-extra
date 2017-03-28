@@ -24,6 +24,7 @@
 #include "main.h"
 #include "kph2user.h"
 #include <hndlinfo.h>
+#include <shlobj.h>
 
 HANDLE PhKph2Handle = NULL;
 
@@ -42,6 +43,25 @@ PPH_STRING Kph2GetPluginDirectory(
   
     PhDereferenceObject(path);
     PhDereferenceObject(directory);
+
+    // Create the directory if it does not exist.
+    {
+        PPH_STRING fullPath;
+        ULONG indexOfFileName;
+        PPH_STRING directoryName;
+
+        if (fullPath = PhGetFullPath(PhGetString(kphFileName), &indexOfFileName))
+        {
+            if (indexOfFileName != -1)
+            {
+                directoryName = PhSubstring(fullPath, 0, indexOfFileName);
+                SHCreateDirectoryEx(NULL, directoryName->Buffer, NULL);
+                PhDereferenceObject(directoryName);
+            }
+
+            PhDereferenceObject(fullPath);
+        }
+    }
 
     return kphFileName;
 }
@@ -242,10 +262,10 @@ static NTSTATUS Kph2Extract(
     if (!NT_SUCCESS(status = PhCreateFileWin32(
         &fileHandle,
         PhGetString(KphFileName),
-        FILE_ALL_ACCESS,
-        0,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        FILE_OVERWRITE_IF,
+        FILE_GENERIC_READ | FILE_GENERIC_WRITE,
+        FILE_ATTRIBUTE_NORMAL,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        FILE_OPEN_IF,
         FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
         )))
     {
