@@ -284,8 +284,8 @@ LOGICAL DllMain(
                 return FALSE;
 
             info->Author = L"dmex";
-            info->DisplayName = L"NT Product Policy";
-            info->Description = L"Plugin for viewing the current NT Product Policy via the Tools menu.";
+            info->DisplayName = L"Software License Policy";
+            info->Description = L"Plugin for viewing the current Software License Policy via the Tools menu.";
             info->HasOptions = FALSE;
 
             PhRegisterCallback(
