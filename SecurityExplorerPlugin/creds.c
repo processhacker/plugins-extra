@@ -47,13 +47,13 @@ VOID SxpEnumerateCredentials(VOID)
 
         FileTimeToSystemTime(&credential[i]->LastWritten, &time);
 
-        name = PH_AUTO(PhCreateString(credential[i]->TargetName));
-        user = PH_AUTO(PhCreateString(credential[i]->UserName));
-        comment = PH_AUTO(PhCreateString(credential[i]->Comment));
+        name = credential[i]->TargetName ? PH_AUTO(PhCreateString(credential[i]->TargetName)) : NULL;
+        user = credential[i]->UserName ? PH_AUTO(PhCreateString(credential[i]->UserName)) : NULL;
+        comment = credential[i]->Comment ? PH_AUTO(PhCreateString(credential[i]->Comment)) : NULL;
 
-        lvItemIndex = PhAddListViewItem(CredentialsLv, MAXINT, PhGetStringOrDefault(name, L"(unknown)"), NULL);
-        PhSetListViewSubItem(CredentialsLv, lvItemIndex, 1, PhGetStringOrDefault(user, L"(unknown)"));
-        PhSetListViewSubItem(CredentialsLv, lvItemIndex, 2, PhGetStringOrDefault(comment, L"(unknown)"));
+        lvItemIndex = PhAddListViewItem(CredentialsLv, MAXINT, PhGetStringOrEmpty(name), NULL);
+        PhSetListViewSubItem(CredentialsLv, lvItemIndex, 1, PhGetStringOrEmpty(user));
+        PhSetListViewSubItem(CredentialsLv, lvItemIndex, 2, PhGetStringOrEmpty(comment));
         PhSetListViewSubItem(CredentialsLv, lvItemIndex, 3, PhaFormatDateTime(&time)->Buffer);
     }
 }
