@@ -26,7 +26,7 @@ BOOLEAN InitializeFirewallApi(
     FWFreeFirewallRules_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWFreeFirewallRules", 0);
 
     FWOpenPolicyStore_I(
-        FW_REDSTONE_BINARY_VERSION,
+        FW_REDSTONE2_BINARY_VERSION,
         NULL,
         FW_STORE_TYPE_LOCAL,
         FW_POLICY_ACCESS_RIGHT_READ_WRITE,
@@ -34,7 +34,7 @@ BOOLEAN InitializeFirewallApi(
         &PolicyStoreHandles[0]
         );
     FWOpenPolicyStore_I(
-        FW_REDSTONE_BINARY_VERSION,
+        FW_REDSTONE2_BINARY_VERSION,
         NULL,
         FW_STORE_TYPE_GP_RSOP,
         FW_POLICY_ACCESS_RIGHT_READ,
@@ -42,7 +42,7 @@ BOOLEAN InitializeFirewallApi(
         &PolicyStoreHandles[1]
         );
     FWOpenPolicyStore_I(
-        FW_REDSTONE_BINARY_VERSION,
+        FW_REDSTONE2_BINARY_VERSION,
         NULL,
         FW_STORE_TYPE_DYNAMIC,
         FW_POLICY_ACCESS_RIGHT_READ,
@@ -50,7 +50,7 @@ BOOLEAN InitializeFirewallApi(
         &PolicyStoreHandles[2]
         );
     FWOpenPolicyStore_I(
-        FW_REDSTONE_BINARY_VERSION,
+        FW_REDSTONE2_BINARY_VERSION,
         NULL,
         FW_STORE_TYPE_DEFAULTS,
         FW_POLICY_ACCESS_RIGHT_READ,
@@ -76,16 +76,6 @@ VOID FreeFirewallApi(
 
     if (FWClosePolicyStore_I && PolicyStoreHandles[3])
         FWClosePolicyStore_I(PolicyStoreHandles[3]);
-}
-
-BOOLEAN ValidateFirewallConnectivity(
-    _In_ ULONG returnValue
-    )
-{
-    if (returnValue == ERROR_INVALID_HANDLE || returnValue == RPC_S_UNKNOWN_IF)
-        return FALSE;
-
-    return TRUE;
 }
 
 VOID FwStatusMessageFromStatusCode(
@@ -126,17 +116,16 @@ VOID EnumerateFirewallRules(
         break;
     }
 
-    //FW_PROFILE_TYPE_CURRENT
     result = FWEnumFirewallRules_I(
         storeHandle,
-        FW_RULE_STATUS_CLASS_OK,
+        FW_RULE_STATUS_CLASS_ALL,
         Type, 
-        FW_ENUM_RULES_FLAG_INCLUDE_METADATA | FW_ENUM_RULES_FLAG_RESOLVE_NAME | FW_ENUM_RULES_FLAG_RESOLVE_DESCRIPTION | FW_ENUM_RULES_FLAG_RESOLVE_APPLICATION, 
+        FW_ENUM_RULES_FLAG_RESOLVE_NAME | FW_ENUM_RULES_FLAG_RESOLVE_DESCRIPTION | FW_ENUM_RULES_FLAG_RESOLVE_APPLICATION, 
         &uRuleCount, 
         &pRules
         );
 
-    if (ValidateFirewallConnectivity(result))
+    if (!result && pRules && uRuleCount)
     {
         for (PFW_RULE i = pRules; i; i = i->pNext)
         {
@@ -154,7 +143,10 @@ VOID EnumerateFirewallRules(
                 }
             }
         }
+    }
 
+    if (FWFreeFirewallRules_I && pRules)
+    {
         FWFreeFirewallRules_I(pRules);
     }
 }

@@ -13,7 +13,8 @@
 #define FW_WIN10_BINARY_VERSION 0x0216
 #define FW_THRESHOLD_BINARY_VERSION 0x0218
 #define FW_THRESHOLD2_BINARY_VERSION 0x0219
-#define FW_REDSTONE_BINARY_VERSION 0x021A
+#define FW_REDSTONE1_BINARY_VERSION 0x021A
+#define FW_REDSTONE2_BINARY_VERSION 0x021B
 
 #define FW_ICMP_CODE_ANY (256)
 #define FW_IP_PROTOCOL_ANY (256)
@@ -598,11 +599,11 @@ typedef struct _tag_FW_RULE
     struct _tag_FW_RULE *pNext;
     USHORT wSchemaVersion;
     //[string, range(1,512), ref]
-    __nullterminated PWCHAR wszRuleId;
+    PWCHAR wszRuleId;
     //[string, range(1,10001)]
-    __nullterminated PWCHAR wszName;
+    PWCHAR wszName;
     //[string, range(1,10001)]
-    __nullterminated PWCHAR wszDescription;
+    PWCHAR wszDescription;
     FW_PROFILE_TYPE dwProfiles;
     //[range(FW_DIR_INVALID, FW_DIR_OUT)]
     FW_DIRECTION Direction;
@@ -627,24 +628,24 @@ typedef struct _tag_FW_RULE
     FW_INTERFACE_LUIDS LocalInterfaceIds;
     ULONG dwLocalInterfaceTypes;
     //[string, range(1,10001)]
-    __nullterminated PWCHAR wszLocalApplication;
+    PWCHAR wszLocalApplication;
     //[string, range(1,10001)]
-    __nullterminated PWCHAR wszLocalService;
+    PWCHAR wszLocalService;
     //[range(FW_RULE_ACTION_INVALID, FW_RULE_ACTION_MAX)]
     FW_RULE_ACTION Action;
     FW_ENUM_RULES_FLAGS wFlags;
     //[string, range(1,10001)]
-    __nullterminated PWCHAR wszRemoteMachineAuthorizationList;
+    PWCHAR wszRemoteMachineAuthorizationList;
     //[string, range(1,10001)]
-    __nullterminated PWCHAR wszRemoteUserAuthorizationList;
+    PWCHAR wszRemoteUserAuthorizationList;
     //[string, range(1,10001)]
-    __nullterminated PWCHAR wszEmbeddedContext;
+    PWCHAR wszEmbeddedContext;
     FW_OS_PLATFORM_LIST PlatformValidityList;
     FW_RULE_STATUS Status;
     //[range(FW_RULE_ORIGIN_INVALID, FW_RULE_ORIGIN_MAX)]
     FW_RULE_ORIGIN_TYPE Origin;
     //[string, range(1,10001)]
-    __nullterminated PWCHAR wszGPOName;
+    PWCHAR wszGPOName;
     ULONG Reserved;
     //[size_is((Reserved & FW_OBJECT_CTRL_FLAG_INCLUDE_METADATA) ? 1 : 0)]
     PFW_OBJECT_METADATA pMetaData;
@@ -660,6 +661,9 @@ typedef struct _tag_FW_RULE
     WCHAR* wszSecurityRealmId;
     unsigned short wFlags2;
     FW_NETWORK_NAMES RemoteOutServerNames;
+
+    WCHAR* Fqbn; // since RS1 or RS2?
+    ULONG compartmentId;
 } FW_RULE, *PFW_RULE;
 
 typedef enum _tag_FW_PROFILE_CONFIG
