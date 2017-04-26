@@ -215,7 +215,7 @@ INT_PTR CALLBACK PoolMonDlgProc(
             PhRegisterDialog(hwndDlg);
             PhCenterWindow(hwndDlg, PhMainWndHandle);
 
-            CreateSearchControl(hwndDlg, context->SearchboxHandle, L"Search Pool Tags (Ctrl+K)");
+            PhCreateSearchControl(hwndDlg, context->SearchboxHandle, L"Search Pool Tags (Ctrl+K)");
             PmInitializePoolTagTree(context);
 
             PhInitializeLayoutManager(&context->LayoutManager, hwndDlg);
