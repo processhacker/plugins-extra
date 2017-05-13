@@ -2,6 +2,7 @@
 #define FWMON_H
 
 #include <phdk.h>
+#include <settings.h>
 #include <winsock2.h>
 #include <fwpmu.h>
 #include <fwpsu.h>

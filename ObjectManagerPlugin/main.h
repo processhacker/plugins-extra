@@ -2,6 +2,7 @@
 #define _WINOBJ_H
 
 #include <phdk.h>
+#include <settings.h>
 #include <workqueue.h>
 #include "resource.h"
 

@@ -26,6 +26,7 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
+#include <settings.h>
 #include "resource.h"
 
 #define POLICY_TABLE_MENUITEM 1000

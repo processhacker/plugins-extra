@@ -30,6 +30,7 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
+#include <settings.h>
 #include <verify.h>
 #include <windowsx.h>
 #include "resource.h"

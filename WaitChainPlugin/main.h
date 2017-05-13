@@ -27,6 +27,7 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
+#include <settings.h>
 #include <wct.h>
 #include <psapi.h>
 #include "resource.h"

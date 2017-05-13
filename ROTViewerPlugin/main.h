@@ -32,6 +32,7 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
+#include <settings.h>
 #include "resource.h"
 
 typedef struct _ROT_WINDOW_CONTEXT

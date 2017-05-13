@@ -27,6 +27,7 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
+#include <settings.h>
 #include <shlobj.h>
 #include <symprv.h>
 #include <windowsx.h>

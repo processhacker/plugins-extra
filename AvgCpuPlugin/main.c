@@ -21,6 +21,7 @@
  */
 
 #include <phdk.h>
+#include <settings.h>
 #include "resource.h"
 
 #define COLUMN_ID_AVGCPU10 1

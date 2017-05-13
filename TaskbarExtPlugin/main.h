@@ -30,6 +30,7 @@
 #define COBJMACROS
 #include "phdk.h"
 #include <phappresource.h>
+#include <settings.h>
 #include "resource.h"
 
 #include <Shobjidl.h>

@@ -34,6 +34,7 @@
 #define INITGUID
 #include <phdk.h>
 #include <phappresource.h>
+#include <settings.h>
 #include <stdint.h>
 #include <cguid.h>
 

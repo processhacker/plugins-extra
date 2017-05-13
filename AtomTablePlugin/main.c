@@ -24,6 +24,7 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
+#include <settings.h>
 #include "resource.h"
 
 #define ATOM_TABLE_MENUITEM 1000

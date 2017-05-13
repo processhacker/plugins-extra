@@ -32,6 +32,7 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
+#include <settings.h>
 #include <pdh.h>
 #include <pdhmsg.h>
 
