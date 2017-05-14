@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Debug View Plugin
  *
- * Copyright (C) 2015 dmex
+ * Copyright (C) 2015-2017 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -39,6 +39,8 @@
 #define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
+#include <settings.h>
+
 #include <windowsx.h>
 #include <Sddl.h>
 
