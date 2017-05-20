@@ -142,7 +142,7 @@ INT_PTR CALLBACK MainWindowDlgProc(
     {
     case WM_INITDIALOG:
         {
-            PhCenterWindow(hwndDlg, PhMainWndHandle);
+            PhCenterWindow(hwndDlg, PhMainWindowHandle);
             ListViewWndHandle = GetDlgItem(hwndDlg, IDC_ATOMLIST);
 
             PhInitializeLayoutManager(&LayoutManager, hwndDlg);

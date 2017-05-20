@@ -359,7 +359,7 @@ INT_PTR CALLBACK FwEntriesDlgProc(
             if (SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(LOGFONT), &logFont, 0))
             {
                 context->NormalFontHandle = CreateFont(
-                    -PhMultiplyDivideSigned(-14, PhGlobalDpi, 72),
+                    -PhMultiplyDivideSigned(-14, PhGetGlobalDpi(), 72),
                     0,
                     0,
                     0,
@@ -376,7 +376,7 @@ INT_PTR CALLBACK FwEntriesDlgProc(
                     );
 
                 context->BoldFontHandle = CreateFont(
-                    -PhMultiplyDivideSigned(-16, PhGlobalDpi, 72),
+                    -PhMultiplyDivideSigned(-16, PhGetGlobalDpi(), 72),
                     0,
                     0,
                     0,
@@ -393,7 +393,7 @@ INT_PTR CALLBACK FwEntriesDlgProc(
                     );
             }
 
-            PhCenterWindow(hwndDlg, PhMainWndHandle);
+            PhCenterWindow(hwndDlg, PhMainWindowHandle);
 
             PhSetListViewStyle(context->ListViewHandle, FALSE, TRUE);
             PhSetControlTheme(context->ListViewHandle, L"explorer");
@@ -474,7 +474,7 @@ VOID ShowFwDialog(
     //{
     //    if (!(DbgDialogThreadHandle = PhCreateThread(0, DbgViewDialogThread, NULL)))
     //    {
-    //        PhShowStatus(PhMainWndHandle, L"Unable to create the window.", 0, GetLastError());
+    //        PhShowStatus(PhMainWindowHandle, L"Unable to create the window.", 0, GetLastError());
     //        return;
     //    }
 

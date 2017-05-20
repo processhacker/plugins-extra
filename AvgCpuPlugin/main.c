@@ -304,9 +304,9 @@ LOGICAL DllMain(
             TreeNewMessageCallback, NULL, &TreeNewMessageCallbackRegistration);
         PhRegisterCallback(PhGetGeneralCallback(GeneralCallbackProcessTreeNewInitializing),
             ProcessTreeNewInitializingCallback, NULL, &ProcessTreeNewInitializingCallbackRegistration);
-        PhRegisterCallback(&PhProcessAddedEvent, ProcessAddedHandler, NULL, &ProcessAddedCallbackRegistration);
-        PhRegisterCallback(&PhProcessRemovedEvent, ProcessRemovedHandler, NULL, &ProcessRemovedCallbackRegistration);
-        PhRegisterCallback(&PhProcessesUpdatedEvent, ProcessesUpdatedHandler, NULL, &ProcessesUpdatedCallbackRegistration);
+        PhRegisterCallback(PhGetGeneralCallback(GeneralCallbackProcessProviderAdded), ProcessAddedHandler, NULL, &ProcessAddedCallbackRegistration);
+        PhRegisterCallback(PhGetGeneralCallback(GeneralCallbackProcessProviderRemoved), ProcessRemovedHandler, NULL, &ProcessRemovedCallbackRegistration);
+        PhRegisterCallback(PhGetGeneralCallback(GeneralCallbackProcessProviderUpdated), ProcessesUpdatedHandler, NULL, &ProcessesUpdatedCallbackRegistration);
 
         PhPluginSetObjectExtension(PluginInstance, EmProcessItemType, sizeof(PROCESS_EXTENSION),
             ProcessItemCreateCallback, NULL);

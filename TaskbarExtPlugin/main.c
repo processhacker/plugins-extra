@@ -60,7 +60,7 @@ VOID NTAPI ProcessesUpdatedCallback(
         // Clear the icon
         if (TaskbarListClass)
         {
-            ITaskbarList3_SetOverlayIcon(TaskbarListClass, PhMainWndHandle, NULL, NULL);
+            ITaskbarList3_SetOverlayIcon(TaskbarListClass, PhMainWindowHandle, NULL, NULL);
         }
     }
 
@@ -89,7 +89,7 @@ VOID NTAPI ProcessesUpdatedCallback(
     {
         if (TaskbarListClass)
         {
-            ITaskbarList3_SetOverlayIcon(TaskbarListClass, PhMainWndHandle, overlayIcon, NULL);
+            ITaskbarList3_SetOverlayIcon(TaskbarListClass, PhMainWindowHandle, overlayIcon, NULL);
         }
 
         DestroyIcon(overlayIcon);
@@ -149,14 +149,14 @@ LRESULT CALLBACK MainWndSubclassProc(
         if (TaskbarListClass)
         {
             // Set the ThumbBar image list
-            ITaskbarList3_ThumbBarSetImageList(TaskbarListClass, PhMainWndHandle, ButtonsImageList);
+            ITaskbarList3_ThumbBarSetImageList(TaskbarListClass, PhMainWindowHandle, ButtonsImageList);
             // Set the ThumbBar buttons array
-            ITaskbarList3_ThumbBarAddButtons(TaskbarListClass, PhMainWndHandle, ARRAYSIZE(ButtonsArray), ButtonsArray);
+            ITaskbarList3_ThumbBarAddButtons(TaskbarListClass, PhMainWindowHandle, ARRAYSIZE(ButtonsArray), ButtonsArray);
 
             if (TaskbarIconType != TASKBAR_ICON_NONE)
             {
                 // Set the initial ThumbBar icon
-                ITaskbarList3_SetOverlayIcon(TaskbarListClass, PhMainWndHandle, BlackIcon, NULL);
+                ITaskbarList3_SetOverlayIcon(TaskbarListClass, PhMainWindowHandle, BlackIcon, NULL);
             }
         }
     }
@@ -192,7 +192,7 @@ VOID NTAPI LoadCallback(
         }
     }
 
-    PhRegisterCallback(&PhProcessesUpdatedEvent, ProcessesUpdatedCallback, NULL, &ProcessesUpdatedCallbackRegistration);
+    PhRegisterCallback(PhGetGeneralCallback(GeneralCallbackProcessProviderUpdated), ProcessesUpdatedCallback, NULL, &ProcessesUpdatedCallbackRegistration);
 }
 
 VOID NTAPI UnloadCallback(
@@ -216,7 +216,7 @@ VOID NTAPI MainWindowShowingCallback(
     _In_opt_ PVOID Context
     )
 {
-    SetWindowSubclass(PhMainWndHandle, MainWndSubclassProc, 0, 0); 
+    SetWindowSubclass(PhMainWindowHandle, MainWndSubclassProc, 0, 0); 
 }
 
 LOGICAL DllMain(
@@ -235,7 +235,7 @@ LOGICAL DllMain(
                 { IntegerSettingType, SETTING_NAME_TASKBAR_ICON_TYPE, L"4" }
             };
 
-            if (WindowsVersion < WINDOWS_7)
+            if (PhWindowsVersion() < WINDOWS_7)
                 break;
 
             PluginInstance = PhRegisterPlugin(PLUGIN_NAME, Instance, &info);

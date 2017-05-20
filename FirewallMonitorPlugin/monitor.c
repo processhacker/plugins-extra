@@ -668,7 +668,7 @@ BOOLEAN StartFwMonitor(
         return FALSE;
     }
        
-    if (WindowsVersion > WINDOWS_7)
+    if (PhWindowsVersion() > WINDOWS_7)
     {
         value.type = FWP_UINT32;
         value.uint32 = FWPM_NET_EVENT_KEYWORD_CAPABILITY_DROP | FWPM_NET_EVENT_KEYWORD_CAPABILITY_ALLOW | FWPM_NET_EVENT_KEYWORD_CLASSIFY_ALLOW; // FWPM_NET_EVENT_KEYWORD_INBOUND_MCAST | FWPM_NET_EVENT_KEYWORD_INBOUND_BCAST
@@ -746,7 +746,7 @@ BOOLEAN StartFwMonitor(
     }
 
     PhRegisterCallback(
-        &PhProcessesUpdatedEvent,
+        PhGetGeneralCallback(GeneralCallbackProcessProviderUpdated),
         ProcessesUpdatedCallback,
         NULL,
         &ProcessesUpdatedCallbackRegistration

@@ -163,7 +163,7 @@ NTSTATUS WaitChainCallbackThread(
         status = NtGetNextThread(
             context->ProcessItem->QueryHandle, 
             NULL, 
-            ThreadQueryAccess,
+            PhThreadQueryAccess(),
             0, 
             0, 
             &threadHandle
@@ -179,7 +179,7 @@ NTSTATUS WaitChainCallbackThread(
             status = NtGetNextThread(
                 context->ProcessItem->QueryHandle, 
                 threadHandle, 
-                ThreadQueryAccess, 
+                PhThreadQueryAccess(),
                 0, 
                 0, 
                 &newThreadHandle
@@ -314,7 +314,7 @@ INT_PTR CALLBACK WaitChainDlgProc(
                     {
                         if (processNode = PhFindProcessNode(selectedNode->ProcessId))
                         {
-                            ProcessHacker_SelectTabPage(PhMainWndHandle, 0);
+                            ProcessHacker_SelectTabPage(PhMainWindowHandle, 0);
                             PhSelectAndEnsureVisibleProcessNode(processNode);
                         }
                     }

@@ -78,7 +78,7 @@ BOOLEAN FwTabPageCallback(
                     0,
                     3,
                     3,
-                    PhMainWndHandle,
+                    PhMainWindowHandle,
                     NULL,
                     NULL,
                     NULL);
@@ -91,7 +91,7 @@ BOOLEAN FwTabPageCallback(
                 *(HWND*)Parameter1 = CreateDialog(
                     PluginInstance->DllBase,
                     MAKEINTRESOURCE(IDD_FWERROR),
-                    PhMainWndHandle,
+                    PhMainWindowHandle,
                     FwTabErrorDialogProc);
 
                 return TRUE;
@@ -167,7 +167,7 @@ VOID InitializeFwTab(
     memset(&page, 0, sizeof(PH_MAIN_TAB_PAGE));
     PhInitializeStringRef(&page.Name, L"Firewall");
     page.Callback = FwTabPageCallback;
-    addedTabPage = ProcessHacker_CreateTabPage(PhMainWndHandle, &page);
+    addedTabPage = ProcessHacker_CreateTabPage(PhMainWindowHandle, &page);
 
     if (toolStatusPlugin = PhFindPlugin(TOOLSTATUS_PLUGIN_NAME))
     {
@@ -721,7 +721,7 @@ VOID ShowFwContextMenu(
 
         if (item = PhShowEMenu(
             menu,
-            PhMainWndHandle,
+            PhMainWindowHandle,
             PH_EMENU_SHOW_LEFTRIGHT,
             PH_ALIGN_LEFT | PH_ALIGN_TOP,
             Location.x,
@@ -745,7 +745,7 @@ VOID NTAPI FwItemAddedHandler(
     PFW_EVENT_ITEM fwItem = (PFW_EVENT_ITEM)Parameter;
 
     PhReferenceObject(fwItem);
-    ProcessHacker_Invoke(PhMainWndHandle, OnFwItemAdded, fwItem);
+    ProcessHacker_Invoke(PhMainWindowHandle, OnFwItemAdded, fwItem);
 }
 
 VOID NTAPI FwItemModifiedHandler(
@@ -753,7 +753,7 @@ VOID NTAPI FwItemModifiedHandler(
     _In_opt_ PVOID Context
     )
 {
-    ProcessHacker_Invoke(PhMainWndHandle, OnFwItemModified, (PFW_EVENT_ITEM)Parameter);
+    ProcessHacker_Invoke(PhMainWindowHandle, OnFwItemModified, (PFW_EVENT_ITEM)Parameter);
 }
 
 VOID NTAPI FwItemRemovedHandler(
@@ -761,7 +761,7 @@ VOID NTAPI FwItemRemovedHandler(
     _In_opt_ PVOID Context
     )
 {
-    ProcessHacker_Invoke(PhMainWndHandle, OnFwItemRemoved, (PFW_EVENT_ITEM)Parameter);
+    ProcessHacker_Invoke(PhMainWindowHandle, OnFwItemRemoved, (PFW_EVENT_ITEM)Parameter);
 }
 
 VOID NTAPI FwItemsUpdatedHandler(
@@ -769,7 +769,7 @@ VOID NTAPI FwItemsUpdatedHandler(
     _In_opt_ PVOID Context
     )
 {
-    ProcessHacker_Invoke(PhMainWndHandle, OnFwItemsUpdated, NULL);
+    ProcessHacker_Invoke(PhMainWindowHandle, OnFwItemsUpdated, NULL);
 }
 
 VOID NTAPI OnFwItemAdded(
@@ -927,10 +927,10 @@ INT_PTR CALLBACK FwTabErrorDialogProc(
             switch (LOWORD(wParam))
             {
             case IDC_RESTART:
-                ProcessHacker_PrepareForEarlyShutdown(PhMainWndHandle);
+                ProcessHacker_PrepareForEarlyShutdown(PhMainWindowHandle);
 
                 if (PhShellProcessHacker(
-                    PhMainWndHandle,
+                    PhMainWindowHandle,
                     L"-v -selecttab Firewall",
                     SW_SHOW,
                     PH_SHELL_EXECUTE_ADMIN,
@@ -939,11 +939,11 @@ INT_PTR CALLBACK FwTabErrorDialogProc(
                     NULL
                     ))
                 {
-                    ProcessHacker_Destroy(PhMainWndHandle);
+                    ProcessHacker_Destroy(PhMainWindowHandle);
                 }
                 else
                 {
-                    ProcessHacker_CancelEarlyShutdown(PhMainWndHandle);
+                    ProcessHacker_CancelEarlyShutdown(PhMainWindowHandle);
                 }
 
                 break;

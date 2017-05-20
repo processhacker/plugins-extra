@@ -50,7 +50,7 @@ INT_PTR CALLBACK OptionsDlgProc(
     switch (uMsg)
     {
     case WM_INITDIALOG:
-        PhCenterWindow(hwndDlg, PhMainWndHandle);
+        PhCenterWindow(hwndDlg, PhMainWindowHandle);
         break;
     case WM_COMMAND:
         {
