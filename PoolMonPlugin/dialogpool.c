@@ -213,7 +213,7 @@ INT_PTR CALLBACK PoolMonDlgProc(
             context->SearchboxHandle = GetDlgItem(hwndDlg, IDC_SEARCH);
 
             PhRegisterDialog(hwndDlg);
-            PhCenterWindow(hwndDlg, PhMainWindowHandle);
+            PhCenterWindow(hwndDlg, PhMainWndHandle);
 
             PhCreateSearchControl(hwndDlg, context->SearchboxHandle, L"Search Pool Tags (Ctrl+K)");
             PmInitializePoolTagTree(context);
@@ -238,7 +238,7 @@ INT_PTR CALLBACK PoolMonDlgProc(
             TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_DESCRIPTION, TN_AUTOSIZE_REMAINING_SPACE);
 
             PhRegisterCallback(
-                PhGetGeneralCallback(GeneralCallbackProcessProviderUpdated),
+                &PhProcessesUpdatedEvent,
                 ProcessesUpdatedCallback,
                 context,
                 &context->ProcessesUpdatedCallbackRegistration
@@ -254,7 +254,7 @@ INT_PTR CALLBACK PoolMonDlgProc(
     case WM_DESTROY:
         {
             PhUnregisterCallback(
-                PhGetGeneralCallback(GeneralCallbackProcessProviderUpdated),
+                &PhProcessesUpdatedEvent,
                 &context->ProcessesUpdatedCallbackRegistration
                 );
 
@@ -415,7 +415,7 @@ VOID ShowPoolMonDialog(
     {
         if (!(PoolTagDialogThreadHandle = PhCreateThread(0, ShowPoolMonDialogThread, NULL)))
         {
-            PhShowStatus(PhMainWindowHandle, L"Unable to create the pool monitor window.", 0, GetLastError());
+            PhShowStatus(PhMainWndHandle, L"Unable to create the pool monitor window.", 0, GetLastError());
             return;
         }
 

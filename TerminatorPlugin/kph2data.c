@@ -53,20 +53,12 @@ NTSTATUS Kph2InitializeDynamicPackage(
     _Out_ PKPH_DYN_PACKAGE Package
     )
 {
-    NTSTATUS status;
-    ULONG majorVersion;
-    ULONG minorVersion;
-    ULONG servicePack;
-    ULONG buildNumber;
-    RTL_OSVERSIONINFOEXW versionInfo = { sizeof(RTL_OSVERSIONINFOEXW) };
+    ULONG majorVersion, minorVersion, servicePack, buildNumber;
 
-    if (!NT_SUCCESS(status = RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo)))
-        return status;
-
-    majorVersion = versionInfo.dwMajorVersion;
-    minorVersion = versionInfo.dwMinorVersion;
-    servicePack = versionInfo.wServicePackMajor;
-    buildNumber = versionInfo.dwBuildNumber;
+    majorVersion = PhOsVersion.dwMajorVersion;
+    minorVersion = PhOsVersion.dwMinorVersion;
+    servicePack = PhOsVersion.wServicePackMajor;
+    buildNumber = PhOsVersion.dwBuildNumber;
 
     memset(&Package->StructData, -1, sizeof(KPH_DYN_STRUCT_DATA));
 
@@ -221,20 +213,12 @@ NTSTATUS Kph2InitializeDynamicPackage(
     _Out_ PKPH_DYN_PACKAGE Package
     )
 {
-    NTSTATUS status;
-    ULONG majorVersion;
-    ULONG minorVersion;
-    ULONG servicePack;
-    ULONG buildNumber;
-    RTL_OSVERSIONINFOEXW versionInfo = { sizeof(RTL_OSVERSIONINFOEXW) };
+    ULONG majorVersion, minorVersion, servicePack, buildNumber;
 
-    if (!NT_SUCCESS(status = RtlGetVersion((PRTL_OSVERSIONINFOW)&versionInfo)))
-        return status;
-
-    majorVersion = versionInfo.dwMajorVersion;
-    minorVersion = versionInfo.dwMinorVersion;
-    servicePack = versionInfo.wServicePackMajor;
-    buildNumber = versionInfo.dwBuildNumber;
+    majorVersion = PhOsVersion.dwMajorVersion;
+    minorVersion = PhOsVersion.dwMinorVersion;
+    servicePack = PhOsVersion.wServicePackMajor;
+    buildNumber = PhOsVersion.dwBuildNumber;
 
     memset(&Package->StructData, -1, sizeof(KPH_DYN_STRUCT_DATA));
 
@@ -258,18 +242,7 @@ NTSTATUS Kph2InitializeDynamicPackage(
     else if (majorVersion == 10 && minorVersion == 0 && buildNumber == 10586)
     {
         Package->BuildNumber = 10586;
-        Package->ResultingNtVersion = PHNT_THRESHOLD2;
-
-        Package->StructData.EgeGuid = 0xc;
-        Package->StructData.EpObjectTable = 0x154;
-        Package->StructData.EreGuidEntry = 0x10;
-        Package->StructData.OtName = 0x8;
-        Package->StructData.OtIndex = 0x14;
-    }
-    else if (majorVersion == 10 && minorVersion == 0 && buildNumber == 14393)
-    {
-        Package->BuildNumber = 14393;
-        Package->ResultingNtVersion = PHNT_THRESHOLD2;
+        Package->ResultingNtVersion = PHNT_THRESHOLD;
 
         Package->StructData.EgeGuid = 0xc;
         Package->StructData.EpObjectTable = 0x154;

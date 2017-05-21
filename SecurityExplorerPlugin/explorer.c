@@ -38,7 +38,7 @@ VOID SxShowExplorer()
         PSH_NOAPPLYNOW |
         PSH_NOCONTEXTHELP |
         PSH_PROPTITLE;
-    propSheetHeader.hwndParent = PhMainWindowHandle;
+    propSheetHeader.hwndParent = PhMainWndHandle;
     propSheetHeader.pszCaption = L"Security";
     propSheetHeader.nPages = 0;
     propSheetHeader.nStartPage = 0;

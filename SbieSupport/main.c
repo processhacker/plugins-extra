@@ -264,7 +264,7 @@ VOID NTAPI MenuItemCallback(
     case 1:
         {
             if (PhShowConfirmMessage(
-                PhMainWindowHandle,
+                PhMainWndHandle,
                 L"terminate",
                 L"all sandboxed processes",
                 NULL,

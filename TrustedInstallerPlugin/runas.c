@@ -94,7 +94,7 @@ NTSTATUS RunAsCreateProcessThread(
         goto CleanupExit;
     }
 
-    if (!NT_SUCCESS(status = PhOpenProcess(&processHandle, PhProcessQueryAccess(), UlongToHandle(serviceStatus.dwProcessId))))
+    if (!NT_SUCCESS(status = PhOpenProcess(&processHandle, ProcessQueryAccess, UlongToHandle(serviceStatus.dwProcessId))))
         goto CleanupExit;
 
     if (!NT_SUCCESS(status = NtOpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)))
@@ -111,7 +111,7 @@ NTSTATUS RunAsCreateProcessThread(
     }
 
     status = PhExecuteRunAsCommand2(
-        PhMainWindowHandle,
+        PhMainWndHandle,
         PhGetStringOrEmpty(commandLine),
         PhGetStringOrEmpty(userName),
         L"",

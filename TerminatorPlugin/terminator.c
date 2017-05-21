@@ -193,7 +193,7 @@ NTSTATUS NTAPI TerminatorTP1a(
 
     if (!NT_SUCCESS(status = NtGetNextProcess(
         NtCurrentProcess(),
-        PhProcessQueryAccess() | PROCESS_TERMINATE,
+        ProcessQueryAccess | PROCESS_TERMINATE,
         0,
         0,
         &processHandle
@@ -218,7 +218,7 @@ NTSTATUS NTAPI TerminatorTP1a(
 
         if (NT_SUCCESS(status = NtGetNextProcess(
             processHandle,
-            PhProcessQueryAccess() | PROCESS_TERMINATE,
+            ProcessQueryAccess | PROCESS_TERMINATE,
             0,
             0,
             &newProcessHandle

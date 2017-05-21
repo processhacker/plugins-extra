@@ -282,7 +282,7 @@ VOID NvGpuNotifyUsageGraph(
                     PhFormatString(L"%.0f%%", GpuCurrentGpuUsage * 100)
                     );
 
-                SelectObject(hdc, PhGetApplicationFont());
+                SelectObject(hdc, PhApplicationFont);
                 PhSetGraphText(hdc, drawInfo, &Context->GpuGraphState.Text->sr,
                     &NormalGraphTextMargin, &NormalGraphTextPadding, PH_ALIGN_TOP | PH_ALIGN_LEFT);
             }
@@ -351,7 +351,7 @@ VOID NvGpuNotifyMemoryGraph(
                     (FLOAT)GpuCurrentMemUsage / GpuMemoryLimit * 100
                     ));
 
-                SelectObject(hdc, PhGetApplicationFont());
+                SelectObject(hdc, PhApplicationFont);
                 PhSetGraphText(hdc, drawInfo, &Context->MemGraphState.Text->sr,
                     &NormalGraphTextMargin, &NormalGraphTextPadding, PH_ALIGN_TOP | PH_ALIGN_LEFT);
             }
@@ -434,7 +434,7 @@ VOID NvGpuNotifySharedGraph(
                     (FLOAT)GpuCurrentCoreUsage * 100
                     ));
 
-                SelectObject(hdc, PhGetApplicationFont());
+                SelectObject(hdc, PhApplicationFont);
                 PhSetGraphText(hdc, drawInfo, &Context->SharedGraphState.Text->sr,
                     &NormalGraphTextMargin, &NormalGraphTextPadding, PH_ALIGN_TOP | PH_ALIGN_LEFT);
             }
@@ -501,7 +501,7 @@ VOID NvGpuNotifyBusGraph(
                     (FLOAT)GpuCurrentBusUsage * 100
                     ));
 
-                SelectObject(hdc, PhGetApplicationFont());
+                SelectObject(hdc, PhApplicationFont);
                 PhSetGraphText(hdc, drawInfo, &Context->BusGraphState.Text->sr,
                     &NormalGraphTextMargin, &NormalGraphTextPadding, PH_ALIGN_TOP | PH_ALIGN_LEFT);
             }

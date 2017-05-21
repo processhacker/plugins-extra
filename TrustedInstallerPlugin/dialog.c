@@ -38,7 +38,7 @@ NTSTATUS RunAsTrustedInstallerThread(
             if (basicInfo.ExitStatus != STATUS_SUCCESS)
             {
                 PhShowStatus(
-                    PhMainWindowHandle, 
+                    PhMainWndHandle, 
                     L"Error creating process with TrustedInstaller privileges", 
                     basicInfo.ExitStatus, 
                     0

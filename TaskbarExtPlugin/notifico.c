@@ -353,7 +353,7 @@ HICON PhUpdateIconPhysicalHistory(
     for (i = 0; i < lineDataCount; i++)
         lineData1[i] = (FLOAT)PhGetItemCircularBuffer_ULONG(Statistics.PhysicalHistory, i);
 
-    PhDivideSinglesBySingle(lineData1, (FLOAT)PhGetSystemBasicInformation().NumberOfPhysicalPages, lineDataCount);
+    PhDivideSinglesBySingle(lineData1, (FLOAT)PhSystemBasicInformation.NumberOfPhysicalPages, lineDataCount);
 
     drawInfo.LineDataCount = lineDataCount;
     drawInfo.LineData1 = lineData1;

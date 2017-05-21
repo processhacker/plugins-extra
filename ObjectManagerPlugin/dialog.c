@@ -486,7 +486,7 @@ INT_PTR CALLBACK WinObjDlgProc(
     {
     case WM_INITDIALOG:
         {
-            PhCenterWindow(hwndDlg, PhMainWindowHandle);
+            PhCenterWindow(hwndDlg, PhMainWndHandle);
 
             context->TreeViewHandle = GetDlgItem(hwndDlg, IDC_TREE1);
             context->ListViewHandle = GetDlgItem(hwndDlg, IDC_FIREWALL_LIST);
