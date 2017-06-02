@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Firewall Monitor
  *
- * Copyright (C) 2015 dmex
+ * Copyright (C) 2015-2017 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -484,15 +484,15 @@ BOOLEAN NTAPI FwTreeNewCallback(
             PPH_TREENEW_GET_NODE_ICON getNodeIcon = (PPH_TREENEW_GET_NODE_ICON)Parameter1;
             node = (PFW_EVENT_ITEM)getNodeIcon->Node;
     
-            //if (node->Icon)
-            //{
-            //    getNodeIcon->Icon = node->Icon;
-            //}
-            //else
-            //{
-            //    node->Icon = PhGetFileShellIcon(PhGetString(node->ProcessFileNameString), L".exe", FALSE);
-            //    getNodeIcon->Icon = node->Icon;
-            //}
+            if (node->Icon)
+            {
+                getNodeIcon->Icon = node->Icon;
+            }
+            else
+            {
+                node->Icon = PhGetFileShellIcon(PhGetString(node->ProcessFileNameString), L".exe", FALSE);
+                getNodeIcon->Icon = node->Icon;
+            }
 
             getNodeIcon->Flags = TN_CACHE;
         }
@@ -679,6 +679,11 @@ VOID HandleFwCommand(
             //PhCreateThread(0, ShowFwRuleProperties, fwItem);
         }
         break;
+    case ID_EVENT_COPY:
+        {
+            CopyFwList();
+        }
+        break;
     }
 }
 
@@ -715,8 +720,6 @@ VOID ShowFwContextMenu(
 
         menu = PhCreateEMenu();
         PhLoadResourceEMenuItem(menu, PluginInstance->DllBase, MAKEINTRESOURCE(IDR_FW_MENU), 0);
-
-        //PhSetFlagsEMenuItem(menu, ID_EVENT_?, PH_EMENU_DEFAULT, PH_EMENU_DEFAULT);
         InitializeFwMenu(menu, fwItems, numberOfFwItems);
 
         if (item = PhShowEMenu(

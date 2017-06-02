@@ -18,47 +18,54 @@ BOOLEAN InitializeFirewallApi(
     VOID
     )
 {
-    FwApiLibraryHandle = LoadLibrary(L"FirewallAPI.dll");
-    FWStatusMessageFromStatusCode_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWStatusMessageFromStatusCode", 0);
-    FWOpenPolicyStore_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWOpenPolicyStore", 0);
-    FWClosePolicyStore_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWClosePolicyStore", 0);
-    FWEnumFirewallRules_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWEnumFirewallRules", 0);
-    FWFreeFirewallRules_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWFreeFirewallRules", 0);
+    if (FwApiLibraryHandle = LoadLibrary(L"FirewallAPI.dll"))
+    {
+        FWStatusMessageFromStatusCode_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWStatusMessageFromStatusCode", 0);
+        FWOpenPolicyStore_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWOpenPolicyStore", 0);
+        FWClosePolicyStore_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWClosePolicyStore", 0);
+        FWEnumFirewallRules_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWEnumFirewallRules", 0);
+        FWFreeFirewallRules_I = PhGetProcedureAddress(FwApiLibraryHandle, "FWFreeFirewallRules", 0);
 
-    FWOpenPolicyStore_I(
-        FW_REDSTONE2_BINARY_VERSION,
-        NULL,
-        FW_STORE_TYPE_LOCAL,
-        FW_POLICY_ACCESS_RIGHT_READ_WRITE,
-        FW_POLICY_STORE_FLAGS_NONE,
-        &PolicyStoreHandles[0]
-        );
-    FWOpenPolicyStore_I(
-        FW_REDSTONE2_BINARY_VERSION,
-        NULL,
-        FW_STORE_TYPE_GP_RSOP,
-        FW_POLICY_ACCESS_RIGHT_READ,
-        FW_POLICY_STORE_FLAGS_NONE,
-        &PolicyStoreHandles[1]
-        );
-    FWOpenPolicyStore_I(
-        FW_REDSTONE2_BINARY_VERSION,
-        NULL,
-        FW_STORE_TYPE_DYNAMIC,
-        FW_POLICY_ACCESS_RIGHT_READ,
-        FW_POLICY_STORE_FLAGS_NONE,
-        &PolicyStoreHandles[2]
-        );
-    FWOpenPolicyStore_I(
-        FW_REDSTONE2_BINARY_VERSION,
-        NULL,
-        FW_STORE_TYPE_DEFAULTS,
-        FW_POLICY_ACCESS_RIGHT_READ,
-        FW_POLICY_STORE_FLAGS_NONE,
-        &PolicyStoreHandles[3]
-        );
+        FWOpenPolicyStore_I(
+            FW_REDSTONE2_BINARY_VERSION,
+            NULL,
+            FW_STORE_TYPE_LOCAL,
+            FW_POLICY_ACCESS_RIGHT_READ_WRITE,
+            FW_POLICY_STORE_FLAGS_NONE,
+            &PolicyStoreHandles[0]
+            );
 
-    return TRUE;
+        FWOpenPolicyStore_I(
+            FW_REDSTONE2_BINARY_VERSION,
+            NULL,
+            FW_STORE_TYPE_GP_RSOP,
+            FW_POLICY_ACCESS_RIGHT_READ,
+            FW_POLICY_STORE_FLAGS_NONE,
+            &PolicyStoreHandles[1]
+            );
+
+        FWOpenPolicyStore_I(
+            FW_REDSTONE2_BINARY_VERSION,
+            NULL,
+            FW_STORE_TYPE_DYNAMIC,
+            FW_POLICY_ACCESS_RIGHT_READ,
+            FW_POLICY_STORE_FLAGS_NONE,
+            &PolicyStoreHandles[2]
+            );
+
+        FWOpenPolicyStore_I(
+            FW_REDSTONE2_BINARY_VERSION,
+            NULL,
+            FW_STORE_TYPE_DEFAULTS,
+            FW_POLICY_ACCESS_RIGHT_READ,
+            FW_POLICY_STORE_FLAGS_NONE,
+            &PolicyStoreHandles[3]
+            );
+
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 VOID FreeFirewallApi(

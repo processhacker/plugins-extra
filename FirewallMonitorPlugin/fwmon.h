@@ -129,4 +129,22 @@ typedef ULONG (WINAPI* _FwpmNetEventSubscribe2)(
    );
 
 
+// Copied from mstcpip.h due to PH sdk conflicts
+#define INADDR_ANY (ULONG)0x00000000
+#define INADDR_LOOPBACK 0x7f000001
+
+FORCEINLINE 
+BOOLEAN 
+IN4_IS_ADDR_UNSPECIFIED(_In_ CONST IN_ADDR *a)
+{
+    return (BOOLEAN)(a->s_addr == INADDR_ANY);
+}
+
+FORCEINLINE 
+BOOLEAN 
+IN4_IS_ADDR_LOOPBACK(_In_ CONST IN_ADDR *a)
+{
+    return (BOOLEAN)(*((PUCHAR)a) == 0x7f); // 127/8
+}
+
 #endif
