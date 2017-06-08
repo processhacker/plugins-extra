@@ -444,10 +444,8 @@ NTSTATUS Kph2Install(
             goto CleanupExit;
     }
 
-#ifdef _DEBUG
     if (!NT_SUCCESS(status = NtUnloadDriver(&objectName)))
         status = STATUS_SUCCESS;
-#endif
 
     if ((status = NtLoadDriver(&objectName)) == STATUS_IMAGE_ALREADY_LOADED)
         status = STATUS_SUCCESS;

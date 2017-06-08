@@ -189,10 +189,10 @@ NTSTATUS NTAPI TerminatorTP1a(
     )
 {
     NTSTATUS status;
-    HANDLE processHandle = NtCurrentProcess();
+    HANDLE processHandle = NULL;
 
     if (!NT_SUCCESS(status = NtGetNextProcess(
-        NtCurrentProcess(),
+        NULL,
         ProcessQueryAccess | PROCESS_TERMINATE,
         0,
         0,
