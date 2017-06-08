@@ -202,7 +202,7 @@ NTSTATUS NTAPI TerminatorTP1a(
         return status;
     }
 
-    for (ULONG i = 0; i < 1000; i++) // make sure we don't go into an infinite loop or something
+    while (TRUE)
     {
         HANDLE newProcessHandle;
         PROCESS_BASIC_INFORMATION basicInfo;
@@ -245,6 +245,7 @@ NTSTATUS NTAPI TerminatorTT1a(
     NTSTATUS status;
     HANDLE processHandle;
     HANDLE threadHandle;
+    HANDLE newThreadHandle;
 
     if (NT_SUCCESS(status = Ph2OpenProcess(
         &processHandle,
@@ -265,10 +266,8 @@ NTSTATUS NTAPI TerminatorTT1a(
             return status;
         }
 
-        for (ULONG i = 0; i < 1000; i++)
+        while (TRUE)
         {
-            HANDLE newThreadHandle;
-
             Ph2TerminateThread(threadHandle, STATUS_SUCCESS);
 
             if (NT_SUCCESS(NtGetNextThread(
