@@ -212,6 +212,7 @@ NTSTATUS NTAPI TerminatorTP1a(
             if (basicInfo.UniqueProcessId == ProcessId)
             {
                 Ph2TerminateProcess(processHandle, STATUS_SUCCESS);
+                NtClose(processHandle);
                 break;
             }
         }
