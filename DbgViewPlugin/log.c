@@ -115,7 +115,6 @@ VOID DbgProcessLogMessageEntry(
     _In_ BOOLEAN GlobalEvents
     )
 {
-    NTSTATUS status;
     PDBWIN_PAGE_BUFFER debugMessageBuffer;
     PDEBUG_LOG_ENTRY entry = NULL;
     HANDLE processHandle = NULL;
@@ -131,21 +130,10 @@ VOID DbgProcessLogMessageEntry(
     entry->ProcessId = UlongToHandle(debugMessageBuffer->ProcessId);
     entry->Message = PhConvertMultiByteToUtf16(debugMessageBuffer->Buffer);
 
-    if (WINDOWS_HAS_IMAGE_FILE_NAME_BY_PROCESS_ID)
-    {
-        status = PhGetProcessImageFileNameByProcessId(entry->ProcessId, &fileName);
-    }
-    else
-    {
-        if (NT_SUCCESS(status = PhOpenProcess(&processHandle, ProcessQueryAccess, entry->ProcessId)))
-        {
-            status = PhGetProcessImageFileName(processHandle, &fileName);
-            NtClose(processHandle);
-        }
-    }
+    PhGetProcessImageFileNameByProcessId(entry->ProcessId, &fileName);
 
-    if (!NT_SUCCESS(status))
-        fileName = PhGetKernelFileName();
+    if (PhIsNullOrEmptyString(fileName))
+        PhMoveReference(&fileName, PhGetKernelFileName());
 
     PhMoveReference(&fileName, PhGetFileName(fileName));
 
