@@ -91,13 +91,13 @@ VOID NTAPI MainMenuInitializingCallback(
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
 
-    if (!(systemMenu = PhFindEMenuItem(menuInfo->Menu, 0, L"System", 0)))
+    if (!(systemMenu = PhFindEMenuItem(menuInfo->Menu, 0, L"&System", 0)))
     {
         PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, PH_EMENU_SEPARATOR, 0, L"", NULL), -1);
-        PhInsertEMenuItem(menuInfo->Menu, systemMenu = PhPluginCreateEMenuItem(PluginInstance, 0, 0, L"System", NULL), -1);
+        PhInsertEMenuItem(menuInfo->Menu, systemMenu = PhPluginCreateEMenuItem(PluginInstance, 0, 0, L"&System", NULL), -1);
     }
 
-    PhInsertEMenuItem(systemMenu, bootMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, BOOT_ENTRIES_MENUITEM, L"Firmware Table", NULL), -1);
+    PhInsertEMenuItem(systemMenu, bootMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, BOOT_ENTRIES_MENUITEM, L"Firm&ware Table", NULL), -1);
 
     if (!PhGetOwnTokenAttributes().Elevated)
     {

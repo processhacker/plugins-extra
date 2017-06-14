@@ -76,8 +76,8 @@ VOID TrayMenuInitializingCallback(
         return;
 
     PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
-    PhInsertEMenuItem(menu, PhPluginCreateEMenuItem(PluginInstance, 0, REBOOT_MENU_ITEM, L"Force reboot", NULL), -1);
-    PhInsertEMenuItem(menu, PhPluginCreateEMenuItem(PluginInstance, 0, SHUTDOWN_MENU_ITEM, L"Force shut down", NULL), -1);
+    PhInsertEMenuItem(menu, PhPluginCreateEMenuItem(PluginInstance, 0, REBOOT_MENU_ITEM, L"F&orce reboot", NULL), -1);
+    PhInsertEMenuItem(menu, PhPluginCreateEMenuItem(PluginInstance, 0, SHUTDOWN_MENU_ITEM, L"For&ce shut down", NULL), -1);
 }
 
 LOGICAL DllMain(
