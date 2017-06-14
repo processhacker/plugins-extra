@@ -29,6 +29,7 @@
 static PPH_PLUGIN PluginInstance;
 static PH_CALLBACK_REGISTRATION MenuItemCallbackRegistration;
 static PH_CALLBACK_REGISTRATION TrayMenuInitializingCallbackRegistration;
+static PH_CALLBACK_REGISTRATION MainMenuInitializingCallbackRegistration;
 
 VOID MenuItemCallback(
     _In_opt_ PVOID Parameter,
@@ -80,6 +81,27 @@ VOID TrayMenuInitializingCallback(
     PhInsertEMenuItem(menu, PhPluginCreateEMenuItem(PluginInstance, 0, SHUTDOWN_MENU_ITEM, L"For&ce shut down", NULL), -1);
 }
 
+VOID MainMenuInitializingCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
+    PPH_EMENU_ITEM menu;
+
+    if (menuInfo->u.MainMenu.SubMenuIndex != 0) // 0 = Hacker menu
+        return;
+
+    menu = PhFindEMenuItem(menuInfo->Menu, 0, L"Computer", 0);
+
+    if (!menu)
+        return;
+ 
+    PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+    PhInsertEMenuItem(menu, PhPluginCreateEMenuItem(PluginInstance, 0, REBOOT_MENU_ITEM, L"F&orce reboot", NULL), -1);
+    PhInsertEMenuItem(menu, PhPluginCreateEMenuItem(PluginInstance, 0, SHUTDOWN_MENU_ITEM, L"For&ce shut down", NULL), -1);
+}
+
 LOGICAL DllMain(
     _In_ HINSTANCE Instance,
     _In_ ULONG Reason,
@@ -111,6 +133,12 @@ LOGICAL DllMain(
             TrayMenuInitializingCallback,
             NULL, 
             &TrayMenuInitializingCallbackRegistration
+            );
+        PhRegisterCallback(
+            PhGetGeneralCallback(GeneralCallbackMainMenuInitializing),
+            MainMenuInitializingCallback,
+            NULL,
+            &MainMenuInitializingCallbackRegistration
             );
     }
 
