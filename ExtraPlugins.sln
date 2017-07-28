@@ -50,6 +50,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObjectManagerPlugin", "Obje
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ProductPolicyPlugin", "ProductPolicyPlugin\ProductPolicyPlugin.vcxproj", "{2850A8C3-3DA3-4D23-A03F-1CA70FDF80EB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SbieSupport", "SbieSupport\SbieSupport.vcxproj", "{EEF1E81D-D286-422A-89E6-C6C8F3BE648A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -230,6 +232,14 @@ Global
 		{2850A8C3-3DA3-4D23-A03F-1CA70FDF80EB}.Release|Win32.Build.0 = Release|Win32
 		{2850A8C3-3DA3-4D23-A03F-1CA70FDF80EB}.Release|x64.ActiveCfg = Release|x64
 		{2850A8C3-3DA3-4D23-A03F-1CA70FDF80EB}.Release|x64.Build.0 = Release|x64
+		{EEF1E81D-D286-422A-89E6-C6C8F3BE648A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EEF1E81D-D286-422A-89E6-C6C8F3BE648A}.Debug|Win32.Build.0 = Debug|Win32
+		{EEF1E81D-D286-422A-89E6-C6C8F3BE648A}.Debug|x64.ActiveCfg = Debug|x64
+		{EEF1E81D-D286-422A-89E6-C6C8F3BE648A}.Debug|x64.Build.0 = Debug|x64
+		{EEF1E81D-D286-422A-89E6-C6C8F3BE648A}.Release|Win32.ActiveCfg = Release|Win32
+		{EEF1E81D-D286-422A-89E6-C6C8F3BE648A}.Release|Win32.Build.0 = Release|Win32
+		{EEF1E81D-D286-422A-89E6-C6C8F3BE648A}.Release|x64.ActiveCfg = Release|x64
+		{EEF1E81D-D286-422A-89E6-C6C8F3BE648A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

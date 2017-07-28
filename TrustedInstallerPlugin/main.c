@@ -77,7 +77,7 @@ VOID NTAPI MainMenuInitializingCallback(
         return;
  
     indexOfMenuItem = PhIndexOfEMenuItem(menuInfo->Menu, runAsMenuItem);
-    runAsMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, RUNAS_MENU_ITEM, L"Run as trusted installer...", NULL);
+    runAsMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, RUNAS_MENU_ITEM, L"Run as &trusted installer...", NULL);
     PhInsertEMenuItem(menuInfo->Menu, runAsMenuItem, indexOfMenuItem + 1);
 
     if (!PhGetOwnTokenAttributes().Elevated)
