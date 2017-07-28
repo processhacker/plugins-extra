@@ -235,9 +235,6 @@ LOGICAL DllMain(
                 { IntegerSettingType, SETTING_NAME_TASKBAR_ICON_TYPE, L"4" }
             };
 
-            if (WindowsVersion < WINDOWS_7)
-                break;
-
             PluginInstance = PhRegisterPlugin(PLUGIN_NAME, Instance, &info);
 
             if (!PluginInstance)

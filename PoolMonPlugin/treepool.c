@@ -444,13 +444,13 @@ BOOLEAN NTAPI PmPoolTagTreeNewCallback(
         return TRUE;
     case TreeNewContextMenu:
         {
-            PPH_TREENEW_MOUSE_EVENT mouseEvent = (PPH_TREENEW_MOUSE_EVENT)Parameter1;
+            PPH_TREENEW_CONTEXT_MENU contextMenuEvent = Parameter1;
 
             SendMessage(
                 context->ParentWindowHandle, 
                 WM_COMMAND, 
                 POOL_TABLE_SHOWCONTEXTMENU, 
-                (LPARAM)mouseEvent
+                (LPARAM)contextMenuEvent
                 );
         }
         return TRUE;

@@ -355,14 +355,14 @@ NTSTATUS Kph2Install(
     InitializeObjectAttributes(
         &objectAttributes,
         &objectName,
-        OBJ_CASE_INSENSITIVE,
+        OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
         NULL,
         NULL
         );
 
     status = NtCreateKey(
         &keyHandle,
-        KEY_WRITE, //KEY_ALL_ACCESS,
+        MAXIMUM_ALLOWED,
         &objectAttributes,
         0,
         NULL,
@@ -448,7 +448,7 @@ NTSTATUS Kph2Install(
         status = STATUS_SUCCESS;
 
     if ((status = NtLoadDriver(&objectName)) == STATUS_IMAGE_ALREADY_LOADED)
-        status = STATUS_SUCCESS;
+        status = STATUS_SUCCESS; // Normalize special error codes
 
 CleanupExit:
 
@@ -459,7 +459,7 @@ CleanupExit:
         PhDereferenceObject(kphFileName);
 
     if (fileName.Buffer)
-        RtlFreeHeap(GetProcessHeap(), 0, fileName.Buffer);
+        RtlFreeUnicodeString(&fileName);
 
     return status;
 }

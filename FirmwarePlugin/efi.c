@@ -105,61 +105,6 @@ NTSTATUS EfiEnumerateBootEntries(
     return status;
 }
 
-
-//VOID EfiQueryBootOptions(
-//    VOID
-//    )
-//{
-//    NTSTATUS status;
-//    PVOID buffer = NULL;
-//    ULONG bufferLength = 0;
-//
-//    __try
-//    {
-//        if (status = NtQueryBootOptions(NULL, &bufferLength) != STATUS_BUFFER_TOO_SMALL)
-//            __leave;
-//
-//        buffer = PhAllocate(bufferLength);
-//        memset(buffer, 0, bufferLength);
-//
-//        if (NT_SUCCESS(NtQueryBootOptions(buffer, &bufferLength)))
-//        {
-//            //PBOOT_OPTIONS bootOptions = buffer;
-//        }
-//    }
-//    __finally
-//    {
-//        if (buffer)
-//        {
-//            PhFree(buffer);
-//        }
-//    }
-//}
-
-
-
-NTSTATUS EnumerateBootEntriesThread(
-    _In_ PVOID Context
-    )
-{
-    NTSTATUS status;
-    PVOID entries;
-
-    if (NT_SUCCESS(status = EfiEnumerateBootEntries(&entries)))
-    {
-        PBOOT_ENTRY_LIST i;
-
-        for (i = PH_FIRST_BOOT_ENTRY(entries); i; i = PH_NEXT_BOOT_ENTRY(i))
-        {
-            
-        }
-
-        PhFree(entries);
-    }
-
-    return status;
-}
-
 BOOLEAN EfiSupported(
     VOID
     )

@@ -318,7 +318,7 @@ INT_PTR CALLBACK PoolMonDlgProc(
                     PPH_EMENU menu;
                     PPOOLTAG_ROOT_NODE selectedNode;
                     PPH_EMENU_ITEM selectedItem;
-                    PPH_TREENEW_MOUSE_EVENT mouseEvent = (PPH_TREENEW_MOUSE_EVENT)lParam;
+                    PPH_TREENEW_CONTEXT_MENU contextMenuEvent = (PPH_TREENEW_CONTEXT_MENU)lParam;
 
                     if (selectedNode = PmGetSelectedPoolTagNode(context))
                     {
@@ -332,8 +332,8 @@ INT_PTR CALLBACK PoolMonDlgProc(
                             hwndDlg,
                             PH_EMENU_SHOW_LEFTRIGHT,
                             PH_ALIGN_LEFT | PH_ALIGN_TOP,
-                            mouseEvent->Location.x,
-                            mouseEvent->Location.y
+                            contextMenuEvent->Location.x,
+                            contextMenuEvent->Location.y
                             );
 
                         if (selectedItem && selectedItem->Id != -1)
