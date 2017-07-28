@@ -120,7 +120,7 @@ NTSTATUS FWRulesEnumThreadStart(
         
     if (InitializeFirewallApi())
     {
-        EnumerateFirewallRules(FW_POLICY_STORE_DYNAMIC, FW_PROFILE_TYPE_CURRENT, FW_DIR_IN, WfAddRules, context);
+        EnumerateFirewallRules(FW_PROFILE_TYPE_CURRENT, FW_DIR_IN, WfAddRules, context);
         FreeFirewallApi();
     } 
 

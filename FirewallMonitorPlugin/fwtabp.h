@@ -96,7 +96,8 @@ VOID InitializeFwMenu(
     );
 
 VOID ShowFwContextMenu(
-    _In_ POINT Location
+    _In_ HWND TreeWindowHandle,
+    _In_ PPH_TREENEW_CONTEXT_MENU TreeMouseEvent
     );
 
 VOID NTAPI FwItemAddedHandler(

@@ -335,8 +335,7 @@ VOID CALLBACK DropEventCallback(
 
             //FWP_BYTE_BLOB* fwpApplicationByteBlob = NULL;
             //if (FwpmGetAppIdFromFileName(fileNameString->Buffer, &fwpApplicationByteBlob) == ERROR_SUCCESS)
-            //fwEventItem->ProcessBaseString = PhCreateStringEx(fwpApplicationByteBlob->data, fwpApplicationByteBlob->size);
-           
+            //fwEventItem->ProcessBaseString = PhCreateStringEx(fwpApplicationByteBlob->data, fwpApplicationByteBlob->size);        
             //fwEventItem->Icon = PhGetFileShellIcon(PhGetString(fwEventItem->ProcessFileNameString), L".exe", FALSE);
         }
     }
@@ -519,8 +518,8 @@ BOOLEAN StartFwMonitor(
     {
         return FALSE;
     }
-       
-    if (WindowsVersion > WINDOWS_7)
+
+    if (WindowsVersion >= WINDOWS_8)
     {
         value.type = FWP_UINT32;
         value.uint32 = FWPM_NET_EVENT_KEYWORD_CAPABILITY_DROP | FWPM_NET_EVENT_KEYWORD_CAPABILITY_ALLOW | FWPM_NET_EVENT_KEYWORD_CLASSIFY_ALLOW; // FWPM_NET_EVENT_KEYWORD_INBOUND_MCAST | FWPM_NET_EVENT_KEYWORD_INBOUND_BCAST

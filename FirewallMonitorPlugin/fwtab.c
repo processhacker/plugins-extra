@@ -351,6 +351,31 @@ BOOLEAN NTAPI FwTreeNewCallback(
     case TreeNewGetChildren:
         {
             PPH_TREENEW_GET_CHILDREN getChildren = Parameter1;
+            node = (PFW_EVENT_ITEM)getChildren->Node;
+
+            if (!getChildren->Node)
+            {
+                //static PVOID sortFunctions[] =
+                //{
+                //    SORT_FUNCTION(Name),
+                //    SORT_FUNCTION(Author),
+                //    SORT_FUNCTION(Version)
+                //};
+                //int(__cdecl *sortFunction)(void *, const void *, const void *);
+
+                //if (context->TreeNewSortColumn < TREE_COLUMN_ITEM_MAXIMUM)
+                //    sortFunction = sortFunctions[context->TreeNewSortColumn];
+                //else
+                //    sortFunction = NULL;
+
+                //if (sortFunction)
+                //{
+                //    qsort_s(context->NodeList->Items, context->NodeList->Count, sizeof(PVOID), sortFunction, context);
+                //}
+
+                //getChildren->Children = (PPH_TREENEW_NODE *)FwNodeList->Items;
+                //getChildren->NumberOfChildren = FwNodeList->Count;
+            }
 
             if (!getChildren->Node)
             {
@@ -558,9 +583,9 @@ BOOLEAN NTAPI FwTreeNewCallback(
         return TRUE;
     case TreeNewContextMenu:
         {
-            PPH_TREENEW_MOUSE_EVENT mouseEvent = (PPH_TREENEW_MOUSE_EVENT)Parameter1;
+            PPH_TREENEW_CONTEXT_MENU contextMenuEvent = Parameter1;
 
-            ShowFwContextMenu(mouseEvent->Location);
+            ShowFwContextMenu(hwnd, contextMenuEvent);
         }
         return TRUE;
     case TreeNewDestroying:
@@ -676,7 +701,8 @@ VOID HandleFwCommand(
     case ID_FW_PROPERTIES:
         {
             PFW_EVENT_ITEM fwItem = GetSelectedFwItem();
-            //PhCreateThread(0, ShowFwRuleProperties, fwItem);
+
+            PhCreateThread2(ShowFwRuleProperties, fwItem);
         }
         break;
     case ID_EVENT_COPY:
@@ -705,7 +731,8 @@ VOID InitializeFwMenu(
 }
 
 VOID ShowFwContextMenu(
-    _In_ POINT Location
+    _In_ HWND TreeWindowHandle,
+    _In_ PPH_TREENEW_CONTEXT_MENU ContextMenuEvent
     )
 {
     PFW_EVENT_ITEM *fwItems;
@@ -721,17 +748,23 @@ VOID ShowFwContextMenu(
         menu = PhCreateEMenu();
         PhLoadResourceEMenuItem(menu, PluginInstance->DllBase, MAKEINTRESOURCE(IDR_FW_MENU), 0);
         InitializeFwMenu(menu, fwItems, numberOfFwItems);
+        PhInsertCopyCellEMenuItem(menu, ID_EVENT_COPY, TreeWindowHandle, ContextMenuEvent->Column);
 
         if (item = PhShowEMenu(
             menu,
             PhMainWndHandle,
             PH_EMENU_SHOW_LEFTRIGHT,
             PH_ALIGN_LEFT | PH_ALIGN_TOP,
-            Location.x,
-            Location.y
+            ContextMenuEvent->Location.x,
+            ContextMenuEvent->Location.y
             ))
         {
-            HandleFwCommand(item->Id);
+            BOOLEAN handled = FALSE;
+
+            handled = PhHandleCopyCellEMenuItem(item);
+
+            if (!handled)
+                HandleFwCommand(item->Id);
         }
 
         PhDestroyEMenu(menu);
@@ -784,8 +817,8 @@ VOID NTAPI OnFwItemAdded(
 
     if (!FwNeedsRedraw)
     {
-       // TreeNew_SetRedraw(FwTreeNewHandle, FALSE);
-       // FwNeedsRedraw = TRUE;
+       //TreeNew_SetRedraw(FwTreeNewHandle, FALSE);
+       //FwNeedsRedraw = TRUE;
     }
 
     fwNode = AddFwNode(fwItem);
