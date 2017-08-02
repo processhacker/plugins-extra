@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Trusted Installer Plugin
  *
- * Copyright (C) 2016 dmex
+ * Copyright (C) 2016-2017 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -26,6 +26,7 @@ NTSTATUS RunAsTrustedInstallerThread(
     _In_ PVOID Parameter
     )
 {
+    NTSTATUS status;
     HANDLE threadHandle;
     THREAD_BASIC_INFORMATION basicInfo;
 
@@ -33,17 +34,21 @@ NTSTATUS RunAsTrustedInstallerThread(
     {
         NtWaitForSingleObject(threadHandle, FALSE, NULL);
         
-        if (NT_SUCCESS(PhGetThreadBasicInformation(threadHandle, &basicInfo)))
+        status = PhGetThreadBasicInformation(threadHandle, &basicInfo);
+
+        if (NT_SUCCESS(status))
         {
-            if (basicInfo.ExitStatus != STATUS_SUCCESS)
-            {
-                PhShowStatus(
-                    PhMainWndHandle, 
-                    L"Error creating process with TrustedInstaller privileges", 
-                    basicInfo.ExitStatus, 
-                    0
-                    );
-            }
+            status = basicInfo.ExitStatus;
+        }
+
+        if (!NT_SUCCESS(status))
+        {
+            PhShowStatus(
+                PhMainWndHandle,
+                L"Error creating process with TrustedInstaller privileges",
+                basicInfo.ExitStatus,
+                0
+                );
         }
 
         NtClose(threadHandle);

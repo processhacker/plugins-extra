@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Trusted Installer Plugin
  *
- * Copyright (C) 2016 dmex
+ * Copyright (C) 2016-2017 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -105,8 +105,7 @@ NTSTATUS RunAsCreateProcessThread(
 
     if (!(userName = PhGetSidFullName(tokenUser->User.Sid, TRUE, NULL)))
     {
-        // the SID structure is not valid.
-        status = STATUS_INVALID_SID;
+        status = STATUS_INVALID_SID; // the SID structure is not valid.
         goto CleanupExit;
     }
 
@@ -140,7 +139,7 @@ CleanupExit:
         NtClose(processHandle);
 
     if (serviceHandle)
-            CloseServiceHandle(serviceHandle);
+        CloseServiceHandle(serviceHandle);
 
     return status;
 }
