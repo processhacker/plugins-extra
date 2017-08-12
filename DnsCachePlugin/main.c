@@ -46,14 +46,25 @@ VOID EnumDnsCacheTable(
     while (dnsCacheDataTable)
     {
         PDNS_RECORD dnsQueryResultPtr = NULL;
-        DNS_STATUS dnsStatus = DnsQuery(
-            dnsCacheDataTable->Name,
-            dnsCacheDataTable->Type,
-            DNS_QUERY_NO_WIRE_QUERY | 32768, // Undocumented flags
-            NULL,
-            &dnsQueryResultPtr,
-            NULL
-            );
+
+		DNS_STATUS dnsStatus = DNS_ERROR_RECORD_DOES_NOT_EXIST;
+		for (int type = DNS_TYPE_A; type <= DNS_TYPE_SRV; type++)
+		{
+			unsigned atype = type & 0xff;
+			dnsStatus = DnsQuery(
+				dnsCacheDataTable->Name,
+				atype,
+				DNS_QUERY_NO_WIRE_QUERY | 32768, // Undocumented flags
+				NULL,
+				&dnsQueryResultPtr,
+				NULL
+			);
+			if (dnsStatus == ERROR_SUCCESS)
+			{
+				break;
+			}
+		}
+
 
         if (dnsStatus == ERROR_SUCCESS)
         {
@@ -66,7 +77,7 @@ VOID EnumDnsCacheTable(
                 WCHAR ipAddrString[INET6_ADDRSTRLEN] = L"";
 
                 itemIndex = PhAddListViewItem(hwndDlg, MAXINT,
-                    PhaFormatString(L"%s", dnsCacheDataTable->Name)->Buffer,
+                    PhaFormatString(L"%s", dnsRecordPtr->pName)->Buffer,
                     NULL
                     );
 
