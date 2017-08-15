@@ -106,6 +106,7 @@ VOID EnumDnsCacheTable(
 {
 
     PDNS_RECORD dnsRecordPtr = TraverseDnsCacheTable();
+    PDNS_RECORD dnsRecordRootPtr = dnsRecordPtr;
     while (dnsRecordPtr)
     {
         INT itemIndex = MAXINT;
@@ -177,9 +178,9 @@ VOID EnumDnsCacheTable(
         dnsRecordPtr = dnsRecordPtr->pNext;
     }
 
-    if (dnsRecordPtr)
+    if (dnsRecordRootPtr)
     {
-        DnsRecordListFree(dnsRecordPtr, DnsFreeRecordList);
+        DnsRecordListFree(dnsRecordRootPtr, DnsFreeRecordList);
     }
 }
 
