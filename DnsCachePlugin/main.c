@@ -55,24 +55,26 @@ PDNS_RECORD TraverseDnsCacheTable()
         goto CleanupExit;
 
     PDNS_RECORD root = 0;
-    USHORT typeList[] = { DNS_TYPE_A , DNS_TYPE_AAAA, DNS_TYPE_MX , DNS_TYPE_SRV ,DNS_TYPE_PTR };  //Only interested in these queries, to boost traversing performance
+    USHORT typeList[] = { DNS_TYPE_A, DNS_TYPE_AAAA, DNS_TYPE_MX, DNS_TYPE_SRV, DNS_TYPE_PTR }; // Only interested in these queries, to boost traversing performance
 
     PDNS_CACHE_ENTRY tablePtr = dnsCacheDataTable;
+
     while (tablePtr)
     {
-        int i = 0;
-        for (USHORT type = typeList[i]; i < sizeof(typeList) / sizeof(typeList[0]); type = typeList[++i] )
+        for (USHORT i = 0; i < ARRAYSIZE(typeList); i++)
         {
-            PDNS_RECORD dnsQueryResultPtr = NULL;
+            DNS_STATUS dnsStatus;
+            PDNS_RECORD dnsQueryResultPtr;
 
-            DNS_STATUS dnsStatus = DnsQuery(
+            dnsStatus = DnsQuery(
                 tablePtr->Name,
-                i,
+                typeList[i],
                 DNS_QUERY_NO_WIRE_QUERY | 32768, // Undocumented flags
                 NULL,
                 &dnsQueryResultPtr,
                 NULL
-            );
+                );
+
             if (dnsStatus == ERROR_SUCCESS)
             {
                 PDNS_RECORD dnsRecordPtr = dnsQueryResultPtr;
