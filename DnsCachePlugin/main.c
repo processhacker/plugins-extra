@@ -647,7 +647,12 @@ static PDNS_RECORD _SearchRootQuery(PWCHAR RemoteAddressString, PDNS_RECORD DnsC
             }
             p = p->pNext;
         }
-        return finalResult ? finalResult : result;
+        if (finalResult)
+        {
+            DnsRecordListFree(result, DnsFreeRecordList);
+            return finalResult;
+        }
+        return result;
     }
     return NULL;
 }
