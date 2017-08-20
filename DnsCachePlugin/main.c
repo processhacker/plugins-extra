@@ -763,7 +763,7 @@ VOID NTAPI NetworkItemAddedHandler(
 
     Extension->AddressValid = IsAddressValid(NetworkItem->RemoteAddressString);
     UpdateNetworkItem(NETWORK_COLUMN_ID_DNSCACHE_ROOT_QUERY, NetworkItem, Extension);
-    if (!Extension->DnsCacheValid)
+    if (!Extension->DnsCacheValid && Extension->AddressValid)
     {
         QueueDnsCacheUpdateThread();
         NetworkItem->JustResolved = TRUE;
