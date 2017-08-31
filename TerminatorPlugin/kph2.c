@@ -55,7 +55,9 @@ PPH_STRING Kph2GetPluginDirectory(
             if (indexOfFileName != -1)
             {
                 directoryName = PhSubstring(fullPath, 0, indexOfFileName);
-                SHCreateDirectoryEx(NULL, directoryName->Buffer, NULL);
+
+                PhCreateDirectory(directoryName);
+
                 PhDereferenceObject(directoryName);
             }
 
@@ -432,7 +434,7 @@ NTSTATUS Kph2Install(
         0,
         REG_EXPAND_SZ,
         fileName.Buffer,
-        (ULONG)fileName.MaximumLength
+        fileName.Length + sizeof(UNICODE_NULL)
         )))
     {
         goto CleanupExit;
