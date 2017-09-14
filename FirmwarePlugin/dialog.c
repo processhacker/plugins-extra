@@ -275,6 +275,8 @@ INT_PTR CALLBACK BootEntriesDlgProc(
         {
             LPNMHDR hdr = (LPNMHDR)lParam;
 
+            PhHandleListViewNotifyForCopy(lParam, context->ListViewHandle);
+
             switch (hdr->code)
             {
             case NM_RCLICK:
