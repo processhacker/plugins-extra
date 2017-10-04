@@ -94,7 +94,7 @@ CleanupExit:
     return status;
 }
 
-HRESULT CALLBACK CheckingForUpdatesDbCallbackProc(
+HRESULT CALLBACK DumpProgressDialogCallbackProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -140,7 +140,7 @@ NTSTATUS ShowDumpProgressDialogThread(
     config.dwFlags = TDF_USE_HICON_MAIN | TDF_SHOW_MARQUEE_PROGRESS_BAR;
     config.dwCommonButtons = TDCBF_CANCEL_BUTTON;
     config.hMainIcon = PH_LOAD_SHARED_ICON_LARGE(PhInstanceHandle, MAKEINTRESOURCE(PHAPP_IDI_PROCESSHACKER));
-    config.pfCallback = CheckingForUpdatesDbCallbackProc;
+    config.pfCallback = DumpProgressDialogCallbackProc;
     config.lpCallbackData = (LONG_PTR)ThreadParameter;
     config.cxWidth = 200;
 
