@@ -1064,7 +1064,7 @@ NTSTATUS EnumeratePageTable(
 
             if (pfnident->u1.e1.UseDescription == MMPFNUSE_PROCESSPRIVATE && pfnident->u1.e4.UniqueProcessKey)
             {
-                PPF_PROCESS process = PfiFindProcess(pfnident->u1.e4.UniqueProcessKey);
+                PPF_PROCESS process = PfiFindProcess((ULONG_PTR)pfnident->u1.e4.UniqueProcessKey);
 
                 if (process && process->ProcessName)
                 {
