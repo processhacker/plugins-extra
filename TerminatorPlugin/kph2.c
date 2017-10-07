@@ -228,6 +228,32 @@ SetValuesEnd:
     return status;
 }
 
+NTSTATUS Kph2RemoveParameters(
+    VOID
+    )
+{
+    static PH_STRINGREF keyName = PH_STRINGREF_INIT(L"System\\CurrentControlSet\\Services\\kph2\\Parameters");
+    NTSTATUS status;
+    HANDLE parametersKeyHandle = NULL;
+
+    if (NT_SUCCESS(status = PhOpenKey(
+        &parametersKeyHandle,
+        DELETE,
+        PH_KEY_LOCAL_MACHINE,
+        &keyName,
+        0
+        )))
+    {
+        status = NtDeleteKey(parametersKeyHandle);
+        NtClose(parametersKeyHandle);
+    }
+
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+        status = STATUS_SUCCESS; // Normalize special error codes
+
+    return status;
+}
+
 static NTSTATUS Kph2Extract(
     _In_ PPH_STRING KphFileName
     )
@@ -474,18 +500,29 @@ NTSTATUS Kph2Uninstall(
     NTSTATUS status;
     HANDLE keyHandle;
     OBJECT_ATTRIBUTES objectAttributes;
+    PPH_STRING kphFileName;
+    UNICODE_STRING fileName = { 0 };
+    UNICODE_STRING valueName;
 
+    kphFileName = Kph2GetPluginDirectory();
+
+    if (!RtlDoesFileExists_U(kphFileName->Buffer))
+    {
+        if (!NT_SUCCESS(status = Kph2Extract(kphFileName)))
+            return status;
+    }
+    
     InitializeObjectAttributes(
         &objectAttributes,
         &objectName,
-        OBJ_CASE_INSENSITIVE,
+        OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
         NULL,
         NULL
         );
 
     status = NtCreateKey(
         &keyHandle,
-        KEY_ALL_ACCESS,
+        KEY_READ | KEY_WRITE | DELETE,
         &objectAttributes,
         0,
         NULL,
@@ -494,14 +531,89 @@ NTSTATUS Kph2Uninstall(
         );
 
     if (!NT_SUCCESS(status))
-        return status;
+        goto CleanupExit;
 
-    status = NtUnloadDriver(&objectName);
+    if (!NT_SUCCESS(status = RtlDosPathNameToNtPathName_U_WithStatus(
+        kphFileName->Buffer,
+        &fileName,
+        NULL,
+        NULL
+        )))
+    {
+        goto CleanupExit;
+    }
+
+    RtlInitUnicodeString(&valueName, L"Type");
+    if (!NT_SUCCESS(status = NtSetValueKey(
+        keyHandle,
+        &valueName,
+        0,
+        REG_DWORD,
+        &(ULONG) { SERVICE_KERNEL_DRIVER },
+        sizeof(ULONG)
+        )))
+    {
+        goto CleanupExit;
+    }
+
+    RtlInitUnicodeString(&valueName, L"ErrorControl");
+    if (!NT_SUCCESS(status = NtSetValueKey(
+        keyHandle,
+        &valueName,
+        0,
+        REG_DWORD,
+        &(ULONG) { SERVICE_ERROR_NORMAL },
+        sizeof(ULONG)
+        )))
+    {
+        goto CleanupExit;
+    }
+
+    RtlInitUnicodeString(&valueName, L"Start");
+    if (!NT_SUCCESS(status = NtSetValueKey(
+        keyHandle,
+        &valueName,
+        0,
+        REG_DWORD,
+        &(ULONG) { SERVICE_DEMAND_START },
+        sizeof(ULONG)
+        )))
+    {
+        goto CleanupExit;
+    }
+
+    RtlInitUnicodeString(&valueName, L"ImagePath");
+    if (!NT_SUCCESS(status = NtSetValueKey(
+        keyHandle,
+        &valueName,
+        0,
+        REG_EXPAND_SZ,
+        fileName.Buffer,
+        fileName.Length + sizeof(UNICODE_NULL)
+        )))
+    {
+        goto CleanupExit;
+    }
+
+    if ((status = NtUnloadDriver(&objectName)) == STATUS_OBJECT_NAME_NOT_FOUND)
+        status = STATUS_SUCCESS; // Normalize special error codes
 
     if (NT_SUCCESS(status))
-        NtDeleteKey(keyHandle);
+        status = Kph2RemoveParameters();
 
-    NtClose(keyHandle);
+    if (NT_SUCCESS(status))
+        status = NtDeleteKey(keyHandle);
+
+CleanupExit:
+
+    if (keyHandle)
+        NtClose(keyHandle);
+
+    if (kphFileName)
+        PhDereferenceObject(kphFileName);
+
+    if (fileName.Buffer)
+        RtlFreeUnicodeString(&fileName);
 
     return status;
 }
