@@ -28,8 +28,10 @@ typedef struct _EFI_EDITOR_CONTEXT
     HWND HexEditHandle;
     PH_LAYOUT_MANAGER LayoutManager;
 
-    PEFI_ENTRY UefiEntry;
     PPH_STRING Title;
+
+    PPH_STRING Name;
+    PPH_STRING GuidString;
 
     PVOID VariableValue;
     ULONG VariableValueLength;
@@ -108,17 +110,14 @@ INT_PTR CALLBACK UefiEditorDlgProc(
 {
     PEFI_EDITOR_CONTEXT context;
 
-    if (uMsg != WM_INITDIALOG)
+    if (uMsg == WM_INITDIALOG)
     {
-        context = GetProp(hwndDlg, L"Context");
+        context = (PEFI_EDITOR_CONTEXT)lParam;
+        SetProp(hwndDlg, L"Context", (HANDLE)context);
     }
     else
     {
-        context = PhAllocate(sizeof(EFI_EDITOR_CONTEXT));
-        memset(context, 0, sizeof(EFI_EDITOR_CONTEXT));
-
-        context->UefiEntry = (PEFI_ENTRY)lParam;
-        SetProp(hwndDlg, L"Context", (HANDLE)context);
+        context = GetProp(hwndDlg, L"Context");
     }
 
     if (!context)
@@ -134,9 +133,9 @@ INT_PTR CALLBACK UefiEditorDlgProc(
 
             SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)PH_LOAD_SHARED_ICON_SMALL(PhInstanceHandle, MAKEINTRESOURCE(PHAPP_IDI_PROCESSHACKER)));
             SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)PH_LOAD_SHARED_ICON_LARGE(PhInstanceHandle, MAKEINTRESOURCE(PHAPP_IDI_PROCESSHACKER)));
-            SetWindowText(hwndDlg, PhGetString(context->UefiEntry->Name));
+            SetWindowText(hwndDlg, PhGetString(context->Name));
 
-            if (!NT_SUCCESS(status = UefiQueryVariable(context, context->UefiEntry->Name, context->UefiEntry->GuidString)))
+            if (!NT_SUCCESS(status = UefiQueryVariable(context, context->Name, context->GuidString)))
             {
                 PhShowStatus(NULL, L"Unable to query the EFI variable.", status, 0);
                 return TRUE;
@@ -203,8 +202,8 @@ INT_PTR CALLBACK UefiEditorDlgProc(
             PhDeleteLayoutManager(&context->LayoutManager);
 
             PhClearReference(&context->Title);
-            PhClearReference(&context->UefiEntry->Name);
-            PhClearReference(&context->UefiEntry->GuidString);
+            PhClearReference(&context->Name);
+            PhClearReference(&context->GuidString);
 
             if (context->VariableValue)
                 PhFree(context->VariableValue);
@@ -234,7 +233,7 @@ INT_PTR CALLBACK UefiEditorDlgProc(
                     PhSetFileDialogFilter(fileDialog, filters, ARRAYSIZE(filters));
                     PhSetFileDialogFileName(fileDialog, PhaFormatString(
                         L"%s.bin",
-                        PhGetString(context->UefiEntry->Name)
+                        PhGetString(context->Name)
                         )->Buffer);
 
                     if (PhShowFileDialog(hwndDlg, fileDialog))
@@ -274,7 +273,7 @@ INT_PTR CALLBACK UefiEditorDlgProc(
                 {
                     NTSTATUS status;
 
-                    if (!NT_SUCCESS(status = UefiQueryVariable(context, context->UefiEntry->Name, context->UefiEntry->GuidString)))
+                    if (!NT_SUCCESS(status = UefiQueryVariable(context, context->Name, context->GuidString)))
                     {
                         PhShowStatus(NULL, L"Unable to query the EFI variable.", status, 0);
                         return TRUE;
@@ -318,15 +317,58 @@ INT_PTR CALLBACK UefiEditorDlgProc(
     return FALSE;
 }
 
-VOID ShowUefiEditorDialog(
-    _In_ PVOID Context
+NTSTATUS UefiEditorDialogThreadStart(
+    _In_ PVOID Parameter
     )
 {
-    DialogBoxParam(
+    BOOL result;
+    MSG message;
+    HWND windowHandle;
+    PH_AUTO_POOL autoPool;
+
+    PhInitializeAutoPool(&autoPool);
+
+    windowHandle = CreateDialogParam(
         PluginInstance->DllBase,
         MAKEINTRESOURCE(IDD_EDITVAR),
         NULL,
         UefiEditorDlgProc,
-        (LPARAM)Context
+        (LPARAM)Parameter
         );
+
+    ShowWindow(windowHandle, SW_SHOW);
+    SetForegroundWindow(windowHandle);
+
+    while (result = GetMessage(&message, NULL, 0, 0))
+    {
+        if (result == -1)
+            break;
+
+        if (!IsDialogMessage(windowHandle, &message))
+        {
+            TranslateMessage(&message);
+            DispatchMessage(&message);
+        }
+
+        PhDrainAutoPool(&autoPool);
+    }
+
+    PhDeleteAutoPool(&autoPool);
+
+    return STATUS_SUCCESS;
+}
+
+VOID ShowUefiEditorDialog(
+    _In_ PEFI_ENTRY Entry
+    )
+{
+    PEFI_EDITOR_CONTEXT context;
+
+    context = PhAllocate(sizeof(EFI_EDITOR_CONTEXT));
+    memset(context, 0, sizeof(EFI_EDITOR_CONTEXT));
+
+    context->Name = PhDuplicateString(Entry->Name);
+    context->GuidString = PhDuplicateString(Entry->GuidString);
+
+    PhCreateThread2(UefiEditorDialogThreadStart, context);
 }

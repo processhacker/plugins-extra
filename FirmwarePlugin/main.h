@@ -74,7 +74,7 @@ BOOLEAN EfiSupported(
     );
 
 VOID ShowUefiEditorDialog(
-    _In_ PVOID Context
+    _In_ PEFI_ENTRY Entry
     );
 
 // Windows types
