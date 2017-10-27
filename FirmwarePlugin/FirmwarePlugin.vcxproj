@@ -64,6 +64,7 @@
     <Import Project="..\ExtraPlugins.props" />
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="editor.c" />
     <ClCompile Include="efi.c" />
     <ClCompile Include="dialog.c" />
     <ClCompile Include="main.c" />

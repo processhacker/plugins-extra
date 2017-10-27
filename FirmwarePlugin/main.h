@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Boot Entries Plugin
  *
- * Copyright (C) 2015 dmex
+ * Copyright (C) 2016-2017 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -35,6 +35,9 @@
 #include <phdk.h>
 #include <phappresource.h>
 #include <settings.h>
+#include <hexedit.h>
+
+#include <windowsx.h>
 #include <stdint.h>
 #include <cguid.h>
 
@@ -42,20 +45,25 @@
 
 extern PPH_PLUGIN PluginInstance;
 
-typedef struct _BOOT_WINDOW_CONTEXT
+typedef struct _UEFI_WINDOW_CONTEXT
 {
     HWND ListViewHandle;
     PH_LAYOUT_MANAGER LayoutManager;
-} BOOT_WINDOW_CONTEXT, *PBOOT_WINDOW_CONTEXT;
+} UEFI_WINDOW_CONTEXT, *PUEFI_WINDOW_CONTEXT;
 
-INT_PTR CALLBACK BootEntriesDlgProc(
+typedef struct _EFI_ENTRY
+{
+    ULONG Length;
+    PPH_STRING Name;
+    PPH_STRING GuidString;
+} EFI_ENTRY, *PEFI_ENTRY;
+
+INT_PTR CALLBACK UefiEntriesDlgProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
     _In_ LPARAM lParam
     );
-
-
 
 NTSTATUS EnumerateFirmwareValues(
     _Out_ PVOID *Values
@@ -64,6 +72,12 @@ NTSTATUS EnumerateFirmwareValues(
 BOOLEAN EfiSupported(
     VOID
     );
+
+VOID ShowUefiEditorDialog(
+    _In_ PVOID Context
+    );
+
+// Windows types
 
 typedef enum _SYSTEM_ENVIRONMENT_INFORMATION_CLASS
 {

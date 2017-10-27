@@ -10,6 +10,7 @@
     <ClCompile Include="efi.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="editor.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">

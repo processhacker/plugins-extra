@@ -64,15 +64,15 @@ VOID NTAPI MenuItemCallback(
         {
             if (!EfiSupported())
             {
-                PhShowError(menuItem->OwnerWindow, L"Windows was installed using legacy BIOS");
+                PhShowError(menuItem->OwnerWindow, L"Windows was installed using legacy BIOS.");
                 return;
             }
 
             DialogBox(
                 PluginInstance->DllBase,
-                MAKEINTRESOURCE(IDD_BOOT),
+                MAKEINTRESOURCE(IDD_FIRMWARE),
                 NULL,
-                BootEntriesDlgProc
+                UefiEntriesDlgProc
                 );
         }
         break;

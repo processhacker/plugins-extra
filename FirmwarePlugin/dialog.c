@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Firmware Plugin
  *
- * Copyright (C) 2016 dmex
+ * Copyright (C) 2016-2017 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -71,15 +71,39 @@ PWSTR FirmwareGuidToNameString(
     return L"";
 }
 
-NTSTATUS EnumerateEnvironmentValues(
-    _In_ HWND ListViewHandle
+VOID FreeListViewFirmwareEntries(
+    _In_ PUEFI_WINDOW_CONTEXT Context
+    )
+{
+    ULONG index = -1;
+
+    while ((index = PhFindListViewItemByFlags(
+        Context->ListViewHandle,
+        index,
+        LVNI_ALL
+        )) != -1)
+    {
+        PEFI_ENTRY param;
+
+        if (PhGetListViewItemParam(Context->ListViewHandle, index, &param))
+        {
+            PhClearReference(&param->Name);
+            PhClearReference(&param->GuidString);
+            PhFree(param);
+        }
+    }
+}
+
+NTSTATUS EnumerateFirmwareEntries(
+    _In_ PUEFI_WINDOW_CONTEXT Context
     )
 {
     NTSTATUS status;
     PVOID variables;
 
-    ExtendedListView_SetRedraw(ListViewHandle, FALSE);
-    ListView_DeleteAllItems(ListViewHandle);
+    ExtendedListView_SetRedraw(Context->ListViewHandle, FALSE);
+    FreeListViewFirmwareEntries(Context);
+    ListView_DeleteAllItems(Context->ListViewHandle);
 
     if (NT_SUCCESS(status = EnumerateFirmwareValues(&variables)))
     {
@@ -88,49 +112,50 @@ NTSTATUS EnumerateEnvironmentValues(
         for (i = PH_FIRST_EFI_VARIABLE(variables); i; i = PH_NEXT_EFI_VARIABLE(i))
         {       
             INT index;
-            GUID vendorGuid;
-            PPH_STRING guidString;
-
-            vendorGuid = i->VendorGuid;
-            guidString = PhFormatGuid(&vendorGuid);
+            PEFI_ENTRY entry;
+            
+            entry = PhAllocate(sizeof(EFI_ENTRY));
+            entry->Length = i->ValueLength;
+            entry->Name = PhCreateString(i->Name);
+            entry->GuidString = PhFormatGuid(&i->VendorGuid);
             
             index = PhAddListViewItem(
-                ListViewHandle,
+                Context->ListViewHandle,
                 MAXINT,
-                i->Name,
-                NULL
+                PhGetStringOrEmpty(entry->Name),
+                entry
                 );
             PhSetListViewSubItem(
-                ListViewHandle,
+                Context->ListViewHandle,
                 index,
                 1,
                 FirmwareAttributeToString(i->Attributes)->Buffer
                 );
-
             PhSetListViewSubItem(
-                ListViewHandle,
+                Context->ListViewHandle,
                 index,
                 2,
-                FirmwareGuidToNameString(&vendorGuid)
+                FirmwareGuidToNameString(&i->VendorGuid)
                 );
-
             PhSetListViewSubItem(
-                ListViewHandle,
+                Context->ListViewHandle,
                 index,
                 3,
-                guidString->Buffer
+                PhGetStringOrEmpty(entry->GuidString)
                 );
-
-            PhSetListViewSubItem(ListViewHandle, index, 4, PhaFormatSize(i->ValueLength, -1)->Buffer);
-
-            PhDereferenceObject(guidString);
+            PhSetListViewSubItem(
+                Context->ListViewHandle,
+                index,
+                4, 
+                PhaFormatSize(entry->Length, -1)->Buffer
+                );
         }
 
         PhFree(variables);
     }
 
-    ExtendedListView_SortItems(ListViewHandle);
-    ExtendedListView_SetRedraw(ListViewHandle, TRUE);
+    ExtendedListView_SortItems(Context->ListViewHandle);
+    ExtendedListView_SetRedraw(Context->ListViewHandle, TRUE);
 
     return status;
 }
@@ -164,7 +189,7 @@ PPH_STRING PhGetSelectedListViewItemText(
 }
 
 VOID ShowBootEntryMenu(
-    _In_ PBOOT_WINDOW_CONTEXT Context,
+    _In_ PUEFI_WINDOW_CONTEXT Context,
     _In_ HWND hwndDlg
     )
 {
@@ -182,38 +207,53 @@ INT NTAPI FirmwareNameCompareFunction(
     _In_opt_ PVOID Context
     )
 {
-    PPH_STRING item1 = Item1;
-    PPH_STRING item2 = Item2;
+    PEFI_ENTRY item1 = Item1;
+    PEFI_ENTRY item2 = Item2;
 
-    return PhCompareStringZ(PhGetStringOrEmpty(item1), PhGetStringOrEmpty(item2), TRUE);
+    return PhCompareStringZ(PhGetStringOrEmpty(item1->Name), PhGetStringOrEmpty(item2->Name), TRUE);
 }
 
-INT_PTR CALLBACK BootEntriesDlgProc(
+INT NTAPI FirmwareEntryLengthCompareFunction(
+    _In_ PVOID Item1,
+    _In_ PVOID Item2,
+    _In_opt_ PVOID Context
+    )
+{
+    PEFI_ENTRY item1 = Item1;
+    PEFI_ENTRY item2 = Item2;
+
+    return uintcmp(item1->Length, item2->Length);
+}
+
+INT_PTR CALLBACK UefiEntriesDlgProc(
     _In_ HWND hwndDlg,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
     _In_ LPARAM lParam
     )
 {
-    PBOOT_WINDOW_CONTEXT context;
+    PUEFI_WINDOW_CONTEXT context;
 
     if (uMsg == WM_INITDIALOG)
     {
-        context = (PBOOT_WINDOW_CONTEXT)PhAllocate(sizeof(BOOT_WINDOW_CONTEXT));
-        memset(context, 0, sizeof(BOOT_WINDOW_CONTEXT));
+        context = (PUEFI_WINDOW_CONTEXT)PhAllocate(sizeof(UEFI_WINDOW_CONTEXT));
+        memset(context, 0, sizeof(UEFI_WINDOW_CONTEXT));
 
         SetProp(hwndDlg, L"Context", (HANDLE)context);
     }
     else
     {
-        context = (PBOOT_WINDOW_CONTEXT)GetProp(hwndDlg, L"Context");
+        context = (PUEFI_WINDOW_CONTEXT)GetProp(hwndDlg, L"Context");
 
         if (uMsg == WM_DESTROY)
         {
+            FreeListViewFirmwareEntries(context);
+
             PhSaveListViewColumnsToSetting(SETTING_NAME_LISTVIEW_COLUMNS, context->ListViewHandle);
             PhSaveWindowPlacementToSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
             PhDeleteLayoutManager(&context->LayoutManager);
             PhUnregisterDialog(hwndDlg);
+
             RemoveProp(hwndDlg, L"Context");
             PhFree(context);
         }
@@ -228,6 +268,9 @@ INT_PTR CALLBACK BootEntriesDlgProc(
         {
             context->ListViewHandle = GetDlgItem(hwndDlg, IDC_BOOT_LIST);
 
+            SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)PH_LOAD_SHARED_ICON_SMALL(PhInstanceHandle, MAKEINTRESOURCE(PHAPP_IDI_PROCESSHACKER)));
+            SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)PH_LOAD_SHARED_ICON_LARGE(PhInstanceHandle, MAKEINTRESOURCE(PHAPP_IDI_PROCESSHACKER)));
+
             PhRegisterDialog(hwndDlg);
             PhSetListViewStyle(context->ListViewHandle, FALSE, TRUE);
             PhSetControlTheme(context->ListViewHandle, L"explorer");
@@ -241,6 +284,7 @@ INT_PTR CALLBACK BootEntriesDlgProc(
             //ExtendedListView_SetSortFast(context->ListViewHandle, TRUE);
             ExtendedListView_SetCompareFunction(context->ListViewHandle, 0, FirmwareNameCompareFunction);
             ExtendedListView_SetCompareFunction(context->ListViewHandle, 1, FirmwareNameCompareFunction);
+            ExtendedListView_SetCompareFunction(context->ListViewHandle, 4, FirmwareEntryLengthCompareFunction);
             PhLoadListViewColumnsFromSetting(SETTING_NAME_LISTVIEW_COLUMNS, context->ListViewHandle);
 
             PhInitializeLayoutManager(&context->LayoutManager, hwndDlg);
@@ -249,7 +293,7 @@ INT_PTR CALLBACK BootEntriesDlgProc(
             PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDOK), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_RIGHT);
             PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
             
-            EnumerateEnvironmentValues(context->ListViewHandle);
+            EnumerateFirmwareEntries(context);
         }
         break;
     case WM_SIZE:
@@ -261,7 +305,7 @@ INT_PTR CALLBACK BootEntriesDlgProc(
             {
             case IDC_BOOT_REFRESH:
                 {
-                    EnumerateEnvironmentValues(context->ListViewHandle);
+                    EnumerateFirmwareEntries(context);
                 }
                 break;
             case IDCANCEL:
@@ -283,6 +327,19 @@ INT_PTR CALLBACK BootEntriesDlgProc(
                 {
                     if (hdr->hwndFrom == context->ListViewHandle)
                         ShowBootEntryMenu(context, hwndDlg);
+                }
+                break;
+            case NM_DBLCLK:
+                {
+                    if (hdr->hwndFrom == context->ListViewHandle)
+                    {
+                        PEFI_ENTRY entry;
+
+                        if (entry = PhGetSelectedListViewItemParam(context->ListViewHandle))
+                        {
+                            ShowUefiEditorDialog(entry);
+                        }
+                    }
                 }
                 break;
             }
