@@ -25,6 +25,9 @@
 #include "resource.h"
 #include "sbiedll.h"
 
+#define PhCsColorSandboxed RGB(0x33, 0x33, 0x00)
+#define PhCsColorSandboxedSuspended RGB(0x45, 0x45, 0x37)
+
 typedef struct _BOX_INFO
 {
     WCHAR BoxName[34];
@@ -359,7 +362,14 @@ VOID NTAPI GetProcessHighlightingColorCallback(
 
     if (boxedProcess = PhFindEntryHashtable(BoxedProcessesHashtable, &lookupBoxedProcess))
     {
-        getHighlightingColor->BackColor = RGB(0x33, 0x33, 0x00);
+        if (((PPH_PROCESS_ITEM)getHighlightingColor->Parameter)->IsSuspended)
+        {
+            getHighlightingColor->BackColor = PhCsColorSandboxedSuspended;
+        }
+        else
+        {
+            getHighlightingColor->BackColor = PhCsColorSandboxed;
+        }
         getHighlightingColor->Cache = TRUE;
         getHighlightingColor->Handled = TRUE;
     }
