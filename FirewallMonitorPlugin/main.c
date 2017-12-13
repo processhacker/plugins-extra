@@ -35,7 +35,8 @@ VOID NTAPI LoadCallback(
     _In_opt_ PVOID Context
     )
 {
-    FwEnabled = StartFwMonitor();
+    if (PhGetOwnTokenAttributes().Elevated)
+        FwEnabled = StartFwMonitor();
 }
 
 VOID NTAPI UnloadCallback(
