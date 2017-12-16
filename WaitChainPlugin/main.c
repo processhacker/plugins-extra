@@ -423,7 +423,7 @@ VOID NTAPI ProcessMenuInitializingCallback(
 
     if (miscMenuItem = PhFindEMenuItem(menuInfo->Menu, 0, L"Miscellaneous", 0))
     {
-        PhInsertEMenuItem(miscMenuItem, menuItem = PhPluginCreateEMenuItem(PluginInstance, 0, IDD_WCT_MENUITEM, L"Wait Chain Traversal", context), -1);
+        PhInsertEMenuItem(miscMenuItem, menuItem = PhPluginCreateEMenuItem(PluginInstance, 0, IDD_WCT_MENUITEM, L"Wait Chain Tra&versal", context), -1);
 
         if (!processItem || !processItem->QueryHandle || processItem->ProcessId == NtCurrentProcessId())
             menuItem->Flags |= PH_EMENU_DISABLED;

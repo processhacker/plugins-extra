@@ -52,7 +52,7 @@ VOID NTAPI MainMenuInitializingCallback(
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
 
-    PhInsertEMenuItem(menuInfo->Menu, liveDumpMenu = PhPluginCreateEMenuItem(PluginInstance, 0, PLUGIN_MENU_ITEM, L"Live kernel dump...", NULL), -1);
+    PhInsertEMenuItem(menuInfo->Menu, liveDumpMenu = PhPluginCreateEMenuItem(PluginInstance, 0, PLUGIN_MENU_ITEM, L"&Live kernel dump...", NULL), -1);
 
     if (WindowsVersion < WINDOWS_8_1 || !PhGetOwnTokenAttributes().Elevated)
     {

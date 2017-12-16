@@ -324,7 +324,7 @@ INT_PTR CALLBACK PoolMonDlgProc(
                     {
                         menu = PhCreateEMenu();
                         PhInsertEMenuItem(menu, PhCreateEMenuItem(0, 1, L"Show allocations", NULL, NULL), -1);
-                        PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+                        PhInsertEMenuItem(menu, PhCreateEMenuSeparator(), -1);
                         PhInsertEMenuItem(menu, PhCreateEMenuItem(0, 2, L"Edit description...", NULL, NULL), -1);
                         
                         selectedItem = PhShowEMenu(
