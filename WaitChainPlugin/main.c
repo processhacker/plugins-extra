@@ -464,7 +464,7 @@ VOID NTAPI ThreadMenuInitializingCallback(
     miscMenuItem = PhFindEMenuItem(menuInfo->Menu, 0, L"Analyze", 0);
     if (miscMenuItem)
     {
-        menuItem = PhPluginCreateEMenuItem(PluginInstance, 0, IDD_WCT_MENUITEM, L"Wait Chain Traversal", context);
+        menuItem = PhPluginCreateEMenuItem(PluginInstance, 0, IDD_WCT_MENUITEM, L"Wait Chain Tra&versal", context);
         PhInsertEMenuItem(miscMenuItem, menuItem, -1);
 
         // Disable menu if current process selected.
