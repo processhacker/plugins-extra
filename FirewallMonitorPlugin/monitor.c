@@ -125,7 +125,7 @@ VOID CALLBACK DropEventCallback(
             break;
         }
 
-        if (FwpmLayerGetById(FwEngineHandle, fwDropEvent->layerId, &fwLayerItem) == ERROR_SUCCESS)
+        if (fwDropEvent->layerId && (FwpmLayerGetById(FwEngineHandle, fwDropEvent->layerId, &fwLayerItem) == ERROR_SUCCESS))
         {
             if (
                 IsEqualGUID(&fwLayerItem->layerKey, &FWPM_LAYER_ALE_FLOW_ESTABLISHED_V4) ||
@@ -137,7 +137,7 @@ VOID CALLBACK DropEventCallback(
                 return;
             }
 
-            if (PhCountStringZ(fwLayerItem->displayData.name) > 0)
+            if (fwLayerItem->displayData.name && PhCountStringZ(fwLayerItem->displayData.name) > 0)
             {
                 fwEventItem->FwRuleLayerNameString = PhCreateString(fwLayerItem->displayData.name);
             }
@@ -147,12 +147,12 @@ VOID CALLBACK DropEventCallback(
             FwpmFreeMemory(&fwLayerItem);
         }
 
-        if (FwpmFilterGetById(FwEngineHandle, fwDropEvent->filterId, &fwFilterItem) == ERROR_SUCCESS)
+        if (fwDropEvent->filterId && (FwpmFilterGetById(FwEngineHandle, fwDropEvent->filterId, &fwFilterItem) == ERROR_SUCCESS))
         {
-            if (PhCountStringZ(fwFilterItem->displayData.name) > 0)
+            if (fwFilterItem->displayData.name && PhCountStringZ(fwFilterItem->displayData.name) > 0)
                 fwEventItem->FwRuleNameString = PhCreateString(fwFilterItem->displayData.name);
 
-            if (PhCountStringZ(fwFilterItem->displayData.description) > 0)
+            if (fwFilterItem->displayData.description && PhCountStringZ(fwFilterItem->displayData.description) > 0)
                 fwEventItem->FwRuleDescriptionString = PhCreateString(fwFilterItem->displayData.description);
 
             FwpmFreeMemory(&fwFilterItem);
@@ -182,7 +182,7 @@ VOID CALLBACK DropEventCallback(
             break;
         }
 
-        if (FwpmLayerGetById(FwEngineHandle, fwAllowEvent->layerId, &fwLayerItem) == ERROR_SUCCESS)
+        if (fwAllowEvent->layerId && (FwpmLayerGetById(FwEngineHandle, fwAllowEvent->layerId, &fwLayerItem) == ERROR_SUCCESS))
         {
             if (
                 IsEqualGUID(&fwLayerItem->layerKey, &FWPM_LAYER_ALE_FLOW_ESTABLISHED_V4) ||
@@ -194,7 +194,7 @@ VOID CALLBACK DropEventCallback(
                 return;
             }
 
-            if (PhCountStringZ(fwLayerItem->displayData.name) > 0)
+            if (fwLayerItem->displayData.name && PhCountStringZ(fwLayerItem->displayData.name) > 0)
             {
                 fwEventItem->FwRuleLayerNameString = PhCreateString(fwLayerItem->displayData.name);
             }
@@ -204,14 +204,14 @@ VOID CALLBACK DropEventCallback(
             FwpmFreeMemory(&fwLayerItem);
         }
 
-        if (FwpmFilterGetById(FwEngineHandle, fwAllowEvent->filterId, &fwFilterItem) == ERROR_SUCCESS)
+        if (fwAllowEvent->filterId && (FwpmFilterGetById(FwEngineHandle, fwAllowEvent->filterId, &fwFilterItem) == ERROR_SUCCESS))
         {
-            if (PhCountStringZ(fwFilterItem->displayData.name) > 0)
+            if (fwFilterItem->displayData.name && PhCountStringZ(fwFilterItem->displayData.name) > 0)
             {
                 fwEventItem->FwRuleNameString = PhCreateString(fwFilterItem->displayData.name);
             }
 
-            if (PhCountStringZ(fwFilterItem->displayData.description) > 0)
+            if (fwFilterItem->displayData.description && PhCountStringZ(fwFilterItem->displayData.description) > 0)
             {
                 fwEventItem->FwRuleDescriptionString = PhCreateString(fwFilterItem->displayData.description);
             }
