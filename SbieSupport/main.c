@@ -28,6 +28,13 @@
 #define PhCsColorSandboxed RGB(0x33, 0x33, 0x00)
 #define PhCsColorSandboxedSuspended RGB(0x45, 0x45, 0x37)
 
+enum _TOOLS_MENU_ITEMS
+{
+	ID_SANDBOXED_TERMINATE = 1,
+	ID_SANDBOXED_SUSPEND,
+	ID_SANDBOXED_RESUME
+} TOOLS_MENU_ITEMS;
+
 typedef struct _BOX_INFO
 {
     WCHAR BoxName[34];
@@ -255,6 +262,63 @@ VOID NTAPI ShowOptionsCallback(
         );
 }
 
+VOID DoSandboxedMenuAction(
+	_In_ ULONG ActionId
+)
+{
+	if (ActionId == ID_SANDBOXED_TERMINATE)
+	{
+		if (!PhShowConfirmMessage(
+			PhMainWndHandle,
+			L"terminate",
+			L"all sandboxed processes",
+			NULL,
+			FALSE
+		))
+			return;
+	}
+
+	PBOXED_PROCESS boxedProcess;
+	ULONG enumerationKey = 0;
+
+	// Make sure we have an up-to-date list.
+	RefreshSandboxieInfo(NULL, FALSE);
+
+	PhAcquireQueuedLockShared(&BoxedProcessesLock);
+
+	while (PhEnumHashtable(BoxedProcessesHashtable, &boxedProcess, &enumerationKey))
+	{
+		HANDLE processHandle;
+
+		if (ActionId == ID_SANDBOXED_TERMINATE)
+		{
+			if (NT_SUCCESS(PhOpenProcess(&processHandle, PROCESS_TERMINATE, boxedProcess->ProcessId)))
+			{
+				PhTerminateProcess(processHandle, STATUS_SUCCESS);
+				NtClose(processHandle);
+			}
+		}
+		else
+		{
+			if (NT_SUCCESS(PhOpenProcess(&processHandle, PROCESS_SUSPEND_RESUME, boxedProcess->ProcessId)))
+			{
+				if (ActionId == ID_SANDBOXED_SUSPEND)
+				{
+					NtSuspendProcess(processHandle);
+				}
+				else if (ActionId == ID_SANDBOXED_RESUME)
+				{
+					NtResumeProcess(processHandle);
+				}
+				NtClose(processHandle);
+			}
+		}
+	}
+
+	PhReleaseQueuedLockShared(&BoxedProcessesLock);
+
+}
+
 VOID NTAPI MenuItemCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
@@ -264,37 +328,11 @@ VOID NTAPI MenuItemCallback(
 
     switch (menuItem->Id)
     {
-    case 1:
+	case ID_SANDBOXED_TERMINATE:
+	case ID_SANDBOXED_SUSPEND:
+	case ID_SANDBOXED_RESUME:
         {
-            if (PhShowConfirmMessage(
-                PhMainWndHandle,
-                L"terminate",
-                L"all sandboxed processes",
-                NULL,
-                FALSE
-                ))
-            {
-                PBOXED_PROCESS boxedProcess;
-                ULONG enumerationKey = 0;
-
-                // Make sure we have an update-to-date list.
-                RefreshSandboxieInfo(NULL, FALSE);
-
-                PhAcquireQueuedLockShared(&BoxedProcessesLock);
-
-                while (PhEnumHashtable(BoxedProcessesHashtable, &boxedProcess, &enumerationKey))
-                {
-                    HANDLE processHandle;
-
-                    if (NT_SUCCESS(PhOpenProcess(&processHandle, PROCESS_TERMINATE, boxedProcess->ProcessId)))
-                    {
-                        PhTerminateProcess(processHandle, STATUS_SUCCESS);
-                        NtClose(processHandle);
-                    }
-                }
-
-                PhReleaseQueuedLockShared(&BoxedProcessesLock);
-            }
+			DoSandboxedMenuAction(menuItem->Id);
         }
         break;
     }
@@ -313,7 +351,9 @@ VOID NTAPI MainMenuInitializingCallback(
         return;
 
     PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, PH_EMENU_SEPARATOR, 0, NULL, NULL), -1);
-    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, 1, L"Terminate sandboxed processes", NULL), -1);
+    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ID_SANDBOXED_TERMINATE, L"T&erminate sandboxed processes", NULL), -1);
+	PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ID_SANDBOXED_SUSPEND, L"Sus&pend sandboxed processes", NULL), -1);
+	PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ID_SANDBOXED_RESUME, L"Res&ume sandboxed processes", NULL), -1);
 }
 
 VOID NTAPI ProcessesUpdatedCallback(
