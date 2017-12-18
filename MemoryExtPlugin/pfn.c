@@ -258,12 +258,12 @@ typedef struct _PHYSICAL_MEMORY_RUN
 SIZE_T MmPageCounts[TransitionPage + 1];
 SIZE_T MmUseCounts[MMPFNUSE_KERNELSTACK + 1];
 SIZE_T MmPageUseCounts[MMPFNUSE_KERNELSTACK + 1][TransitionPage + 1];
-PPF_PFN_PRIO_REQUEST MmPfnDatabase;
+PPF_PFN_PRIO_REQUEST MmPfnDatabase = NULL;
 RTL_BITMAP MmVaBitmap, MmPfnBitMap;
 ULONG MmPfnDatabaseSize;
-HANDLE PfiFileInfoHandle;
-PPF_MEMORY_RANGE_INFO MemoryRanges;
-
+HANDLE PfiFileInfoHandle = NULL;
+PPF_MEMORY_RANGE_INFO MemoryRanges = NULL;
+PVOID BitMapBuffer = NULL;
 PPH_LIST ProcessKeyList;
 PPH_LIST FileKeyList;
 PPH_LIST VolumeKeyList;
@@ -301,7 +301,7 @@ NTSTATUS PfiQueryMemoryRanges(VOID)
 
     if (status == STATUS_BUFFER_TOO_SMALL)
     {
-        MemoryRanges = PhCreateAlloc(resultLength);
+        MemoryRanges = PhAllocate(resultLength);
         memset(MemoryRanges, 0, resultLength);
 
         MemoryRanges->Version = 1;
@@ -336,7 +336,6 @@ NTSTATUS PfiInitializePfnDatabase(VOID)
     PMMPFN_IDENTITY Pfn1;
     ULONG PfnCount, i, k;
     ULONG PfnOffset = 0;
-    PVOID BitMapBuffer;
     PPF_PFN_PRIO_REQUEST PfnDbStart;
     PPF_PHYSICAL_MEMORY_RANGE Node;
     SYSTEM_BASIC_INFORMATION basicInfo;
@@ -353,10 +352,8 @@ NTSTATUS PfiInitializePfnDatabase(VOID)
     
     // Build the PFN List Information Request
     MmPfnDatabaseSize = FIELD_OFFSET(PF_PFN_PRIO_REQUEST, PageData) + PfnCount * sizeof(MMPFN_IDENTITY);
-    PfnDbStart = MmPfnDatabase = PhCreateAlloc(MmPfnDatabaseSize);
+    PfnDbStart = MmPfnDatabase = PhAllocate(MmPfnDatabaseSize);
     memset(MmPfnDatabase, 0, MmPfnDatabaseSize);
-
-    PhReferenceObject(MmPfnDatabase); // HACK
 
     MmPfnDatabase->Version = 1;
     MmPfnDatabase->RequestFlags = 1;
@@ -479,6 +476,9 @@ NTSTATUS PfiQueryPrivateSources()
             );
     }
 
+    if (!NT_SUCCESS(status))
+        return status;
+
     for (ULONG i = 0; i < request->InfoCount; i++)
     {
         PPF_PROCESS process;
@@ -488,7 +488,7 @@ NTSTATUS PfiQueryPrivateSources()
 
         if (!(process = PfiFindProcess((ULONG_PTR)request->InfoArray[i].EProcess)))
         {
-            process = PhCreateAlloc(sizeof(PF_PROCESS) + request->InfoArray[i].WsPrivatePages * sizeof(ULONG));
+            process = PhAllocate(sizeof(PF_PROCESS) + request->InfoArray[i].WsPrivatePages * sizeof(ULONG));
             memset(process, 0, sizeof(PF_PROCESS) + request->InfoArray[i].WsPrivatePages * sizeof(ULONG));
 
             process->ProcessKey = (ULONG_PTR)request->InfoArray[i].EProcess;
@@ -602,14 +602,17 @@ NTSTATUS PfiQueryFileInfo(VOID)
     RtlInitUnicodeString(&fileInfoUs, L"\\Device\\FileInfo");
     InitializeObjectAttributes(&oa, &fileInfoUs, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    NtOpenFile(
+    if (!NT_SUCCESS(status = NtOpenFile(
         &PfiFileInfoHandle,
         FILE_GENERIC_READ,
         &oa,
         &isb,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         FILE_NON_DIRECTORY_FILE
-        );
+        )))
+    {
+        return status;
+    }
 
     if (!NT_SUCCESS(status = PfSvFICommand(
         PfiFileInfoHandle,
@@ -620,6 +623,7 @@ NTSTATUS PfiQueryFileInfo(VOID)
         &OutputLength
         )))
     {
+        NtClose(PfiFileInfoHandle);
         return status;
     }
 
@@ -633,7 +637,7 @@ NTSTATUS PfiQueryFileInfo(VOID)
 
         if (!(file = PfiFindFile(LogEntry->FileInfo.Key)))
         {
-            file = PhCreateAlloc(sizeof(PF_FILE) + LogEntry->Header.Size - FIELD_OFFSET(PFNL_LOG_ENTRY, FileInfo));
+            file = PhAllocate(sizeof(PF_FILE) + LogEntry->Header.Size - FIELD_OFFSET(PFNL_LOG_ENTRY, FileInfo));
             memset(file, 0, sizeof(PF_FILE) + LogEntry->Header.Size - FIELD_OFFSET(PFNL_LOG_ENTRY, FileInfo));
 
             if (LogEntry->Header.Type == PfNLInfoTypeVolume)
@@ -725,6 +729,7 @@ NTSTATUS PfiQueryFileInfo(VOID)
     }
 
     PhFree(OutputBuffer);
+    NtClose(PfiFileInfoHandle);
 
     return status;
 }
@@ -1050,7 +1055,7 @@ NTSTATUS EnumeratePageTable(
             //if (page == NonPagedPoolPage)
             //    continue;
             
-            entry = PhCreateAlloc(sizeof(PAGE_ENTRY));
+            entry = PhAllocate(sizeof(PAGE_ENTRY));
             memset(entry, 0, sizeof(PAGE_ENTRY));
 
             entry->Type = (ULONG)pfnident->u1.e1.UseDescription;
@@ -1109,9 +1114,6 @@ CleanupExit:
         PhShowStatus(Context->WindowHandle, L"Unable to query the PFN database", status, 0);
     }
 
-    if (MmPfnDatabase)
-        PhDereferenceObject(MmPfnDatabase);
-
     PhDereferenceObject(Context);
 
     return status;
@@ -1144,7 +1146,6 @@ INT_PTR CALLBACK RotViewDlgProc(
             PhUnregisterDialog(hwndDlg);
             RemoveProp(hwndDlg, L"Context");
             
-            //PhDereferenceObject(MemoryRanges);
             //PhDereferenceObject(MmPfnDatabase);      
 
             PhAcquireQueuedLockExclusive(&context->LogMessageListLock);
@@ -1157,8 +1158,35 @@ INT_PTR CALLBACK RotViewDlgProc(
                 if (entry->FileName)
                     PhDereferenceObject(entry->FileName);
 
-                PhDereferenceObject(entry);
+                PhFree(entry);
             }
+            for (ULONG i = 0; i < ProcessKeyList->Count; i++)
+            {
+                PPF_PROCESS entry = ProcessKeyList->Items[i];
+
+                if (entry->ProcessName)
+                    PhDereferenceObject(entry->ProcessName);
+                if (entry->ProcessHandle)
+                    NtClose(entry->ProcessHandle);
+
+                PhFree(entry);
+            }
+            for (ULONG i = 0; i < FileKeyList->Count; i++)
+            {
+                PPF_FILE entry = FileKeyList->Items[i];
+
+                if (entry->FileName)
+                    PhDereferenceObject(entry->FileName);
+
+                PhFree(entry);
+            }
+
+            if (BitMapBuffer)
+                PhFree(BitMapBuffer);
+            if (MmPfnDatabase)
+                PhFree(MmPfnDatabase);
+            if (MemoryRanges)
+                PhFree(MemoryRanges);
             PhReleaseQueuedLockExclusive(&context->LogMessageListLock);
 
             PhDereferenceObject(context);
