@@ -59,7 +59,7 @@ VOID NTAPI ProcessMenuInitializingCallback(
         return;
 
     processItem = menuInfo->u.Process.NumberOfProcesses == 1 ? menuInfo->u.Process.Processes[0] : NULL;
-    terminatorMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, TERMINATOR_MENU_ITEM, L"Terminator", processItem);
+    terminatorMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, TERMINATOR_MENU_ITEM, L"T&erminator", processItem);
     PhInsertEMenuItem(miscMenuItem, terminatorMenuItem, -1);
 
     if (!PhGetOwnTokenAttributes().Elevated || !processItem)
