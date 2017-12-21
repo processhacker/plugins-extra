@@ -122,7 +122,7 @@ VOID NTAPI ServiceMenuInitializingCallback(
     menuItemRestore = PhPluginCreateEMenuItem(PluginInstance, 0, 1002, L"R&estore...", menuInfo->u.Service.Services[0]);
     PhInsertEMenuItem(menuInfo->Menu, menuItemBackup, indexOfMenuItem);
     PhInsertEMenuItem(menuInfo->Menu, menuItemRestore, indexOfMenuItem + 1);
-    PhInsertEMenuItem(menuInfo->Menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, L"", NULL, NULL), indexOfMenuItem + 2);
+    PhInsertEMenuItem(menuInfo->Menu, PhCreateEMenuSeparator(), indexOfMenuItem + 2);
 }
 
 LOGICAL DllMain(

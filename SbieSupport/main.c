@@ -350,7 +350,7 @@ VOID NTAPI MainMenuInitializingCallback(
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
 
-    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, PH_EMENU_SEPARATOR, 0, NULL, NULL), -1);
+    PhInsertEMenuItem(menuInfo->Menu, PhCreateEMenuSeparator(), -1);
     PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ID_SANDBOXED_TERMINATE, L"T&erminate sandboxed processes", NULL), -1);
     PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ID_SANDBOXED_SUSPEND, L"Sus&pend sandboxed processes", NULL), -1);
     PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ID_SANDBOXED_RESUME, L"Res&ume sandboxed processes", NULL), -1);
