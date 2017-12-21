@@ -30,9 +30,9 @@
 
 enum _TOOLS_MENU_ITEMS
 {
-	ID_SANDBOXED_TERMINATE = 1,
-	ID_SANDBOXED_SUSPEND,
-	ID_SANDBOXED_RESUME
+    ID_SANDBOXED_TERMINATE = 1,
+    ID_SANDBOXED_SUSPEND,
+    ID_SANDBOXED_RESUME
 } TOOLS_MENU_ITEMS;
 
 typedef struct _BOX_INFO
@@ -263,59 +263,59 @@ VOID NTAPI ShowOptionsCallback(
 }
 
 VOID DoSandboxedMenuAction(
-	_In_ ULONG ActionId
+    _In_ ULONG ActionId
 )
 {
-	if (ActionId == ID_SANDBOXED_TERMINATE)
-	{
-		if (!PhShowConfirmMessage(
-			PhMainWndHandle,
-			L"terminate",
-			L"all sandboxed processes",
-			NULL,
-			FALSE
-		))
-			return;
-	}
+    if (ActionId == ID_SANDBOXED_TERMINATE)
+    {
+        if (!PhShowConfirmMessage(
+            PhMainWndHandle,
+            L"terminate",
+            L"all sandboxed processes",
+            NULL,
+            FALSE
+        ))
+            return;
+    }
 
-	PBOXED_PROCESS boxedProcess;
-	ULONG enumerationKey = 0;
+    PBOXED_PROCESS boxedProcess;
+    ULONG enumerationKey = 0;
 
-	// Make sure we have an up-to-date list.
-	RefreshSandboxieInfo(NULL, FALSE);
+    // Make sure we have an up-to-date list.
+    RefreshSandboxieInfo(NULL, FALSE);
 
-	PhAcquireQueuedLockShared(&BoxedProcessesLock);
+    PhAcquireQueuedLockShared(&BoxedProcessesLock);
 
-	while (PhEnumHashtable(BoxedProcessesHashtable, &boxedProcess, &enumerationKey))
-	{
-		HANDLE processHandle;
+    while (PhEnumHashtable(BoxedProcessesHashtable, &boxedProcess, &enumerationKey))
+    {
+        HANDLE processHandle;
 
-		if (ActionId == ID_SANDBOXED_TERMINATE)
-		{
-			if (NT_SUCCESS(PhOpenProcess(&processHandle, PROCESS_TERMINATE, boxedProcess->ProcessId)))
-			{
-				PhTerminateProcess(processHandle, STATUS_SUCCESS);
-				NtClose(processHandle);
-			}
-		}
-		else
-		{
-			if (NT_SUCCESS(PhOpenProcess(&processHandle, PROCESS_SUSPEND_RESUME, boxedProcess->ProcessId)))
-			{
-				if (ActionId == ID_SANDBOXED_SUSPEND)
-				{
-					NtSuspendProcess(processHandle);
-				}
-				else if (ActionId == ID_SANDBOXED_RESUME)
-				{
-					NtResumeProcess(processHandle);
-				}
-				NtClose(processHandle);
-			}
-		}
-	}
+        if (ActionId == ID_SANDBOXED_TERMINATE)
+        {
+            if (NT_SUCCESS(PhOpenProcess(&processHandle, PROCESS_TERMINATE, boxedProcess->ProcessId)))
+            {
+                PhTerminateProcess(processHandle, STATUS_SUCCESS);
+                NtClose(processHandle);
+            }
+        }
+        else
+        {
+            if (NT_SUCCESS(PhOpenProcess(&processHandle, PROCESS_SUSPEND_RESUME, boxedProcess->ProcessId)))
+            {
+                if (ActionId == ID_SANDBOXED_SUSPEND)
+                {
+                    NtSuspendProcess(processHandle);
+                }
+                else if (ActionId == ID_SANDBOXED_RESUME)
+                {
+                    NtResumeProcess(processHandle);
+                }
+                NtClose(processHandle);
+            }
+        }
+    }
 
-	PhReleaseQueuedLockShared(&BoxedProcessesLock);
+    PhReleaseQueuedLockShared(&BoxedProcessesLock);
 
 }
 
@@ -328,11 +328,11 @@ VOID NTAPI MenuItemCallback(
 
     switch (menuItem->Id)
     {
-	case ID_SANDBOXED_TERMINATE:
-	case ID_SANDBOXED_SUSPEND:
-	case ID_SANDBOXED_RESUME:
+    case ID_SANDBOXED_TERMINATE:
+    case ID_SANDBOXED_SUSPEND:
+    case ID_SANDBOXED_RESUME:
         {
-			DoSandboxedMenuAction(menuItem->Id);
+            DoSandboxedMenuAction(menuItem->Id);
         }
         break;
     }
@@ -352,8 +352,8 @@ VOID NTAPI MainMenuInitializingCallback(
 
     PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, PH_EMENU_SEPARATOR, 0, NULL, NULL), -1);
     PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ID_SANDBOXED_TERMINATE, L"T&erminate sandboxed processes", NULL), -1);
-	PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ID_SANDBOXED_SUSPEND, L"Sus&pend sandboxed processes", NULL), -1);
-	PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ID_SANDBOXED_RESUME, L"Res&ume sandboxed processes", NULL), -1);
+    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ID_SANDBOXED_SUSPEND, L"Sus&pend sandboxed processes", NULL), -1);
+    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, ID_SANDBOXED_RESUME, L"Res&ume sandboxed processes", NULL), -1);
 }
 
 VOID NTAPI ProcessesUpdatedCallback(
