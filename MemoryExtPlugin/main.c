@@ -57,10 +57,10 @@ VOID NTAPI MainMenuInitializingCallback(
 
     if (!(systemMenu = PhFindEMenuItem(menuInfo->Menu, 0, L"System", 0)))
     {
-        PhInsertEMenuItem(menuInfo->Menu, systemMenu = PhPluginCreateEMenuItem(PluginInstance, 0, 0, L"System", NULL), -1);
+        PhInsertEMenuItem(menuInfo->Menu, systemMenu = PhPluginCreateEMenuItem(PluginInstance, 0, 0, L"&System", NULL), -1);
     }
 
-    PhInsertEMenuItem(systemMenu, pageMenu = PhPluginCreateEMenuItem(PluginInstance, 0, MEMORY_LIST_MENU_ITEM, L"Page Table", NULL), -1);
+    PhInsertEMenuItem(systemMenu, pageMenu = PhPluginCreateEMenuItem(PluginInstance, 0, MEMORY_LIST_MENU_ITEM, L"Pa&ge Table", NULL), -1);
 
     if (!PhGetOwnTokenAttributes().Elevated)
     {

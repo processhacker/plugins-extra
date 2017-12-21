@@ -107,7 +107,7 @@ VOID NTAPI ProcessMenuInitializingCallback(
         return;
 
     processItem = menuInfo->u.Process.NumberOfProcesses == 1 ? menuInfo->u.Process.Processes[0] : NULL;
-    criticalMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, CRITICAL_MENU_ITEM, L"Critical", processItem);
+    criticalMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, CRITICAL_MENU_ITEM, L"&Critical", processItem);
     PhInsertEMenuItem(miscMenuItem, criticalMenuItem, -1);
 
     if (processItem)

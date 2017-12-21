@@ -118,8 +118,8 @@ VOID NTAPI ServiceMenuInitializingCallback(
     else
         indexOfMenuItem = -1;
 
-    menuItemBackup = PhPluginCreateEMenuItem(PluginInstance, 0, 1001, L"Backup...", menuInfo->u.Service.Services[0]);
-    menuItemRestore = PhPluginCreateEMenuItem(PluginInstance, 0, 1002, L"Restore...", menuInfo->u.Service.Services[0]);
+    menuItemBackup = PhPluginCreateEMenuItem(PluginInstance, 0, 1001, L"Back&up...", menuInfo->u.Service.Services[0]);
+    menuItemRestore = PhPluginCreateEMenuItem(PluginInstance, 0, 1002, L"R&estore...", menuInfo->u.Service.Services[0]);
     PhInsertEMenuItem(menuInfo->Menu, menuItemBackup, indexOfMenuItem);
     PhInsertEMenuItem(menuInfo->Menu, menuItemRestore, indexOfMenuItem + 1);
     PhInsertEMenuItem(menuInfo->Menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, L"", NULL, NULL), indexOfMenuItem + 2);
