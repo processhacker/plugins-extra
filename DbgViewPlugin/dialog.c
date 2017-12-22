@@ -140,13 +140,13 @@ VOID ShowListViewMenu(
 
         menu = PhCreateEMenu();
         PhInsertEMenuItem(menu, PhCreateEMenuItem(0, 1, L"View Message", NULL, NULL), -1);
-        PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+        PhInsertEMenuItem(menu, PhCreateEMenuSeparator(), -1);
         PhInsertEMenuItem(menu, PhCreateEMenuItem(0, 2, L"Go to Owning &Process", NULL, NULL), -1);
-        PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+        PhInsertEMenuItem(menu, PhCreateEMenuSeparator(), -1);
         PhInsertEMenuItem(menu, selectedItem = PhCreateEMenuItem(0, 0, L"E&xclude Process", NULL, NULL), -1);
         PhInsertEMenuItem(selectedItem, PhCreateEMenuItem(0, 3, L"By PID", NULL, NULL), -1);
         PhInsertEMenuItem(selectedItem, PhCreateEMenuItem(0, 4, L"By Name", NULL, NULL), -1);
-        PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+        PhInsertEMenuItem(menu, PhCreateEMenuSeparator(), -1);
         PhInsertEMenuItem(menu, PhCreateEMenuItem(0, 5, L"&Copy", NULL, NULL), -1);
 
         selectedItem = PhShowEMenu(
@@ -232,11 +232,11 @@ VOID ShowDropdownMenu(
     menu = PhCreateEMenu();
     PhInsertEMenuItem(menu, captureMenuItem = PhCreateEMenuItem(0, ID_CAPTURE_WIN32, L"Capture Win32", NULL, NULL), -1);
     PhInsertEMenuItem(menu, captureGlobalMenuItem = PhCreateEMenuItem(0, ID_CAPTURE_WIN32_GLOBAL, L"Capture Global Win32", NULL, NULL), -1);
-    PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+    PhInsertEMenuItem(menu, PhCreateEMenuSeparator(), -1);
     PhInsertEMenuItem(menu, resetMenuItem = PhCreateEMenuItem(PH_EMENU_DISABLED, ID_RESET_FILTERS, L"Reset Filters", NULL, NULL), -1);
-    PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+    PhInsertEMenuItem(menu, PhCreateEMenuSeparator(), -1);
     PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_CLEAR_EVENTS, L"Clear", NULL, NULL), -1);
-    PhInsertEMenuItem(menu, PhCreateEMenuItem(PH_EMENU_SEPARATOR, 0, NULL, NULL, NULL), -1);
+    PhInsertEMenuItem(menu, PhCreateEMenuSeparator(), -1);
     PhInsertEMenuItem(menu, PhCreateEMenuItem(0, ID_SAVE_EVENTS, L"Save", NULL, NULL), -1);
 
     if (Context->ExcludeList->Count > 0)

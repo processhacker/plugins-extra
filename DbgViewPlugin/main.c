@@ -54,7 +54,7 @@ VOID NTAPI MainMenuInitializingCallback(
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
 
-    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, DBGVIEW_MENUITEM, L"Debug View", NULL), -1);
+    PhInsertEMenuItem(menuInfo->Menu, PhPluginCreateEMenuItem(PluginInstance, 0, DBGVIEW_MENUITEM, L"&Debug View", NULL), -1);
 }
 
 VOID NTAPI MenuItemCallback(
