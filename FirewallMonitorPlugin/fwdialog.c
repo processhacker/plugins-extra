@@ -33,15 +33,15 @@ INT_PTR CALLBACK OptionsDlgProc(
 
     if (uMsg == WM_INITDIALOG)
     {
-        SetProp(hwndDlg, L"Context", (HANDLE)lParam);
-        //context = (PFW_EVENT_ITEM)GetProp(hwndDlg, L"Context");
+        PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, (PFW_EVENT_ITEM)lParam);
+        //context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
     }
     else
     {
-        //context = (PFW_EVENT_ITEM)GetProp(hwndDlg, L"Context");
+        //context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
 
         if (uMsg == WM_DESTROY)
-            RemoveProp(hwndDlg, L"Context");
+            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
     }
 
     //if (!context)

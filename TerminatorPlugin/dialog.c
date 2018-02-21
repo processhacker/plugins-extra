@@ -146,16 +146,16 @@ INT_PTR CALLBACK PhpProcessTerminatorDlgProc(
 
         context->ProcessItem = (PPH_PROCESS_ITEM)lParam;
 
-        SetProp(hwndDlg, L"Context", (HANDLE)context);
+        PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, context);
     }
     else
     {
-        context = (PTERMINATOR_CONTEXT)GetProp(hwndDlg, L"Context");
+        context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
 
         if (uMsg == WM_DESTROY)
         {
             PhDeleteLayoutManager(&context->LayoutManager);
-            RemoveProp(hwndDlg, L"Context");
+            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
 
             ShutdownAndDeleteKph2();
         }
