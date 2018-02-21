@@ -98,14 +98,14 @@ INT_PTR CALLBACK BigPoolMonDlgProc(
         context->TagUlong = ((PPOOL_ITEM)lParam)->TagUlong;
         PhZeroExtendToUtf16Buffer(context->Tag, sizeof(context->Tag), context->TagString);
 
-        SetProp(hwndDlg, L"Context", (HANDLE)context);
+        PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, context);
     }
     else
     {
-        context = (PBIGPOOLTAG_CONTEXT)GetProp(hwndDlg, L"Context");
+        context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
 
         if (uMsg == WM_DESTROY)
-            RemoveProp(hwndDlg, L"Context");
+            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
     }
 
     if (!context)

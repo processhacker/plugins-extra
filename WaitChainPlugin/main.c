@@ -223,11 +223,11 @@ INT_PTR CALLBACK WaitChainDlgProc(
     if (uMsg == WM_INITDIALOG)
     {
         context = (PWCT_CONTEXT)lParam;
-        SetProp(hwndDlg, L"Context", (HANDLE)context);
+        PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, context);
     }
     else
     {
-        context = (PWCT_CONTEXT)GetProp(hwndDlg, L"Context");
+        context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
 
         if (uMsg == WM_DESTROY)
         {
@@ -236,7 +236,7 @@ INT_PTR CALLBACK WaitChainDlgProc(
             PhDeleteLayoutManager(&context->LayoutManager);
             WtcDeleteWindowTree(&context->TreeContext);
 
-            RemoveProp(hwndDlg, L"Context");
+            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
             PhFree(context);
         }
     }

@@ -369,15 +369,15 @@ INT_PTR CALLBACK DbgViewDlgProc(
         context = (PPH_DBGEVENTS_CONTEXT)PhAllocate(sizeof(PH_DBGEVENTS_CONTEXT));
         memset(context, 0, sizeof(PH_DBGEVENTS_CONTEXT));
 
-        SetProp(hwndDlg, L"Context", (HANDLE)context);
+        PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, context);
     }
     else
     {
-        context = (PPH_DBGEVENTS_CONTEXT)GetProp(hwndDlg, L"Context");
+        context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
 
         if (uMsg == WM_NCDESTROY)
         {
-            RemoveProp(hwndDlg, L"Context");
+            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
             PhFree(context);
         }
     }

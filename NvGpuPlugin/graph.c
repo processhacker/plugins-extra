@@ -37,15 +37,15 @@ INT_PTR CALLBACK NvGpuPanelDialogProc(
     if (uMsg == WM_INITDIALOG)
     {
         context = (PPH_NVGPU_SYSINFO_CONTEXT)lParam;
-        SetProp(hwndDlg, L"Context", (HANDLE)context);
+        PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, context);
     }
     else
     {
-        context = (PPH_NVGPU_SYSINFO_CONTEXT)GetProp(hwndDlg, L"Context");
+        context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
 
         if (uMsg == WM_NCDESTROY)
         {
-            RemoveProp(hwndDlg, L"Context");
+            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
         }
     }
 
@@ -615,11 +615,11 @@ INT_PTR CALLBACK NvGpuDialogProc(
     {
         context = (PPH_NVGPU_SYSINFO_CONTEXT)lParam;
 
-        SetProp(hwndDlg, L"Context", (HANDLE)context);
+        PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, context);
     }
     else
     {
-        context = (PPH_NVGPU_SYSINFO_CONTEXT)GetProp(hwndDlg, L"Context");
+        context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
 
         if (uMsg == WM_NCDESTROY)
         {
@@ -641,7 +641,7 @@ INT_PTR CALLBACK NvGpuDialogProc(
             if (context->GpuPanel)
                 DestroyWindow(context->GpuPanel);
 
-            RemoveProp(hwndDlg, L"Context");
+            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
         }
     }
 

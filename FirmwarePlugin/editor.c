@@ -113,11 +113,11 @@ INT_PTR CALLBACK UefiEditorDlgProc(
     if (uMsg == WM_INITDIALOG)
     {
         context = (PEFI_EDITOR_CONTEXT)lParam;
-        SetProp(hwndDlg, L"Context", (HANDLE)context);
+        PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, context);
     }
     else
     {
-        context = GetProp(hwndDlg, L"Context");
+        context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
     }
 
     if (!context)
@@ -194,7 +194,7 @@ INT_PTR CALLBACK UefiEditorDlgProc(
         break;
     case WM_DESTROY:
         {
-            RemoveProp(hwndDlg, L"Context");
+            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
 
             PhSaveWindowPlacementToSetting(L"MemEditPosition", L"MemEditSize", hwndDlg);
             PhUnregisterDialog(hwndDlg);
