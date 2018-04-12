@@ -263,6 +263,7 @@ RTL_BITMAP MmVaBitmap, MmPfnBitMap;
 ULONG MmPfnDatabaseSize;
 HANDLE PfiFileInfoHandle = NULL;
 PPF_MEMORY_RANGE_INFO MemoryRanges = NULL;
+BOOLEAN IsLocalMemoryRange = FALSE;
 PVOID BitMapBuffer = NULL;
 PPH_LIST ProcessKeyList;
 PPH_LIST FileKeyList;
@@ -323,6 +324,7 @@ NTSTATUS PfiQueryMemoryRanges(VOID)
     {
         // Use local buffer
         MemoryRanges = &rangeInfo;
+        IsLocalMemoryRange = TRUE;
     }
 
     return status;
@@ -1185,7 +1187,7 @@ INT_PTR CALLBACK RotViewDlgProc(
                 PhFree(BitMapBuffer);
             if (MmPfnDatabase)
                 PhFree(MmPfnDatabase);
-            if (MemoryRanges)
+            if (MemoryRanges && !IsLocalMemoryRange)
                 PhFree(MemoryRanges);
             PhReleaseQueuedLockExclusive(&context->LogMessageListLock);
 
