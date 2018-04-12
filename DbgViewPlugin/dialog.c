@@ -61,14 +61,12 @@ PPH_STRING DbgGetStringForSelectedLogEntries(
     )
 {
     PH_STRING_BUILDER stringBuilder;
-    ULONG i;
+    ULONG i = 0;
 
     if (Context->ListViewCount == 0)
         return PhReferenceEmptyString();
 
     PhInitializeStringBuilder(&stringBuilder, 0x100);
-
-    i = Context->ListViewCount - 1;
 
     while (TRUE)
     {
@@ -107,10 +105,10 @@ PPH_STRING DbgGetStringForSelectedLogEntries(
 
 ContinueLoop:
 
-        if (i == 0)
+        if (i >= Context->ListViewCount - 1)
             break;
 
-        i--;
+        i++;
     }
 
     return PhFinalStringBuilderString(&stringBuilder);
