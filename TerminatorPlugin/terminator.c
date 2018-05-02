@@ -668,7 +668,6 @@ BOOLEAN PhpRunTerminatorTest(
     HWND lvHandle;
     PVOID processes;
     BOOLEAN success = FALSE;
-    LARGE_INTEGER interval;
 
     lvHandle = GetDlgItem(WindowHandle, IDC_TERMINATOR_LIST);
 
@@ -680,8 +679,8 @@ BOOLEAN PhpRunTerminatorTest(
         return FALSE;
 
     status = testItem->TestProc(ProcessItem->ProcessId);
-    interval.QuadPart = -1000 * PH_TIMEOUT_MS;
-    NtDelayExecution(FALSE, &interval);
+
+    PhDelayExecution(1000);
 
     if (status == STATUS_NOT_SUPPORTED)
     {

@@ -46,11 +46,9 @@ static PDNS_RECORD DnsCacheList = NULL;
 static PH_INITONCE DnsUpdateQueueInitOnce = PH_INITONCE_INIT;
 static PH_WORK_QUEUE DnsUpdateQueue;
 
-
 typedef enum _DNSCACHE_COLUMN_ID
 {
     NETWORK_COLUMN_ID_DNSCACHE_ROOT_QUERY = 1,
-
 } DNSCACHE_COLUMN_ID;
 
 typedef struct _NETWORK_DNSCACHE_EXTENSION
@@ -68,29 +66,34 @@ typedef struct _NETWORK_DNSCACHE_EXTENSION
 } NETWORK_DNSCACHE_EXTENSION, *PNETWORK_DNSCACHE_EXTENSION;
 
 
-BOOL RecordSetContains(PDNS_RECORD head, PDNS_RECORD target)
+BOOLEAN RecordSetContains(
+    _In_ PDNS_RECORD Head, 
+    _In_ PDNS_RECORD Target
+    )
 {
-    while (head)
+    while (Head)
     {
-        if (DnsRecordCompare(head, target))
-        {
+        if (DnsRecordCompare(Head, Target))
             return TRUE;
-        }
-        head = head->pNext;
+
+        Head = Head->pNext;
     }
+
     return FALSE;
 }
 
-PDNS_RECORD TraverseDnsCacheTable(PDNS_RECORD root)
+PDNS_RECORD TraverseDnsCacheTable(
+    _In_ PDNS_RECORD root
+    )
 {
+    USHORT typeList[] = { DNS_TYPE_A, DNS_TYPE_AAAA, DNS_TYPE_MX, DNS_TYPE_SRV, DNS_TYPE_PTR }; // Only interested in these queries, to boost traversing performance
     PDNS_CACHE_ENTRY dnsCacheDataTable = NULL;
+    PDNS_CACHE_ENTRY tablePtr;
 
     if (!DnsGetCacheDataTable_I(&dnsCacheDataTable))
         goto CleanupExit;
 
-    USHORT typeList[] = { DNS_TYPE_A, DNS_TYPE_AAAA, DNS_TYPE_MX, DNS_TYPE_SRV, DNS_TYPE_PTR }; // Only interested in these queries, to boost traversing performance
-
-    PDNS_CACHE_ENTRY tablePtr = dnsCacheDataTable;
+    tablePtr = dnsCacheDataTable;
 
     while (tablePtr)
     {
@@ -111,6 +114,7 @@ PDNS_RECORD TraverseDnsCacheTable(PDNS_RECORD root)
             if (dnsStatus == ERROR_SUCCESS)
             {
                 PDNS_RECORD dnsRecordPtr = dnsQueryResultPtr;
+
                 while (dnsRecordPtr)
                 {
                     if (!RecordSetContains(root, dnsRecordPtr))
@@ -119,19 +123,22 @@ PDNS_RECORD TraverseDnsCacheTable(PDNS_RECORD root)
                         root = DnsRecordCopy(dnsRecordPtr);
                         root->pNext = temp;
                     }
+
                     dnsRecordPtr = dnsRecordPtr->pNext;
                 }
+
                 DnsRecordListFree(dnsQueryResultPtr, DnsFreeRecordList);
             }
         }
+
         tablePtr = tablePtr->Next;
     }
+
 CleanupExit:
 
     if (dnsCacheDataTable)
-    {
         DnsRecordListFree(dnsCacheDataTable, DnsFreeRecordList);
-    }
+
     return root;
 }
 
@@ -142,6 +149,7 @@ VOID EnumDnsCacheTable(
 
     PDNS_RECORD dnsRecordPtr = TraverseDnsCacheTable(NULL);
     PDNS_RECORD dnsRecordRootPtr = dnsRecordPtr;
+
     while (dnsRecordPtr)
     {
         INT itemIndex = MAXINT;
@@ -153,7 +161,7 @@ VOID EnumDnsCacheTable(
             MAXINT,
             PhaFormatString(L"%s", dnsRecordPtr->pName)->Buffer,
             NULL
-        );
+            );
 
         if (dnsRecordPtr->wType == DNS_TYPE_A)
         {
@@ -175,7 +183,7 @@ VOID EnumDnsCacheTable(
                 sizeof(ipv6Address.s6_addr),
                 dnsRecordPtr->Data.AAAA.Ip6Address.IP6Byte,
                 sizeof(dnsRecordPtr->Data.AAAA.Ip6Address.IP6Byte)
-            );
+                );
 
             RtlIpv6AddressToString(&ipv6Address, ipAddrString);
 
@@ -205,7 +213,7 @@ VOID EnumDnsCacheTable(
         else
         {
             PhSetListViewSubItem(ListViewHandle, itemIndex, 1, PhaFormatString(L"UNKNOWN")->Buffer);
-            PhSetListViewSubItem(ListViewHandle, itemIndex, 2, PhaFormatString(L"")->Buffer);
+            PhSetListViewSubItem(ListViewHandle, itemIndex, 2, L"");
         }
 
         PhSetListViewSubItem(ListViewHandle, itemIndex, 3, PhaFormatString(L"%lu", dnsRecordPtr->dwTtl)->Buffer);
@@ -483,7 +491,7 @@ static VOID NTAPI NetworkItemCreateCallback(
     _In_ PVOID Object,
     _In_ PH_EM_OBJECT_TYPE ObjectType,
     _In_ PVOID Extension
-)
+    )
 {
     PPH_NETWORK_ITEM networkItem = Object;
     PNETWORK_DNSCACHE_EXTENSION extension = Extension;
@@ -491,12 +499,11 @@ static VOID NTAPI NetworkItemCreateCallback(
     memset(extension, 0, sizeof(NETWORK_DNSCACHE_EXTENSION));
 }
 
-
 static VOID NTAPI NetworkItemDeleteCallback(
     _In_ PVOID Object,
     _In_ PH_EM_OBJECT_TYPE ObjectType,
     _In_ PVOID Extension
-)
+    )
 {
     PNETWORK_DNSCACHE_EXTENSION extension = Extension;
 
@@ -508,8 +515,9 @@ static LONG NTAPI NetworkServiceSortFunction(
     _In_ PVOID Node1,
     _In_ PVOID Node2,
     _In_ ULONG SubId,
+    _In_ PH_SORT_ORDER SortOrder,
     _In_ PVOID Context
-)
+    )
 {
      PPH_NETWORK_NODE node1 = Node1;
      PPH_NETWORK_NODE node2 = Node2;
@@ -525,11 +533,10 @@ static LONG NTAPI NetworkServiceSortFunction(
     return 0;
 }
 
-
 static VOID NTAPI NetworkTreeNewInitializingCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
-)
+    )
 {
     PPH_PLUGIN_TREENEW_INFORMATION info = Parameter;
     PH_TREENEW_COLUMN column;
@@ -537,7 +544,7 @@ static VOID NTAPI NetworkTreeNewInitializingCallback(
     *(HWND*)Context = info->TreeNewHandle;
 
     memset(&column, 0, sizeof(PH_TREENEW_COLUMN));
-    column.Text = L"Remote Host(dnscache)";
+    column.Text = L"Remote Host (dnscache)";
     column.Width = 140;
     column.Alignment = PH_ALIGN_LEFT;
     column.CustomDraw = FALSE; // Owner-draw this column to show country flags
@@ -546,21 +553,24 @@ static VOID NTAPI NetworkTreeNewInitializingCallback(
 
 static NTSTATUS DnsCacheUpdateThread(
     _In_ PVOID Parameter
-)
+    )
 {
     PhAcquireFastLockExclusive(&CacheListLock);
     DnsCacheList = TraverseDnsCacheTable(DnsCacheList);
     PhReleaseFastLockExclusive(&CacheListLock);
+
     PhInvokeCallback(&PhNetworkItemsUpdatedEvent, NULL);
+
     TreeNew_SetRedraw(NetworkTreeNewHandle, TRUE);
-    LARGE_INTEGER interval;
-    interval.QuadPart = -2 * PH_TIMEOUT_SEC;
-    NtDelayExecution(FALSE, &interval);    // don't update quicker than 2 seconds
+
+    PhDelayExecution(2 * 1000); // don't update quicker than 2 seconds
+
     return STATUS_SUCCESS;
 }
 
-
-static void QueueDnsCacheUpdateThread()
+static VOID QueueDnsCacheUpdateThread(
+    VOID
+    )
 {
     if (PhBeginInitOnce(&DnsUpdateQueueInitOnce))
     {
@@ -572,7 +582,9 @@ static void QueueDnsCacheUpdateThread()
         PhQueueItemWorkQueue(&DnsUpdateQueue, DnsCacheUpdateThread, 0);
 }
 
-static BOOL IsAddressValid(PWCHAR RemoteAddressString)
+static BOOLEAN IsAddressValid(
+    _In_ PWCHAR RemoteAddressString
+    )
 {
     if (RemoteAddressString == NULL || wcslen(RemoteAddressString) == 0)
         return FALSE;
@@ -581,103 +593,130 @@ static BOOL IsAddressValid(PWCHAR RemoteAddressString)
     return TRUE;
 }
 
-
-
-static PDNS_RECORD _SearchRootQuery(PWCHAR RemoteAddressString, PDNS_RECORD DnsCacheList)
+static PDNS_RECORD _SearchRootQuery(
+    _In_ PWCHAR RemoteAddressString, 
+    _In_ PDNS_RECORD DnsCacheList
+    )
 {
-
     PDNS_RECORD p = DnsCacheList;
     PWCHAR orig = RemoteAddressString;
     PDNS_RECORD result = NULL;
     WCHAR ipAddrString[INET6_ADDRSTRLEN] = L"";
 
-    while (p != NULL)
+    while (p)
     {
-        BOOL found = FALSE;
+        BOOLEAN found = FALSE;
+
         if (p->wType == DNS_TYPE_A)
         {
             RtlIpv4AddressToString((IN_ADDR*)&p->Data.A.IpAddress, ipAddrString);
-            if (0 == wcscmp(ipAddrString, orig))
+
+            if (wcscmp(ipAddrString, orig) == 0)
             {
                 found = TRUE;
             }
         }
+
         if (p->wType == DNS_TYPE_AAAA)
         {
             RtlIpv6AddressToString((IN6_ADDR*)&p->Data.AAAA.Ip6Address, ipAddrString);
-            if (0 == wcscmp(ipAddrString, orig))
+
+            if (wcscmp(ipAddrString, orig) == 0)
             {
                 found = TRUE;
             }
         }
-        if (p->wType == DNS_TYPE_MX && 0 == wcscmp(orig, p->Data.MX.pNameExchange))
+
+        if (p->wType == DNS_TYPE_MX && wcscmp(orig, p->Data.MX.pNameExchange) == 0)
         {
             found = TRUE;
         }
-        if (p->wType == DNS_TYPE_SRV && 0 == wcscmp(orig, p->Data.SRV.pNameTarget))
+
+        if (p->wType == DNS_TYPE_SRV && wcscmp(orig, p->Data.SRV.pNameTarget) == 0)
         {
             found = TRUE;
         }
-        else if (p->wType == DNS_TYPE_CNAME && 0 == wcscmp(p->Data.CNAME.pNameHost, orig))
+        else if (p->wType == DNS_TYPE_CNAME && wcscmp(p->Data.CNAME.pNameHost, orig) == 0)
         {
             found = TRUE;
         }
+
         if (found)
         {
             PDNS_RECORD tmp = DnsRecordCopy(p);
             tmp->pNext = result;
             result = tmp;
         }
+
         p = p->pNext;
     }
+
     if (result)
     {
         PDNS_RECORD p = result;
         PDNS_RECORD finalResult = NULL;
+
         while (p)
         {
             PDNS_RECORD r = _SearchRootQuery(p->pName, DnsCacheList);
             if (r)
             {
                 PDNS_RECORD t = r;
+
                 while (t->pNext)
                     t = t->pNext;
+
                 t->pNext = finalResult;
                 finalResult = r;
             }
+
             p = p->pNext;
         }
+
         if (finalResult)
         {
             DnsRecordListFree(result, DnsFreeRecordList);
             return finalResult;
         }
+
         return result;
     }
+
     return NULL;
 }
 
-static PPH_STRING GenerateCacheName(PDNS_RECORD Record)
+static PPH_STRING GenerateCacheName(
+    _In_ PDNS_RECORD Record
+    )
 {
-    PDNS_RECORD r = Record;
-    PPH_STRING result = PhCreateString(r->pName);
-    r = r->pNext;
-    while (r)
+    PDNS_RECORD record = Record;
+    PPH_STRING result;
+
+    result = PhCreateString(record->pName);
+    record = record->pNext;
+
+    while (record)
     {
-         PPH_STRING t = PhFormatString(L"%s;%s", result->Buffer, r->pName);
-         PhDereferenceObject(result);
-         result = t;
-        r = r->pNext;
+        PhMoveReference(
+            &result, 
+            PhFormatString(L"%s, %s", result->Buffer, record->pName)
+            );
+
+        record = record->pNext;
     }
+
     return result;
 }
 
-static BOOL SearchRootQuery(PWCHAR RemoteAddressString, PPH_STRING *Result)
+static BOOLEAN SearchRootQuery(
+    _In_ PWCHAR RemoteAddressString, 
+    _In_ PPH_STRING *Result
+    )
 {
     if (!PhTryAcquireFastLockShared(&CacheListLock))
         return FALSE;
 
-    PDNS_RECORD r =  _SearchRootQuery(RemoteAddressString, DnsCacheList);
+    PDNS_RECORD r = _SearchRootQuery(RemoteAddressString, DnsCacheList);
 
     PhReleaseFastLockShared(&CacheListLock);
 
@@ -692,58 +731,63 @@ static BOOL SearchRootQuery(PWCHAR RemoteAddressString, PPH_STRING *Result)
         return FALSE;
     }
 }
+
 VOID UpdateNetworkItem(
     _In_ DNSCACHE_COLUMN_ID ColumnID,
     _In_ PPH_NETWORK_ITEM NetworkItem,
     _In_ PNETWORK_DNSCACHE_EXTENSION Extension
-)
+    )
 {
     switch (ColumnID)
     {
     case NETWORK_COLUMN_ID_DNSCACHE_ROOT_QUERY:
-    {
-        if (!Extension->DnsCacheValid && Extension->AddressValid)
         {
-            Extension->DnsCacheValid = SearchRootQuery(NetworkItem->RemoteAddressString, &Extension->DnsCacheQueryRoot);
+            if (!Extension->DnsCacheValid && Extension->AddressValid)
+            {
+                Extension->DnsCacheValid = SearchRootQuery(NetworkItem->RemoteAddressString, &Extension->DnsCacheQueryRoot);
+            }
         }
-    }
-    break;
+        break;
     }
 }
 
 static VOID NTAPI TreeNewMessageCallback(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
-)
+    )
 {
     PPH_PLUGIN_TREENEW_MESSAGE message = Parameter;
 
     switch (message->Message)
     {
     case TreeNewGetCellText:
-    {
-        if (message->TreeNewHandle == NetworkTreeNewHandle)
         {
-            PPH_TREENEW_GET_CELL_TEXT getCellText = message->Parameter1;
-            PPH_NETWORK_NODE networkNode = (PPH_NETWORK_NODE)getCellText->Node;
-            PNETWORK_DNSCACHE_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, networkNode->NetworkItem, EmNetworkItemType);
-
-            UpdateNetworkItem(message->SubId, networkNode->NetworkItem, extension);
-
-            switch (message->SubId)
+            if (message->TreeNewHandle == NetworkTreeNewHandle)
             {
-            case NETWORK_COLUMN_ID_DNSCACHE_ROOT_QUERY:
-                if (extension->DnsCacheValid)
-                    getCellText->Text = PhGetStringRef(extension->DnsCacheQueryRoot);
-                break;
+                PPH_TREENEW_GET_CELL_TEXT getCellText = message->Parameter1;
+                PPH_NETWORK_NODE networkNode = (PPH_NETWORK_NODE)getCellText->Node;
+                PNETWORK_DNSCACHE_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, networkNode->NetworkItem, EmNetworkItemType);
+
+                UpdateNetworkItem(message->SubId, networkNode->NetworkItem, extension);
+
+                switch (message->SubId)
+                {
+                case NETWORK_COLUMN_ID_DNSCACHE_ROOT_QUERY:
+                    {
+                        if (extension->DnsCacheValid)
+                            getCellText->Text = PhGetStringRef(extension->DnsCacheQueryRoot);
+                    }
+                    break;
+                }
             }
         }
-    }
-    break;
+        break;
     }
 }
 
-static void InitDnsApi()
+static VOID InitDnsApi(
+    VOID
+    )
 {
     if (DnsApiHandle = LoadLibrary(L"dnsapi.dll"))
     {
@@ -756,18 +800,14 @@ static void InitDnsApi()
 VOID NTAPI NetworkItemAddedHandler(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
-)
+    )
 {
     PPH_NETWORK_ITEM NetworkItem = (PPH_NETWORK_ITEM)Parameter;
     PNETWORK_DNSCACHE_EXTENSION Extension = PhPluginGetObjectExtension(PluginInstance, NetworkItem, EmNetworkItemType);
 
     Extension->AddressValid = IsAddressValid(NetworkItem->RemoteAddressString);
+
     UpdateNetworkItem(NETWORK_COLUMN_ID_DNSCACHE_ROOT_QUERY, NetworkItem, Extension);
-    if (!Extension->DnsCacheValid && Extension->AddressValid)
-    {
-        QueueDnsCacheUpdateThread();
-        NetworkItem->JustResolved = TRUE;
-    }
 }
 
 LOGICAL DllMain(
@@ -817,13 +857,13 @@ LOGICAL DllMain(
                 NetworkTreeNewInitializingCallback,
                 &NetworkTreeNewHandle,
                 &NetworkTreeNewInitializingCallbackRegistration
-            );
+                );
             PhRegisterCallback(
                 PhGetPluginCallback(PluginInstance, PluginCallbackTreeNewMessage),
                 TreeNewMessageCallback,
                 NULL,
                 &TreeNewMessageCallbackRegistration
-            );
+                );
 
             PhPluginSetObjectExtension(
                 PluginInstance,
@@ -831,22 +871,24 @@ LOGICAL DllMain(
                 sizeof(NETWORK_DNSCACHE_EXTENSION),
                 NetworkItemCreateCallback,
                 NetworkItemDeleteCallback
-            );
+                );
 
             PhRegisterCallback(
                 &PhNetworkItemAddedEvent,
                 NetworkItemAddedHandler,
                 NULL,
                 &NetworkItemAddedRegistration
-            );
+                );
 
             PhRegisterCallback(
                 &PhNetworkItemModifiedEvent,
                 NetworkItemAddedHandler,
                 NULL,
                 &NetworkItemModifiedRegistration
-            );
+                );
+
             PhAddSettings(settings, ARRAYSIZE(settings));
+
             QueueDnsCacheUpdateThread();
         }
         break;

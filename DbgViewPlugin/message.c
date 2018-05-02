@@ -46,7 +46,7 @@ INT_PTR CALLBACK DbgPropDlgProc(
             Edit_SetText(GetDlgItem(hwndDlg, IDC_MESSAGE), entry->Message->Buffer);
             //SendMessage(GetDlgItem(hwndDlg, IDC_MESSAGE), WM_SETFONT, (WPARAM)PhApplicationFont, FALSE);
         }
-        return TRUE;
+        break;
     case WM_DESTROY:
         PhDeleteLayoutManager(&LayoutManager);
         break;
