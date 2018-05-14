@@ -38,6 +38,7 @@ static HANDLE FwEventHandle = NULL;
 static HANDLE FwEnumHandle = NULL;
 static _FwpmNetEventSubscribe1 FwpmNetEventSubscribe1_I = NULL;
 static _FwpmNetEventSubscribe2 FwpmNetEventSubscribe2_I = NULL;
+static _FwpmNetEventSubscribe3 FwpmNetEventSubscribe3_I = NULL;
 
 VOID NTAPI FwObjectTypeDeleteProcedure(
     _In_ PVOID Object,
@@ -482,15 +483,22 @@ BOOLEAN StartFwMonitor(
     FWPM_NET_EVENT_SUBSCRIPTION subscription = { 0 };
     FWPM_NET_EVENT_ENUM_TEMPLATE eventTemplate = { 0 };
 
-    if (!(FwpmNetEventSubscribe2_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe2")))
+    if (WindowsVersion >= WINDOWS_10_RS4)
     {
-        FwpmNetEventSubscribe1_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe1");
+        FwpmNetEventSubscribe3_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe3");
+    }
+    else
+    {
+        if (!(FwpmNetEventSubscribe2_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe2")))
+        {
+            FwpmNetEventSubscribe1_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe1");
+        }
     }
    
     FwNodeList = PhCreateList(100);
     FwObjectType = PhCreateObjectType(L"FwObject", 0, FwObjectTypeDeleteProcedure);
 
-    session.flags = 0;
+    session.flags = 0;// FWPM_SESSION_FLAG_DYNAMIC;
     session.displayData.name  = L"PhFirewallMonitoringSession";
     session.displayData.description = L"Non-Dynamic session for Process Hacker";
 
@@ -522,7 +530,12 @@ BOOLEAN StartFwMonitor(
     if (WindowsVersion >= WINDOWS_8)
     {
         value.type = FWP_UINT32;
-        value.uint32 = FWPM_NET_EVENT_KEYWORD_CAPABILITY_DROP | FWPM_NET_EVENT_KEYWORD_CAPABILITY_ALLOW | FWPM_NET_EVENT_KEYWORD_CLASSIFY_ALLOW; // FWPM_NET_EVENT_KEYWORD_INBOUND_MCAST | FWPM_NET_EVENT_KEYWORD_INBOUND_BCAST
+        value.uint32 =
+            FWPM_NET_EVENT_KEYWORD_CAPABILITY_DROP |
+            FWPM_NET_EVENT_KEYWORD_CAPABILITY_ALLOW |
+            FWPM_NET_EVENT_KEYWORD_CLASSIFY_ALLOW |
+            FWPM_NET_EVENT_KEYWORD_INBOUND_MCAST |
+            FWPM_NET_EVENT_KEYWORD_INBOUND_BCAST;
 
         if (FwpmEngineSetOption(
             FwEngineHandle,
@@ -552,12 +565,28 @@ BOOLEAN StartFwMonitor(
     subscription.enumTemplate = &eventTemplate;
 
     // Subscribe to the events
-    if (FwpmNetEventSubscribe2_I)
+    if (WindowsVersion >= WINDOWS_10_RS4)
     {
-        if (FwpmNetEventSubscribe2_I(
+        if (!FwpmNetEventSubscribe3_I)
+            return FALSE;
+
+        if (FwpmNetEventSubscribe3_I(
             FwEngineHandle,
             &subscription,
             DropEventCallback,
+            NULL,
+            &FwEventHandle
+            ) != ERROR_SUCCESS)
+        {
+            return FALSE;
+        }
+    }
+    else if (FwpmNetEventSubscribe2_I)
+    {
+        if (FwpmNetEventSubscribe2(
+            FwEngineHandle,
+            &subscription,
+            (FWPM_NET_EVENT_CALLBACK2)DropEventCallback,
             NULL,
             &FwEventHandle
             ) != ERROR_SUCCESS)

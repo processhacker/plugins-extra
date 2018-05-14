@@ -104,9 +104,7 @@ VOID InitializeFwTab(VOID);
 VOID LoadSettingsFwTreeList(VOID);
 VOID SaveSettingsFwTreeList(VOID);
 
-VOID ShowFwDialog(
-    VOID
-);
+VOID ShowFwDialog(VOID);
 
 NTSTATUS NTAPI ShowFwRuleProperties(
     _In_ PVOID ThreadParameter
@@ -128,6 +126,13 @@ typedef ULONG (WINAPI* _FwpmNetEventSubscribe2)(
    _Out_ HANDLE* eventsHandle
    );
 
+typedef ULONG (WINAPI* _FwpmNetEventSubscribe3)(
+    _In_ HANDLE engineHandle,
+    _In_ const FWPM_NET_EVENT_SUBSCRIPTION0* subscription,
+    _In_ FWPM_NET_EVENT_CALLBACK3 callback,
+    _In_opt_ void* context,
+    _Out_ HANDLE* eventsHandle
+    );
 
 // Copied from mstcpip.h due to PH sdk conflicts
 #define INADDR_ANY (ULONG)0x00000000
