@@ -583,7 +583,7 @@ BOOLEAN StartFwMonitor(
     }
     else if (FwpmNetEventSubscribe2_I)
     {
-        if (FwpmNetEventSubscribe2(
+        if (FwpmNetEventSubscribe2_I(
             FwEngineHandle,
             &subscription,
             (FWPM_NET_EVENT_CALLBACK2)DropEventCallback,
