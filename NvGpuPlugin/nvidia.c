@@ -30,7 +30,6 @@
 #include <cfgmgr32.h>
 #include <Setupapi.h>
 #include <Ntddvdeo.h>
-#include <devpkey.h>
 
 static PVOID NvApiLibrary = NULL;
 static PPH_LIST NvGpuPhysicalHandleList = NULL;
@@ -157,28 +156,27 @@ BOOLEAN InitializeNvApi(VOID)
     NvAPI_GPU_GetFBWidthAndLocation = NvAPI_QueryInterface(0x11104158UL);
     NvAPI_GPU_ClientPowerTopologyGetStatus = NvAPI_QueryInterface(0x0EDCF624EUL);
 
-    typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverBuildTitle)(_In_ NvDisplayHandle hNvDisplay, NvAPI_ShortString pDriverBuildTitle);
-    typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverCompileType)(_In_ NvDisplayHandle hNvDisplay, NvU32* pDriverCompileType);
-    typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverSecurityLevel)(_In_ NvDisplayHandle hNvDisplay, NvU32* pDriverSecurityLevel);
-    typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetVPECount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pVPECount);
-    typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetSerialNumber)(_In_ NvPhysicalGpuHandle hPhysicalGPU, PBYTE pRamBankCount);
-    //typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetExtendedMinorRevision)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pRamBankCount);
+    //typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverBuildTitle)(_In_ NvDisplayHandle hNvDisplay, NvAPI_ShortString pDriverBuildTitle);
+    //typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverCompileType)(_In_ NvDisplayHandle hNvDisplay, NvU32* pDriverCompileType);
+    //typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverSecurityLevel)(_In_ NvDisplayHandle hNvDisplay, NvU32* pDriverSecurityLevel);
+    //typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetVPECount)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* pVPECount);
+    //typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetSerialNumber)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* serialnumber);
+    //typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetExtendedMinorRevision)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* revision);
+    //typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetTargetID)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NvU32* target);
     //_NvAPI_GPU_GetExtendedMinorRevision NvAPI_GPU_GetExtendedMinorRevision;
-    //NvAPI_GPU_GetExtendedMinorRevision = NvAPI_QueryInterface(0x025F17421);
-    //typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetTargetID)(_In_ NvPhysicalGpuHandle hPhysicalGPU, PBYTE pRamBankCount);
     //_NvAPI_GPU_GetTargetID NvAPI_GPU_GetTargetID;
+    //_NvAPI_GPU_GetSerialNumber NvAPI_GPU_GetSerialNumber;
+    //_NvAPI_GPU_GetVPECount NvAPI_GPU_GetVPECount;
+    //_NvAPI_GetDisplayDriverBuildTitle NvAPI_GetDisplayDriverBuildTitle;
+    //_NvAPI_GetDisplayDriverCompileType NvAPI_GetDisplayDriverCompileType;
+    //_NvAPI_GetDisplayDriverSecurityLevel NvAPI_GetDisplayDriverSecurityLevel;
+    //NvAPI_GPU_GetExtendedMinorRevision = NvAPI_QueryInterface(0x025F17421);
     //NvAPI_GPU_GetTargetID = NvAPI_QueryInterface(0x35B5FD2F);
-    _NvAPI_GPU_GetSerialNumber NvAPI_GPU_GetSerialNumber;
-    _NvAPI_GPU_GetVPECount NvAPI_GPU_GetVPECount;
-    _NvAPI_GetDisplayDriverBuildTitle NvAPI_GetDisplayDriverBuildTitle;
-    _NvAPI_GetDisplayDriverCompileType NvAPI_GetDisplayDriverCompileType;
-    _NvAPI_GetDisplayDriverSecurityLevel NvAPI_GetDisplayDriverSecurityLevel;
-
-    NvAPI_GetDisplayDriverBuildTitle = NvAPI_QueryInterface(0x7562E947);
-    NvAPI_GetDisplayDriverCompileType = NvAPI_QueryInterface(0x988AEA78);
-    NvAPI_GetDisplayDriverSecurityLevel = NvAPI_QueryInterface(0x9D772BBA);
-    NvAPI_GPU_GetVPECount = NvAPI_QueryInterface(0xD8CBF37B);
-    NvAPI_GPU_GetSerialNumber = NvAPI_QueryInterface(0x14B83A5F);
+    //NvAPI_GPU_GetSerialNumber = NvAPI_QueryInterface(0x14B83A5F);
+    //NvAPI_GPU_GetVPECount = NvAPI_QueryInterface(0xD8CBF37B);
+    //NvAPI_GetDisplayDriverBuildTitle = NvAPI_QueryInterface(0x7562E947);
+    //NvAPI_GetDisplayDriverCompileType = NvAPI_QueryInterface(0x988AEA78);
+    //NvAPI_GetDisplayDriverSecurityLevel = NvAPI_QueryInterface(0x9D772BBA);
 
     if (NvAPI_Initialize() == NVAPI_OK)
     {
