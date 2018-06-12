@@ -55,7 +55,7 @@ typedef struct _TEST_ITEM
 } TEST_ITEM, *PTEST_ITEM;
 
 extern PPH_PLUGIN PluginInstance;
-extern TEST_ITEM PhTerminatorTests[16];
+extern TEST_ITEM PhTerminatorTests[17];
 
 VOID PhShowProcessTerminatorDialog(
     _In_ HWND ParentWindowHandle,

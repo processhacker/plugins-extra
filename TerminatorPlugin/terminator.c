@@ -637,7 +637,61 @@ NTSTATUS NTAPI TerminatorM2(
     return status;
 }
 
-TEST_ITEM PhTerminatorTests[16] =
+NTSTATUS NTAPI TerminatorM3(
+    _In_ HANDLE ProcessId
+    )
+{
+    NTSTATUS status;
+    HANDLE processHandle;
+
+    if (NT_SUCCESS(status = Ph2OpenProcess(
+        &processHandle,
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION,
+        ProcessId
+        )))
+    {
+        PVOID baseAddress;
+        MEMORY_BASIC_INFORMATION basicInfo;
+
+        baseAddress = (PVOID)0;
+
+        while (NT_SUCCESS(NtQueryVirtualMemory(
+            processHandle,
+            baseAddress,
+            MemoryBasicInformation,
+            &basicInfo,
+            sizeof(MEMORY_BASIC_INFORMATION),
+            NULL
+            )))
+        {
+            if (!(basicInfo.Type & (MEM_MAPPED | MEM_IMAGE)))
+            {
+                SIZE_T regionSize;
+
+                regionSize = 0;
+
+                status = NtFreeVirtualMemory(
+                    processHandle,
+                    &baseAddress,
+                    &regionSize,
+                    MEM_RELEASE
+                    );
+            }
+            else
+            {
+                status = NtUnmapViewOfSection(processHandle, baseAddress);
+            }
+
+            baseAddress = PTR_ADD_OFFSET(baseAddress, basicInfo.RegionSize);
+        }
+
+        NtClose(processHandle);
+    }
+
+    return status;
+}
+
+TEST_ITEM PhTerminatorTests[] =
 {
     { L"TP1", L"Terminates the process using NtTerminateProcess", TerminatorTP1 },
     { L"TP2", L"Creates a remote thread in the process which terminates the process", TerminatorTP2 },
@@ -654,7 +708,8 @@ TEST_ITEM PhTerminatorTests[16] =
     { L"TP3", L"Terminates the process in kernel-mode", TerminatorTP3 },
     { L"TT3", L"Terminates the process' threads in kernel-mode", TerminatorTT3 },
     { L"M1", L"Writes garbage to the process' memory regions", TerminatorM1 },
-    { L"M2", L"Sets the page protection of the process' memory regions to PAGE_NOACCESS", TerminatorM2 }
+    { L"M2", L"Sets the page protection of the process' memory regions to PAGE_NOACCESS", TerminatorM2 },
+    { L"M3", L"Frees the process' memory regions", TerminatorM3 }
 };
 
 BOOLEAN PhpRunTerminatorTest(
