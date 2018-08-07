@@ -94,46 +94,19 @@ INT_PTR CALLBACK OptionsDlgProc(
             HWND graphTypeHandle;
 
             graphTypeHandle = GetDlgItem(hwndDlg, IDC_GRAPH_TYPE);
-
-            PhCenterWindow(hwndDlg, GetParent(hwndDlg));
-
-            PhAddComboBoxStrings(graphTypeHandle, GraphTypeStrings, ARRAYSIZE(GraphTypeStrings));
+            PhAddComboBoxStrings(graphTypeHandle, GraphTypeStrings, RTL_NUMBER_OF(GraphTypeStrings));
             PhSelectComboBoxString(graphTypeHandle, GraphTypeGetTypeString(PhGetIntegerSetting(SETTING_NAME_TASKBAR_ICON_TYPE)), FALSE);
         }
         break;
-    case WM_COMMAND:
+    case WM_DESTROY:
         {
-            switch (LOWORD(wParam))
-            {
-            case IDCANCEL:
-                EndDialog(hwndDlg, IDCANCEL);
-                break;
-            case IDOK:
-                {
-                    PPH_STRING graphTypeString;
+            PPH_STRING graphTypeString;
 
-                    graphTypeString = PhAutoDereferenceObject(PhGetWindowText(GetDlgItem(hwndDlg, IDC_GRAPH_TYPE)));             
-                    PhSetIntegerSetting(SETTING_NAME_TASKBAR_ICON_TYPE, GraphTypeGetTypeInteger(graphTypeString->Buffer));
-
-                    EndDialog(hwndDlg, IDOK);
-                }
-                break;
-            }
+            graphTypeString = PhAutoDereferenceObject(PhGetWindowText(GetDlgItem(hwndDlg, IDC_GRAPH_TYPE)));
+            PhSetIntegerSetting(SETTING_NAME_TASKBAR_ICON_TYPE, GraphTypeGetTypeInteger(graphTypeString->Buffer));
         }
         break;
     }
 
     return FALSE;
-}
-
-VOID ShowOptionsDialog(
-    _In_ HWND ParentHandle
-    )
-{
-    DialogBox(
-        PluginInstance->DllBase,
-        MAKEINTRESOURCE(IDD_OPTIONS),
-        ParentHandle,
-        OptionsDlgProc
-        );
 }

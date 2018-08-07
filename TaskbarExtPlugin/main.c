@@ -33,6 +33,7 @@ static TASKBAR_ICON TaskbarIconType = TASKBAR_ICON_NONE;
 static ULONG ProcessesUpdatedCount = 0;
 static UINT TaskbarButtonCreatedMsgId = 0;
 static ITaskbarList3* TaskbarListClass = NULL;
+static WNDPROC MainWindowHookProc = NULL;
 static HICON BlackIcon = NULL;
 static HIMAGELIST ButtonsImageList = NULL;
 static THUMBBUTTON ButtonsArray[4] = { 0 }; // maximum 8
@@ -100,12 +101,14 @@ LRESULT CALLBACK MainWndSubclassProc(
     _In_ HWND hWnd,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
-    _In_ LPARAM lParam,
-    _In_ UINT_PTR uIdSubclass,
-    _In_ ULONG_PTR dwRefData
+    _In_ LPARAM lParam
     )
 {
-    if (uMsg == TaskbarButtonCreatedMsgId)
+    if (uMsg == WM_DESTROY)
+    {
+        SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)MainWindowHookProc);
+    }
+    else if (uMsg == TaskbarButtonCreatedMsgId)
     {
         static PH_INITONCE initOnce = PH_INITONCE_INIT;
 
@@ -161,7 +164,7 @@ LRESULT CALLBACK MainWndSubclassProc(
         }
     }
 
-    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+    return CallWindowProc(MainWindowHookProc, hWnd, uMsg, wParam, lParam);
 }
 
 VOID NTAPI LoadCallback(
@@ -192,7 +195,7 @@ VOID NTAPI LoadCallback(
         }
     }
 
-    PhRegisterCallback(&PhProcessesUpdatedEvent, ProcessesUpdatedCallback, NULL, &ProcessesUpdatedCallbackRegistration);
+    PhRegisterCallback(PhGetGeneralCallback(GeneralCallbackProcessProviderUpdatedEvent), ProcessesUpdatedCallback, NULL, &ProcessesUpdatedCallbackRegistration);
 }
 
 VOID NTAPI UnloadCallback(
@@ -200,7 +203,8 @@ VOID NTAPI UnloadCallback(
     _In_opt_ PVOID Context
     )
 {
-    NOTHING;
+    SetWindowLongPtr(PhMainWndHandle, GWLP_WNDPROC, (LONG_PTR)MainWindowHookProc);
+    PhUnregisterCallback(PhGetGeneralCallback(GeneralCallbackProcessProviderUpdatedEvent), &ProcessesUpdatedCallbackRegistration);
 }
 
 VOID NTAPI ShowOptionsCallback(
@@ -208,7 +212,15 @@ VOID NTAPI ShowOptionsCallback(
     _In_opt_ PVOID Context
     )
 {
-    ShowOptionsDialog((HWND)Parameter);
+    PPH_PLUGIN_OPTIONS_POINTERS optionsEntry = (PPH_PLUGIN_OPTIONS_POINTERS)Parameter;
+
+    optionsEntry->CreateSection(
+        L"Taskbar Extensions",
+        PluginInstance->DllBase,
+        MAKEINTRESOURCE(IDD_OPTIONS),
+        OptionsDlgProc,
+        NULL
+        );
 }
 
 VOID NTAPI MainWindowShowingCallback(
@@ -216,7 +228,8 @@ VOID NTAPI MainWindowShowingCallback(
     _In_opt_ PVOID Context
     )
 {
-    SetWindowSubclass(PhMainWndHandle, MainWndSubclassProc, 0, 0); 
+    MainWindowHookProc = (WNDPROC)GetWindowLongPtr(PhMainWndHandle, GWLP_WNDPROC);
+    SetWindowLongPtr(PhMainWndHandle, GWLP_WNDPROC, (LONG_PTR)MainWndSubclassProc);
 }
 
 LOGICAL DllMain(
@@ -258,7 +271,7 @@ LOGICAL DllMain(
                 &PluginUnloadCallbackRegistration
                 );
             PhRegisterCallback(
-                PhGetPluginCallback(PluginInstance, PluginCallbackShowOptions),
+                PhGetGeneralCallback(GeneralCallbackOptionsWindowInitializing),
                 ShowOptionsCallback,
                 NULL,
                 &PluginShowOptionsCallbackRegistration

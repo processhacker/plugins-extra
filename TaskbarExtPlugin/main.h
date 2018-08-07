@@ -48,8 +48,11 @@ typedef enum _TASKBAR_ICON
 extern PPH_PLUGIN PluginInstance;
 extern TASKBAR_ICON TaskbarIconType;
 
-VOID ShowOptionsDialog(
-    _In_ HWND ParentHandle
+INT_PTR CALLBACK OptionsDlgProc(
+    _In_ HWND hwndDlg,
+    _In_ UINT uMsg,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
     );
 
 HICON PhGetBlackIcon(
