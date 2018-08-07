@@ -261,13 +261,13 @@ INT_PTR CALLBACK PoolMonDlgProc(
             PhSaveWindowPlacementToSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
             PmSaveSettingsTreeList(context);
 
-            PhDeleteLayoutManager(&context->LayoutManager);
-            PhUnregisterDialog(hwndDlg);
-
             PhDeleteTreeNewFilterSupport(&context->FilterSupport);
 
             PmDeletePoolTagTree(context);
             FreePoolTagDatabase(context);
+
+            PhDeleteLayoutManager(&context->LayoutManager);
+            PhUnregisterDialog(hwndDlg);
 
             PostQuitMessage(0);
         }
