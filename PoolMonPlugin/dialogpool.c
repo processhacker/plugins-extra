@@ -238,7 +238,7 @@ INT_PTR CALLBACK PoolMonDlgProc(
             TreeNew_AutoSizeColumn(context->TreeNewHandle, TREE_COLUMN_ITEM_DESCRIPTION, TN_AUTOSIZE_REMAINING_SPACE);
 
             PhRegisterCallback(
-                &PhProcessesUpdatedEvent,
+                PhGetGeneralCallback(GeneralCallbackProcessProviderUpdatedEvent),
                 ProcessesUpdatedCallback,
                 context,
                 &context->ProcessesUpdatedCallbackRegistration
@@ -254,7 +254,7 @@ INT_PTR CALLBACK PoolMonDlgProc(
     case WM_DESTROY:
         {
             PhUnregisterCallback(
-                &PhProcessesUpdatedEvent,
+                PhGetGeneralCallback(GeneralCallbackProcessProviderUpdatedEvent),
                 &context->ProcessesUpdatedCallbackRegistration
                 );
 

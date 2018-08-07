@@ -611,7 +611,7 @@ static PDNS_RECORD _SearchRootQuery(
         {
             RtlIpv4AddressToString((IN_ADDR*)&p->Data.A.IpAddress, ipAddrString);
 
-            if (wcscmp(ipAddrString, orig) == 0)
+            if (PhEqualStringZ(ipAddrString, orig, TRUE))
             {
                 found = TRUE;
             }
@@ -621,22 +621,22 @@ static PDNS_RECORD _SearchRootQuery(
         {
             RtlIpv6AddressToString((IN6_ADDR*)&p->Data.AAAA.Ip6Address, ipAddrString);
 
-            if (wcscmp(ipAddrString, orig) == 0)
+            if (PhEqualStringZ(ipAddrString, orig, TRUE))
             {
                 found = TRUE;
             }
         }
 
-        if (p->wType == DNS_TYPE_MX && wcscmp(orig, p->Data.MX.pNameExchange) == 0)
+        if (p->wType == DNS_TYPE_MX && PhEqualStringZ(orig, p->Data.MX.pNameExchange, TRUE))
         {
             found = TRUE;
         }
 
-        if (p->wType == DNS_TYPE_SRV && wcscmp(orig, p->Data.SRV.pNameTarget) == 0)
+        if (p->wType == DNS_TYPE_SRV && PhEqualStringZ(orig, p->Data.SRV.pNameTarget, TRUE))
         {
             found = TRUE;
         }
-        else if (p->wType == DNS_TYPE_CNAME && wcscmp(p->Data.CNAME.pNameHost, orig) == 0)
+        else if (p->wType == DNS_TYPE_CNAME && PhEqualStringZ(p->Data.CNAME.pNameHost, orig, TRUE))
         {
             found = TRUE;
         }
@@ -874,14 +874,14 @@ LOGICAL DllMain(
                 );
 
             PhRegisterCallback(
-                &PhNetworkItemAddedEvent,
+                PhGetGeneralCallback(GeneralCallbackNetworkProviderAddedEvent),
                 NetworkItemAddedHandler,
                 NULL,
                 &NetworkItemAddedRegistration
                 );
 
             PhRegisterCallback(
-                &PhNetworkItemModifiedEvent,
+                PhGetGeneralCallback(GeneralCallbackNetworkProviderModifiedEvent),
                 NetworkItemAddedHandler,
                 NULL,
                 &NetworkItemModifiedRegistration

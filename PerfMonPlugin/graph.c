@@ -96,7 +96,7 @@ INT_PTR CALLBACK PerfCounterDialogProc(
             if (context->GraphHandle)
                 DestroyWindow(context->GraphHandle);
 
-            PhUnregisterCallback(&PhProcessesUpdatedEvent, &context->ProcessesUpdatedRegistration);
+            PhUnregisterCallback(PhGetGeneralCallback(GeneralCallbackProcessProviderUpdatedEvent), &context->ProcessesUpdatedRegistration);
             PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
         }
     }
@@ -137,7 +137,7 @@ INT_PTR CALLBACK PerfCounterDialogProc(
             SetDlgItemText(hwndDlg, IDC_COUNTERNAME, context->SysinfoSection->Name.Buffer);
 
             PhRegisterCallback(
-                &PhProcessesUpdatedEvent,
+                PhGetGeneralCallback(GeneralCallbackProcessProviderUpdatedEvent),
                 ProcessesUpdatedHandler,
                 context,
                 &context->ProcessesUpdatedRegistration

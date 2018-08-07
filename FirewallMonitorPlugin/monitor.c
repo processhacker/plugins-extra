@@ -626,7 +626,7 @@ BOOLEAN StartFwMonitor(
     }
 
     PhRegisterCallback(
-        &PhProcessesUpdatedEvent,
+        PhGetGeneralCallback(GeneralCallbackProcessProviderUpdatedEvent),
         ProcessesUpdatedCallback,
         NULL,
         &ProcessesUpdatedCallbackRegistration
