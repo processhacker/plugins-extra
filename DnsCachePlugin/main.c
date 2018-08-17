@@ -559,10 +559,6 @@ static NTSTATUS DnsCacheUpdateThread(
     DnsCacheList = TraverseDnsCacheTable(DnsCacheList);
     PhReleaseFastLockExclusive(&CacheListLock);
 
-    PhInvokeCallback(&PhNetworkItemsUpdatedEvent, NULL);
-
-    TreeNew_SetRedraw(NetworkTreeNewHandle, TRUE);
-
     PhDelayExecution(2 * 1000); // don't update quicker than 2 seconds
 
     return STATUS_SUCCESS;
