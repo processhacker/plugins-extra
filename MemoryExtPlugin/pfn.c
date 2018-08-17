@@ -30,12 +30,22 @@ static PH_EVENT InitializedEvent = PH_EVENT_INIT;
 
 #define PAGE_SHIFT 12
 
-typedef struct _PF_MEMORY_RANGE_INFO 
+typedef struct _PF_MEMORY_RANGE_INFO_V1
 {
     ULONG Version;
     ULONG RangeCount;
     PF_PHYSICAL_MEMORY_RANGE Ranges[ANYSIZE_ARRAY];
-} PF_MEMORY_RANGE_INFO, *PPF_MEMORY_RANGE_INFO;
+} PF_MEMORY_RANGE_INFO_V1, *PPF_MEMORY_RANGE_INFO_V1;
+
+typedef struct _PF_MEMORY_RANGE_INFO_V2
+{
+    ULONG Version;
+    ULONG Flags;
+    ULONG RangeCount;
+    PF_PHYSICAL_MEMORY_RANGE Ranges[ANYSIZE_ARRAY];
+} PF_MEMORY_RANGE_INFO_V2, *PPF_MEMORY_RANGE_INFO_V2;
+
+typedef PF_MEMORY_RANGE_INFO_V2 PF_MEMORY_RANGE_INFO, *PPF_MEMORY_RANGE_INFO;
 
 typedef struct _PF_FILE 
 {
@@ -233,7 +243,7 @@ typedef enum _MMPFNUSE
 } MMPFNUSE;
 
 // Mapping of page usage strings
-PWCHAR UseList[] =
+PWSTR UseList[] =
 {
     L"Process Private",
     L"Memory Mapped File",
@@ -246,7 +256,8 @@ PWCHAR UseList[] =
     L"Metafile",
     L"AWE Pages",
     L"Driver Lock Pages",
-    L"Kernel Stack"
+    L"Kernel Stack",
+    L"Unknown"
 };
 
 typedef struct _PHYSICAL_MEMORY_RUN 
@@ -285,7 +296,7 @@ NTSTATUS PfiQueryMemoryRanges(VOID)
     ULONG resultLength = 0;
 
     // Memory Ranges API was added in RTM, this is Version 1
-    rangeInfo.Version = 1;
+    rangeInfo.Version = 2;
 
     info.Version = SUPERFETCH_INFORMATION_VERSION;
     info.Magic = SUPERFETCH_INFORMATION_MAGIC;
@@ -305,7 +316,7 @@ NTSTATUS PfiQueryMemoryRanges(VOID)
         MemoryRanges = PhAllocate(resultLength);
         memset(MemoryRanges, 0, resultLength);
 
-        MemoryRanges->Version = 1;
+        MemoryRanges->Version = 2;
 
         info.Version = SUPERFETCH_INFORMATION_VERSION;
         info.Magic = SUPERFETCH_INFORMATION_MAGIC;
