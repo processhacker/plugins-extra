@@ -105,37 +105,23 @@ INT_PTR CALLBACK SxUsersDlgProc(
                 break;
             case IDC_ACCOUNT_SECURITY:
                 {
-                    PH_STD_OBJECT_SECURITY stdObjectSecurity;
-                    PPH_ACCESS_ENTRY accessEntries;
-                    ULONG numberOfAccessEntries;
+                    PPH_STRING name;
 
                     if (!SelectedAccount)
                         return FALSE;
 
-                    stdObjectSecurity.OpenObject = SxpOpenSelectedSamAccount;
-                    stdObjectSecurity.ObjectType = L"SamUser";
-                    stdObjectSecurity.Context = UlongToPtr(RelativeId);
+                    name = PhGetSidFullName(SelectedAccount, TRUE, NULL);
 
-                    if (PhGetAccessEntries(L"SamUser", &accessEntries, &numberOfAccessEntries))
-                    {
-                        PPH_STRING name;
+                    PhEditSecurity(
+                        hwndDlg,
+                        PhGetStringOrDefault(name, L"(unknown)"),
+                        L"SamUser",
+                        SxpOpenSelectedSamAccount,
+                        NULL,
+                        UlongToPtr(RelativeId)
+                        );
 
-                        name = PhGetSidFullName(SelectedAccount, TRUE, NULL);
-
-                        PhEditSecurity(
-                            hwndDlg,
-                            PhGetStringOrDefault(name, L"(unknown)"),
-                            SxStdGetObjectSecurity,
-                            SxStdSetObjectSecurity,
-                            &stdObjectSecurity,
-                            accessEntries,
-                            numberOfAccessEntries
-                            );
-                        PhFree(accessEntries);
-
-                        if (name)
-                            PhDereferenceObject(name);
-                    }
+                    PhClearReference(&name);
                 }
                 break;
             }

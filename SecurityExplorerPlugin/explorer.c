@@ -227,7 +227,7 @@ VOID SxpRefreshSessions(
 
             if (NT_SUCCESS(LsaGetLogonSessionData(&logonSessionList[i], &logonSessionData)))
             {
-                WCHAR logonSessionLuid[PH_PTR_STR_LEN_1] = L"Unknown";
+                WCHAR logonSessionLuid[PH_INT64_STR_LEN_1];
 
                 if (RtlValidSid(logonSessionData->Sid))
                 {
@@ -576,27 +576,14 @@ INT_PTR CALLBACK SxLsaDlgProc(
             {
             case IDC_EDITPOLICYSECURITY:
                 {
-                    PH_STD_OBJECT_SECURITY stdObjectSecurity;
-                    PPH_ACCESS_ENTRY accessEntries;
-                    ULONG numberOfAccessEntries;
-
-                    stdObjectSecurity.OpenObject = SxpOpenLsaPolicy;
-                    stdObjectSecurity.ObjectType = L"LsaPolicy";
-                    stdObjectSecurity.Context = NULL;
-
-                    if (PhGetAccessEntries(L"LsaPolicy", &accessEntries, &numberOfAccessEntries))
-                    {
-                        PhEditSecurity(
-                            hwndDlg,
-                            L"Local LSA Policy",
-                            SxStdGetObjectSecurity,
-                            SxStdSetObjectSecurity,
-                            &stdObjectSecurity,
-                            accessEntries,
-                            numberOfAccessEntries
-                            );
-                        PhFree(accessEntries);
-                    }
+                    PhEditSecurity(
+                        hwndDlg,
+                        L"Local LSA Policy",
+                        L"LsaPolicy",
+                        SxpOpenLsaPolicy,
+                        NULL,
+                        NULL
+                        );
                 }
                 break;
             case IDC_ACCOUNT_DELETE:
@@ -641,36 +628,23 @@ INT_PTR CALLBACK SxLsaDlgProc(
                 break;
             case IDC_ACCOUNT_SECURITY:
                 {
-                    PH_STD_OBJECT_SECURITY stdObjectSecurity;
-                    PPH_ACCESS_ENTRY accessEntries;
-                    ULONG numberOfAccessEntries;
+                    PPH_STRING name;
 
                     if (!SelectedAccount)
                         return FALSE;
 
-                    stdObjectSecurity.OpenObject = SxpOpenSelectedLsaAccount;
-                    stdObjectSecurity.ObjectType = L"LsaAccount";
-                    stdObjectSecurity.Context = NULL;
+                    name = PhGetSidFullName(SelectedAccount, TRUE, NULL);
 
-                    if (PhGetAccessEntries(L"LsaAccount", &accessEntries, &numberOfAccessEntries))
-                    {
-                        PPH_STRING name;
+                    PhEditSecurity(
+                        hwndDlg,
+                        PhGetStringOrDefault(name, L"(unknown)"),
+                        L"LsaAccount",
+                        SxpOpenSelectedLsaAccount,
+                        NULL,
+                        SelectedAccount
+                        );
 
-                        name = PhGetSidFullName(SelectedAccount, TRUE, NULL);
-
-                        PhEditSecurity(
-                            hwndDlg,
-                            PhGetStringOrDefault(name, L"(unknown)"),
-                            SxStdGetObjectSecurity,
-                            SxStdSetObjectSecurity,
-                            &stdObjectSecurity,
-                            accessEntries,
-                            numberOfAccessEntries
-                            );
-                        PhFree(accessEntries);
-
-                        PhDereferenceObject(name);
-                    }
+                    PhClearReference(&name);
                 }
                 break;
             }

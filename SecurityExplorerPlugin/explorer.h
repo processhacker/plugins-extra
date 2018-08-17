@@ -26,7 +26,6 @@
 
 #pragma comment(lib, "Samlib.lib")
 #pragma comment(lib, "Secur32.lib")
-#pragma comment(lib, "Samlib.lib")
 
 #include <phdk.h>
 #include <secedit.h>
@@ -53,18 +52,6 @@ _Callback_ NTSTATUS SxpOpenSelectedLsaAccount(
 _Callback_ NTSTATUS SxpOpenSelectedSamAccount(
     _Out_ PHANDLE Handle,
     _In_ ACCESS_MASK DesiredAccess,
-    _In_opt_ PVOID Context
-    );
-
-_Callback_ NTSTATUS SxStdGetObjectSecurity(
-    _Out_ PSECURITY_DESCRIPTOR *SecurityDescriptor,
-    _In_ SECURITY_INFORMATION SecurityInformation,
-    _In_opt_ PVOID Context
-    );
-
-_Callback_ NTSTATUS SxStdSetObjectSecurity(
-    _In_ PSECURITY_DESCRIPTOR SecurityDescriptor,
-    _In_ SECURITY_INFORMATION SecurityInformation,
     _In_opt_ PVOID Context
     );
 

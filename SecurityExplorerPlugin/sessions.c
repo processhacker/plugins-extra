@@ -105,37 +105,23 @@ INT_PTR CALLBACK SxSessionsDlgProc(
                 break;
             case IDC_ACCOUNT_SECURITY:
                 {
-                    PH_STD_OBJECT_SECURITY stdObjectSecurity;
-                    PPH_ACCESS_ENTRY accessEntries;
-                    ULONG numberOfAccessEntries;
+                    PPH_STRING name;
 
                     if (!SelectedAccount)
                         return FALSE;
 
-                    stdObjectSecurity.OpenObject = SxpOpenSelectedLsaAccount;
-                    stdObjectSecurity.ObjectType = L"LsaAccount";
-                    stdObjectSecurity.Context = NULL;
+                    name = PhGetSidFullName(SelectedAccount, TRUE, NULL);
 
-                    if (PhGetAccessEntries(L"LsaAccount", &accessEntries, &numberOfAccessEntries))
-                    {
-                        PPH_STRING name;
+                    PhEditSecurity(
+                        hwndDlg,
+                        PhGetStringOrDefault(name, L"(unknown)"),
+                        L"LsaAccount",
+                        SxpOpenSelectedLsaAccount,
+                        NULL,
+                        SelectedAccount
+                        );
 
-                        name = PhGetSidFullName(SelectedAccount, TRUE, NULL);
-
-                        PhEditSecurity(
-                            hwndDlg,
-                            PhGetStringOrDefault(name, L"(unknown)"),
-                            SxStdGetObjectSecurity,
-                            SxStdSetObjectSecurity,
-                            &stdObjectSecurity,
-                            accessEntries,
-                            numberOfAccessEntries
-                            );
-                        PhFree(accessEntries);
-
-                        if (name)
-                            PhDereferenceObject(name);
-                    }
+                    PhClearReference(&name);
                 }
                 break;
             }
