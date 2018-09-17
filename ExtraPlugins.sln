@@ -56,6 +56,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MemoryExtPlugin", "MemoryEx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LiveDumpPlugin", "LiveDumpPlugin\LiveDumpPlugin.vcxproj", "{C913699F-D231-4FED-BE4B-4A89E875CBDA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DpiAwarenessExtPlugin", "DpiAwarenessExtPlugin\DpiAwarenessExtPlugin.vcxproj", "{3A20876B-7910-4F74-8B42-D6A8445DEDB9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -260,6 +262,14 @@ Global
 		{C913699F-D231-4FED-BE4B-4A89E875CBDA}.Release|Win32.Build.0 = Release|Win32
 		{C913699F-D231-4FED-BE4B-4A89E875CBDA}.Release|x64.ActiveCfg = Release|x64
 		{C913699F-D231-4FED-BE4B-4A89E875CBDA}.Release|x64.Build.0 = Release|x64
+		{3A20876B-7910-4F74-8B42-D6A8445DEDB9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3A20876B-7910-4F74-8B42-D6A8445DEDB9}.Debug|Win32.Build.0 = Debug|Win32
+		{3A20876B-7910-4F74-8B42-D6A8445DEDB9}.Debug|x64.ActiveCfg = Debug|x64
+		{3A20876B-7910-4F74-8B42-D6A8445DEDB9}.Debug|x64.Build.0 = Debug|x64
+		{3A20876B-7910-4F74-8B42-D6A8445DEDB9}.Release|Win32.ActiveCfg = Release|Win32
+		{3A20876B-7910-4F74-8B42-D6A8445DEDB9}.Release|Win32.Build.0 = Release|Win32
+		{3A20876B-7910-4F74-8B42-D6A8445DEDB9}.Release|x64.ActiveCfg = Release|x64
+		{3A20876B-7910-4F74-8B42-D6A8445DEDB9}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
