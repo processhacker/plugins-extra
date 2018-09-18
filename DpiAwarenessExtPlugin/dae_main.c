@@ -32,16 +32,47 @@
 #define DAE_DPI_AWARENESS_SYSTEM 2
 #define DAE_DPI_AWARENESS_PER_MONITOR 3
 
-#define DAE_DPI_AWARENESS_AWARENESS_MASK 0x3
+#define DAE_TRIS_UNKNOWN 0
+#define DAE_TRIS_FALSE 1
+#define DAE_TRIS_TRUE 2
+
+#define DAE_TRIS_STR(x) ((x) == DAE_TRIS_UNKNOWN ? L"?" : ((x) == DAE_TRIS_TRUE ? L"+" : L"-"))
+
+ /*#define DAE_DPI_AWARENESS_LOCKED 0x8
+#define DAE_DPI_AWARENESS_PERTHREAD 0x10*/
+
+// Some flags in CLIENTINFO.CI_flags
+#define CI_INITTHREAD        0x00000008
+// This is not in any symbol file so is probably not what Microsoft calls it.
+#define CI_FORCEDPIAWARE 0x20000000
+
+// The offset of ((PCLIENTINFO)TEB->Win32ClientInfo)->CI_flags (which is TEB->Win32ClientInfo[0])
+#define CI_FLAGS_TEB64_OFFSET 0x800
+#define CI_FLAGS_TEB32_OFFSET 0x6CC
+#ifdef _WIN64
+#define CI_FLAGS_TEB_OFFSET CI_FLAGS_TEB64_OFFSET
+#else
+#define CI_FLAGS_TEB_OFFSET CI_FLAGS_TEB32_OFFSET
+#endif
 
 typedef struct _PROCESS_EXTENSION
 {
     LIST_ENTRY ListEntry;
-    BOOL IsValid;
-    ULONG DpiAwarenessExt;
+    ULONG ValidAwareness : 1;
+    ULONG ValidForced : 1;
+    ULONG ValidDescription : 1;
+    ULONG ValidSpare : 29;
+
+    ULONG DpiAwareness : 2;
+    ULONG DpiAwarenessForced : 2;
+    ULONG DpiAwarenessExtSpare : 28;
+    PPH_PROCESS_ITEM ProcessItem;
+    PSYSTEM_PROCESS_INFORMATION ExtProcessInfo;
+    WCHAR DpiAwarenessExtDescription[32];
 } PROCESS_EXTENSION, *PPROCESS_EXTENSION;
 
 static VOID DaepUpdateDpiAwareness(PPH_PROCESS_ITEM ProcessItem, PPROCESS_EXTENSION Extension);
+static VOID DaepUpdateDpiAwarenessDescription(_In_ PPROCESS_EXTENSION Extension);
 
 static PPH_PLUGIN PluginInstance;
 static PH_CALLBACK_REGISTRATION TreeNewMessageCallbackRegistration;
@@ -50,7 +81,17 @@ static PH_CALLBACK_REGISTRATION ProcessAddedCallbackRegistration;
 static PH_CALLBACK_REGISTRATION ProcessRemovedCallbackRegistration;
 static PH_CALLBACK_REGISTRATION ProcessesUpdatedCallbackRegistration;
 
-LIST_ENTRY ProcessListHead = { &ProcessListHead, &ProcessListHead };
+static LIST_ENTRY ProcessListHead = { &ProcessListHead, &ProcessListHead };
+static PVOID ExtendedProcesses;
+
+static BOOL (WINAPI *getProcessDpiAwarenessInternal)(
+    _In_ HANDLE hprocess,
+    _Out_ ULONG *value
+    );
+static ULONG_PTR gfDPIAwareOffset;
+#ifdef _WIN64
+static ULONG_PTR gfDPIAwareOffset32;
+#endif
 
 static VOID DaepTreeNewMessageCallback(
     _In_opt_ PVOID Parameter,
@@ -76,26 +117,43 @@ static VOID DaepTreeNewMessageCallback(
 
                     extension = PhPluginGetObjectExtension(PluginInstance, node->ProcessItem, EmProcessItemType);
                     DaepUpdateDpiAwareness(node->ProcessItem, extension);
-                    switch (extension->DpiAwarenessExt & DAE_DPI_AWARENESS_AWARENESS_MASK)
-                    {
-                    case DAE_DPI_AWARENESS_UNKNOWN:
-                        break;
-                    case DAE_DPI_AWARENESS_UNAWARE:
-                        PhInitializeStringRef(&getCellText->Text, L"Unaware");
-                        break;
-                    case DAE_DPI_AWARENESS_SYSTEM:
-                        PhInitializeStringRef(&getCellText->Text, L"System aware");
-                        break;
-                    case DAE_DPI_AWARENESS_PER_MONITOR:
-                        PhInitializeStringRef(&getCellText->Text, L"Per-monitor aware");
-                        break;
-                    }
+                    DaepUpdateDpiAwarenessDescription(extension);
+                    PhInitializeStringRef(&getCellText->Text, extension->DpiAwarenessExtDescription);
                 }
                 break;
             }
         }
         break;
     }
+}
+
+static VOID DaepUpdateDpiAwarenessDescription(_In_ PPROCESS_EXTENSION Extension)
+{
+    PWSTR awarenessDesc, forcedState;
+    if (Extension->ValidDescription)
+        return;
+
+    switch (Extension->DpiAwareness)
+    {
+    case DAE_DPI_AWARENESS_UNKNOWN:
+        Extension->DpiAwarenessExtDescription[0] = L'\0';
+        Extension->ValidDescription = TRUE;
+        return;
+    case DAE_DPI_AWARENESS_UNAWARE:
+        awarenessDesc = L"Unaware";
+        break;
+    case DAE_DPI_AWARENESS_SYSTEM:
+        awarenessDesc = L"System aware";
+        break;
+    case DAE_DPI_AWARENESS_PER_MONITOR:
+        awarenessDesc = L"Per-monitor aware";
+        break;
+    }
+    forcedState = DAE_TRIS_STR(Extension->DpiAwarenessForced);
+
+    swprintf(Extension->DpiAwarenessExtDescription, sizeof(Extension->DpiAwarenessExtDescription) / sizeof(WCHAR),
+        L"%s (F%s)", awarenessDesc, forcedState);
+    Extension->ValidDescription = TRUE;
 }
 
 static LONG NTAPI DaepDpiAwarenessExtSortFunction(
@@ -106,6 +164,7 @@ static LONG NTAPI DaepDpiAwarenessExtSortFunction(
     _In_ PVOID Context
     )
 {
+    LONG cmp1;
     PPH_PROCESS_NODE node1 = Node1;
     PPH_PROCESS_NODE node2 = Node2;
     PPROCESS_EXTENSION extension1 = PhPluginGetObjectExtension(PluginInstance, node1->ProcessItem, EmProcessItemType);
@@ -114,9 +173,10 @@ static LONG NTAPI DaepDpiAwarenessExtSortFunction(
     DaepUpdateDpiAwareness(node1->ProcessItem, extension1);
     DaepUpdateDpiAwareness(node2->ProcessItem, extension2);
 
-    return uintcmp(
-        extension1->DpiAwarenessExt & DAE_DPI_AWARENESS_AWARENESS_MASK,
-        extension2->DpiAwarenessExt & DAE_DPI_AWARENESS_AWARENESS_MASK);
+    cmp1 = uintcmp(
+        extension1->DpiAwareness,
+        extension2->DpiAwareness);
+    return cmp1 != 0 ? cmp1 : uintcmp(extension1->DpiAwarenessForced, extension2->DpiAwarenessForced);
 }
 
 static VOID DaepProcessTreeNewInitializingCallback(
@@ -128,7 +188,7 @@ static VOID DaepProcessTreeNewInitializingCallback(
     PH_TREENEW_COLUMN column;
 
     memset(&column, 0, sizeof(PH_TREENEW_COLUMN));
-    column.Text = L"Extended DPI awareness";
+    column.Text = L"DPI awareness extended";
     column.Width = 50;
     column.Alignment = PH_ALIGN_RIGHT;
     column.TextFlags = DT_RIGHT;
@@ -147,6 +207,7 @@ VOID DaepProcessItemCreateCallback(
     PPROCESS_EXTENSION extension = Extension;
 
     memset(extension, 0, sizeof(PROCESS_EXTENSION));
+    extension->ProcessItem = processItem;
 }
 
 
@@ -172,20 +233,87 @@ VOID DaepProcessRemovedHandler(
     RemoveEntryList(&extension->ListEntry);
 }
 
-VOID DaepProcessesUpdatedHandler(
+static int __cdecl DaepProcessInfoPidCompare(
+    _In_ const void *elem1,
+    _In_ const void *elem2
+)
+{
+    const SYSTEM_PROCESS_INFORMATION *pi1 = elem1;
+    const SYSTEM_PROCESS_INFORMATION *pi2 = elem2;
+
+    return uintptrcmp((ULONG_PTR)pi1->UniqueProcessId, (ULONG_PTR)pi2->UniqueProcessId);
+}
+
+static PSYSTEM_PROCESS_INFORMATION DaepLookupProcessInfo(
+    _In_ PSYSTEM_PROCESS_INFORMATION *OrderedProcesses,
+    _In_ HANDLE ProcessId,
+    _In_ ULONG startIdx,
+    _In_ ULONG endIdx)
+{
+    if (endIdx < startIdx)
+        return NULL;
+    if (startIdx == endIdx)
+    {
+        PSYSTEM_PROCESS_INFORMATION proc = OrderedProcesses[startIdx];
+        if (proc->UniqueProcessId == ProcessId)
+            return proc;
+        else
+            return NULL;
+    }
+    else
+    {
+        PSYSTEM_PROCESS_INFORMATION proc1;
+        ULONG mid = (startIdx + endIdx) / 2;
+        proc1 = DaepLookupProcessInfo(OrderedProcesses, ProcessId, startIdx, mid);
+        if (proc1)
+            return proc1;
+        return DaepLookupProcessInfo(OrderedProcesses, ProcessId, mid + 1, endIdx);
+    }
+}
+
+static VOID DaepProcessesUpdatedHandler(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
 )
 {
+    PVOID processes;
+    PSYSTEM_PROCESS_INFORMATION *orderedProcesses;
+    ULONG processCount = 0;
+    ULONG processIdx;
+    if (!NT_SUCCESS(PhEnumProcessesEx(&processes, SystemExtendedProcessInformation)))
+        return;
+
+    for (PSYSTEM_PROCESS_INFORMATION process = PH_FIRST_PROCESS(processes); process; process = PH_NEXT_PROCESS(process))
+    {
+        processCount++;
+    }
+    orderedProcesses = calloc(processCount, sizeof(PSYSTEM_PROCESS_INFORMATION));
+    if (!orderedProcesses)
+        return;
+    processIdx = 0;
+    for (PSYSTEM_PROCESS_INFORMATION process = PH_FIRST_PROCESS(processes); process; (process = PH_NEXT_PROCESS(process)), processIdx++)
+    {
+        orderedProcesses[processIdx] = process;
+    }
+
+    qsort(orderedProcesses, processCount, sizeof(PSYSTEM_PROCESS_INFORMATION), DaepProcessInfoPidCompare);
+
+    if (ExtendedProcesses)
+        PhFree(ExtendedProcesses);
+    ExtendedProcesses = processes;
+
     for (PLIST_ENTRY listEntry = ProcessListHead.Flink; listEntry != &ProcessListHead; listEntry = listEntry->Flink)
     {
         PPROCESS_EXTENSION extension = CONTAINING_RECORD(listEntry, PROCESS_EXTENSION, ListEntry);
+        PSYSTEM_PROCESS_INFORMATION procInfo = DaepLookupProcessInfo(orderedProcesses, extension->ProcessItem->ProcessId, 0, processCount - 1);
+        extension->ExtProcessInfo = procInfo;
 
         // The DPI awareness defaults to unaware if not set or declared in the manifest in which case
         // it can be changed once, so we can only be sure that it won't be changed again if it is different
         // from Unaware.
-        if (extension->DpiAwarenessExt == DAE_DPI_AWARENESS_UNKNOWN || extension->DpiAwarenessExt == DAE_DPI_AWARENESS_UNAWARE)
-            extension->IsValid = FALSE;
+        if (extension->DpiAwareness == DAE_DPI_AWARENESS_UNKNOWN ||
+            (extension->DpiAwareness == DAE_DPI_AWARENESS_UNAWARE && extension->DpiAwarenessForced != DAE_TRIS_TRUE))
+            extension->ValidAwareness = FALSE;
     }
 }
 
@@ -285,7 +413,7 @@ CleanupExit:
 #ifdef _WIN64
 #define DaepGetGfDPIAwareOffset DaepGetGfDPIAwareOffset64
 #else
-#define DaepGetGfDPIAwareOffset DaepGetGfDPIAwareOffset32
+#define DaepGetGfDPIAwareOffset(user32Base, isProcessDPIAware) DaepGetGfDPIAwareOffset32((ULONG)(user32Base), isProcessDPIAware)
 #endif
 
 static void DaepInitDpiAwarenessValues(
@@ -316,19 +444,89 @@ static void DaepInitDpiAwarenessValues(
 #endif
 }
 
-static VOID DaepUpdateDpiAwareness(PPH_PROCESS_ITEM ProcessItem, PPROCESS_EXTENSION Extension)
+static ULONG DaepGetDpiAwareness(_In_ PPH_PROCESS_ITEM ProcessItem, _Inout_ PHANDLE VmReadHandle)
+{
+    ULONG dpiAwareness = DAE_DPI_AWARENESS_UNKNOWN;
+    if (getProcessDpiAwarenessInternal)
+    {
+        ULONG winDpiAwareness;
+        if (getProcessDpiAwarenessInternal(ProcessItem->QueryHandle, &winDpiAwareness))
+            dpiAwareness = winDpiAwareness + 1;
+    }
+    else
+    {
+        ULONG_PTR curOffset;
+#ifdef _WIN64
+        if (ProcessItem->IsWow64)
+            curOffset = gfDPIAwareOffset32;
+        else
+#endif
+            curOffset = gfDPIAwareOffset;
+        PH_STRINGREF user32sr = PH_STRINGREF_INIT(L"user32.dll");
+        PVOID user32Base;
+        BOOLEAN gfDPIAware;
+
+        if (!*VmReadHandle)
+        {
+            if (!NT_SUCCESS(PhOpenProcess(VmReadHandle, ProcessQueryAccess | PROCESS_VM_READ, ProcessItem->ProcessId)))
+                return DAE_DPI_AWARENESS_UNKNOWN;
+        }
+        if (!NT_SUCCESS(
+            DaeGetDllBaseRemote(
+                *VmReadHandle,
+                &user32sr,
+                &user32Base)) || !user32Base)
+            return DAE_DPI_AWARENESS_UNKNOWN;
+        if (!NT_SUCCESS(
+            NtReadVirtualMemory(
+                *VmReadHandle,
+                PTR_ADD_OFFSET(user32Base, curOffset),
+                &gfDPIAware,
+                sizeof(BOOLEAN),
+                NULL)))
+            return DAE_DPI_AWARENESS_UNKNOWN;
+        dpiAwareness = !!gfDPIAware + 1;
+    }
+    return dpiAwareness;
+}
+
+static ULONG DaepGetDpiAwarenessForced(_In_ PPROCESS_EXTENSION Extension, _Inout_ PHANDLE VmReadHandle)
+{
+    PSYSTEM_PROCESS_INFORMATION procInfo = Extension->ExtProcessInfo;
+    if (!procInfo || procInfo->NumberOfThreads == 0)
+        return DAE_TRIS_UNKNOWN;
+
+    if (!*VmReadHandle)
+    {
+        if (!NT_SUCCESS(PhOpenProcess(VmReadHandle, ProcessQueryAccess | PROCESS_VM_READ, Extension->ProcessItem->ProcessId)))
+            return DAE_TRIS_UNKNOWN;
+    }
+
+    for (ULONG i = 0; i < procInfo->NumberOfThreads; i++)
+    {
+        ULONG ciFlags = 0;
+        PSYSTEM_EXTENDED_THREAD_INFORMATION threadInfo = (PSYSTEM_EXTENDED_THREAD_INFORMATION)procInfo->Threads + i;
+        if (!threadInfo->TebBase)
+            continue;
+        if (!NT_SUCCESS(NtReadVirtualMemory(
+                *VmReadHandle,
+                PTR_ADD_OFFSET(threadInfo->TebBase, CI_FLAGS_TEB_OFFSET),
+                &ciFlags,
+                sizeof(ciFlags),
+                NULL)))
+            continue;
+        if (ciFlags & CI_INITTHREAD)
+            return (ciFlags & CI_FORCEDPIAWARE) ? DAE_TRIS_TRUE : DAE_TRIS_FALSE;
+    }
+    return DAE_TRIS_UNKNOWN;
+}
+
+static VOID DaepUpdateDpiAwareness(_In_ PPH_PROCESS_ITEM ProcessItem, _In_opt_ PPROCESS_EXTENSION Extension)
 {
     static PH_INITONCE initOnce = PH_INITONCE_INIT;
-    static BOOL (WINAPI *getProcessDpiAwarenessInternal)(
-        _In_ HANDLE hprocess,
-        _Out_ ULONG *value
-        );
-    static ULONG_PTR gfDPIAwareOffset;
     BOOL query_gfDPIAware32 = FALSE;
     BOOL query_gfDPIAware64 = FALSE;
-#ifdef _WIN64
-    static ULONG_PTR gfDPIAwareOffset32;
-#endif
+    HANDLE vmReadHandle = NULL;
 
     if (!Extension)
         Extension = PhPluginGetObjectExtension(PluginInstance, ProcessItem, EmProcessItemType);
@@ -359,57 +557,32 @@ static VOID DaepUpdateDpiAwareness(PPH_PROCESS_ITEM ProcessItem, PPROCESS_EXTENS
             return;
     }
 
-    if (!Extension->IsValid)
+    if (!Extension->ValidAwareness)
     {
+        ULONG oldDpiAwareness = Extension->DpiAwareness;
         if (ProcessItem->QueryHandle)
         {
-            ULONG dpiAwareness;
-
-            if (getProcessDpiAwarenessInternal)
-            {
-                if (getProcessDpiAwarenessInternal(ProcessItem->QueryHandle, &dpiAwareness))
-                    Extension->DpiAwarenessExt = dpiAwareness + 1;
-            }
-            else
-            {
-                ULONG_PTR curOffset;
-#ifdef _WIN64
-                if (ProcessItem->IsWow64)
-                    curOffset = gfDPIAwareOffset32;
-                else
-#endif
-                    curOffset = gfDPIAwareOffset;
-                PH_STRINGREF user32sr = PH_STRINGREF_INIT(L"user32.dll");
-                PVOID user32Base;
-                BOOLEAN gfDPIAware;
-
-                HANDLE processHandle = NULL;
-
-                if (!NT_SUCCESS(PhOpenProcess(&processHandle, ProcessQueryAccess | PROCESS_VM_READ, ProcessItem->ProcessId)))
-                    goto clean;
-                if (!NT_SUCCESS(
-                    DaeGetDllBaseRemote(
-                        processHandle,
-                        &user32sr,
-                        &user32Base)) || !user32Base)
-                    goto clean;
-                if (!NT_SUCCESS(
-                    NtReadVirtualMemory(
-                        processHandle,
-                        PTR_ADD_OFFSET(user32Base, curOffset),
-                        &gfDPIAware,
-                        sizeof(BOOLEAN),
-                        NULL)))
-                    goto clean;
-                Extension->DpiAwarenessExt = !!gfDPIAware + 1;
-            clean:
-                if (processHandle)
-                    NtClose(processHandle);
-            }
+            Extension->DpiAwareness = DaepGetDpiAwareness(ProcessItem, &vmReadHandle);
         }
 
-        Extension->IsValid = TRUE;
+        Extension->ValidAwareness = TRUE;
+        Extension->ValidDescription = Extension->ValidDescription && oldDpiAwareness == Extension->DpiAwareness;
     }
+
+    if (!Extension->ValidForced)
+    {
+        ULONG oldDpiAwarenessForced = Extension->DpiAwarenessForced;
+        if (ProcessItem->QueryHandle)
+        {
+            Extension->DpiAwarenessForced = DaepGetDpiAwarenessForced(Extension, &vmReadHandle);
+        }
+
+        Extension->ValidForced = TRUE;
+        Extension->ValidDescription = Extension->ValidDescription && oldDpiAwarenessForced == Extension->DpiAwarenessForced;
+    }
+
+    if (vmReadHandle)
+        NtClose(vmReadHandle);
 }
 
 LOGICAL DllMain(
