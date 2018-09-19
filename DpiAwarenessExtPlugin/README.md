@@ -14,4 +14,4 @@ Currently the following flags are shown
   * `F` The DPI awareness is forced by the system, may be due to compatibility settings or desktop-composition being disabled.
   
 ## Known limitations
-On Windows 8.1+ the DPI awareness of processes on other sessions/window stations (possibly even desktops) arealways shown as Unaware, this is due to a limitation of GetProcessDpiAwareness.
+On Windows 8.1+ the DPI awareness of processes on other sessions/window stations (possibly even desktops) are always shown as Unaware, this is due to a limitation of GetProcessDpiAwareness.
