@@ -238,37 +238,35 @@ static int __cdecl DaepProcessInfoPidCompare(
     _In_ const void *elem2
 )
 {
-    const SYSTEM_PROCESS_INFORMATION *pi1 = elem1;
-    const SYSTEM_PROCESS_INFORMATION *pi2 = elem2;
+    const SYSTEM_PROCESS_INFORMATION **pi1 = elem1;
+    const SYSTEM_PROCESS_INFORMATION **pi2 = elem2;
 
-    return uintptrcmp((ULONG_PTR)pi1->UniqueProcessId, (ULONG_PTR)pi2->UniqueProcessId);
+    return uintptrcmp((ULONG_PTR)(*pi1)->UniqueProcessId, (ULONG_PTR)(*pi2)->UniqueProcessId);
 }
 
 static PSYSTEM_PROCESS_INFORMATION DaepLookupProcessInfo(
     _In_ PSYSTEM_PROCESS_INFORMATION *OrderedProcesses,
     _In_ HANDLE ProcessId,
-    _In_ ULONG startIdx,
-    _In_ ULONG endIdx)
+    _In_ ULONG ProcessCount)
 {
-    if (endIdx < startIdx)
-        return NULL;
-    if (startIdx == endIdx)
+    PSYSTEM_PROCESS_INFORMATION proc;
+    ULONG startIdx = 0, endIdx = ProcessCount - 1;
+    ULONG mid;
+
+    while (endIdx >= startIdx)
     {
-        PSYSTEM_PROCESS_INFORMATION proc = OrderedProcesses[startIdx];
+        mid = (startIdx + endIdx) / 2;
+        proc = OrderedProcesses[mid];
         if (proc->UniqueProcessId == ProcessId)
             return proc;
+        else if (startIdx == endIdx)
+            break;
+        else if (proc->UniqueProcessId > ProcessId)
+            endIdx = mid;
         else
-            return NULL;
+            startIdx = mid + 1;
     }
-    else
-    {
-        PSYSTEM_PROCESS_INFORMATION proc1;
-        ULONG mid = (startIdx + endIdx) / 2;
-        proc1 = DaepLookupProcessInfo(OrderedProcesses, ProcessId, startIdx, mid);
-        if (proc1)
-            return proc1;
-        return DaepLookupProcessInfo(OrderedProcesses, ProcessId, mid + 1, endIdx);
-    }
+    return NULL;
 }
 
 static VOID DaepProcessesUpdatedHandler(
@@ -305,7 +303,7 @@ static VOID DaepProcessesUpdatedHandler(
     for (PLIST_ENTRY listEntry = ProcessListHead.Flink; listEntry != &ProcessListHead; listEntry = listEntry->Flink)
     {
         PPROCESS_EXTENSION extension = CONTAINING_RECORD(listEntry, PROCESS_EXTENSION, ListEntry);
-        PSYSTEM_PROCESS_INFORMATION procInfo = DaepLookupProcessInfo(orderedProcesses, extension->ProcessItem->ProcessId, 0, processCount - 1);
+        PSYSTEM_PROCESS_INFORMATION procInfo = DaepLookupProcessInfo(orderedProcesses, extension->ProcessItem->ProcessId, processCount);
         extension->ExtProcessInfo = procInfo;
 
         // The DPI awareness defaults to unaware if not set or declared in the manifest in which case
