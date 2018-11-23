@@ -287,7 +287,10 @@ static VOID DaepProcessesUpdatedHandler(
     }
     orderedProcesses = calloc(processCount, sizeof(PSYSTEM_PROCESS_INFORMATION));
     if (!orderedProcesses)
+    {
+        PhFree(processes);
         return;
+    }
     processIdx = 0;
     for (PSYSTEM_PROCESS_INFORMATION process = PH_FIRST_PROCESS(processes); process; (process = PH_NEXT_PROCESS(process)), processIdx++)
     {
@@ -313,6 +316,8 @@ static VOID DaepProcessesUpdatedHandler(
             (extension->DpiAwareness == DAE_DPI_AWARENESS_UNAWARE && extension->DpiAwarenessForced != DAE_TRIS_TRUE))
             extension->ValidAwareness = FALSE;
     }
+
+    free(orderedProcesses);
 }
 
 static ULONG DaepGetGfDPIAwareOffset32(
