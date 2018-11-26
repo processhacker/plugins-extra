@@ -68,20 +68,34 @@ BOOLEAN FwTabPageCallback(
             if (FwEnabled)
             {
                 ULONG thinRows;
+                ULONG treelistBorder;
+                ULONG treelistCustomColors;
+                PH_TREENEW_CREATEPARAMS treelistCreateParams;
 
                 thinRows = PhGetIntegerSetting(L"ThinRows") ? TN_STYLE_THIN_ROWS : 0;
+                treelistBorder = (PhGetIntegerSetting(L"TreeListBorderEnable") && !PhGetIntegerSetting(L"EnableThemeSupport")) ? WS_BORDER : 0;
+                treelistCustomColors = PhGetIntegerSetting(L"TreeListCustomColorsEnable") ? TN_STYLE_CUSTOM_COLORS : 0;
+
+                if (treelistCustomColors)
+                {
+                    treelistCreateParams.TextColor = PhGetIntegerSetting(L"TreeListCustomColorText");
+                    treelistCreateParams.FocusColor = PhGetIntegerSetting(L"TreeListCustomColorFocus");
+                    treelistCreateParams.SelectionColor = PhGetIntegerSetting(L"TreeListCustomColorSelection");
+                }
+
                 hwnd = CreateWindow(
                     PH_TREENEW_CLASSNAME,
                     NULL,
-                    WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_BORDER | TN_STYLE_ICONS | TN_STYLE_DOUBLE_BUFFERED | thinRows,
+                    WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | TN_STYLE_ICONS | TN_STYLE_DOUBLE_BUFFERED | thinRows | treelistBorder | treelistCustomColors,
                     0,
                     0,
                     3,
                     3,
                     PhMainWndHandle,
                     NULL,
-                    NULL,
-                    NULL);
+                    PluginInstance->DllBase,
+                    &treelistCreateParams
+                    );
 
                 if (!hwnd)
                     return FALSE;

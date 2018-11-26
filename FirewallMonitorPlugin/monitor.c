@@ -39,6 +39,7 @@ static HANDLE FwEnumHandle = NULL;
 static _FwpmNetEventSubscribe1 FwpmNetEventSubscribe1_I = NULL;
 static _FwpmNetEventSubscribe2 FwpmNetEventSubscribe2_I = NULL;
 static _FwpmNetEventSubscribe3 FwpmNetEventSubscribe3_I = NULL;
+static _FwpmNetEventSubscribe4 FwpmNetEventSubscribe4_I = NULL;
 
 VOID NTAPI FwObjectTypeDeleteProcedure(
     _In_ PVOID Object,
@@ -284,7 +285,7 @@ VOID CALLBACK DropEventCallback(
                 return;
             }
 
-            if (IN6_IS_ADDR_UNSPECIFIED((PIN6_ADDR)&FwEvent->header.localAddrV6))
+            if (IN6_IS_ADDR_LOOPBACK((PIN6_ADDR)&FwEvent->header.localAddrV6))
             {
                 PhDereferenceObject(fwEventItem);
                 return;
@@ -456,7 +457,7 @@ VOID NTAPI ProcessesUpdatedCallback(
     _In_opt_ PVOID Context
     )
 {   
-    static LARGE_INTEGER systemTime;
+    LARGE_INTEGER systemTime;
 
     PhQuerySystemTime(&systemTime);
 
@@ -483,7 +484,11 @@ BOOLEAN StartFwMonitor(
     FWPM_NET_EVENT_SUBSCRIPTION subscription = { 0 };
     FWPM_NET_EVENT_ENUM_TEMPLATE eventTemplate = { 0 };
 
-    if (WindowsVersion >= WINDOWS_10_RS4)
+    if (WindowsVersion >= WINDOWS_10_RS5)
+    {
+        FwpmNetEventSubscribe4_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe4");
+    }
+    else if (WindowsVersion >= WINDOWS_10_RS4)
     {
         FwpmNetEventSubscribe3_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe3");
     }
@@ -565,7 +570,23 @@ BOOLEAN StartFwMonitor(
     subscription.enumTemplate = &eventTemplate;
 
     // Subscribe to the events
-    if (WindowsVersion >= WINDOWS_10_RS4)
+    if (WindowsVersion >= WINDOWS_10_RS5)
+    {
+        if (!FwpmNetEventSubscribe4_I)
+            return FALSE;
+
+        if (FwpmNetEventSubscribe4_I(
+            FwEngineHandle,
+            &subscription,
+            DropEventCallback,
+            NULL,
+            &FwEventHandle
+            ) != ERROR_SUCCESS)
+        {
+            return FALSE;
+        }
+    }
+    else if (WindowsVersion >= WINDOWS_10_RS4)
     {
         if (!FwpmNetEventSubscribe3_I)
             return FALSE;
@@ -573,7 +594,7 @@ BOOLEAN StartFwMonitor(
         if (FwpmNetEventSubscribe3_I(
             FwEngineHandle,
             &subscription,
-            DropEventCallback,
+            (FWPM_NET_EVENT_CALLBACK3)DropEventCallback,
             NULL,
             &FwEventHandle
             ) != ERROR_SUCCESS)
