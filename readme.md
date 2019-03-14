@@ -3,7 +3,6 @@
 These are small plugins that are not included with Process Hacker by default.
 
 ## Compilation
-_Quoting https://wj32.org/processhacker/forums/viewtopic.php?t=2801#p9194_
 
 1) Checkout the main repository into a folder somewhere (For example: `C:\ProcessHacker\`)
 3) Run `C:\ProcessHacker\build\debug_debug.cmd`
@@ -18,6 +17,5 @@ You can now just open the `plugins-extra\ExtraPlugins.sln` solution just like th
 
 > What about a simple possibility to install any of them without installing several gigabytes of Visual Studio?
 
-_Quoting https://github.com/processhacker/processhacker/issues/108#issuecomment-359072916_
 
 Install the "Build Tools for Visual Studio 2017" (170mb) and run `build\build_release.cmd`
