@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Performance Monitor Plugin
  *
- * Copyright (C) 2015-2016 dmex
+ * Copyright (C) 2015-2019 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -63,7 +63,7 @@ VOID PerfCounterUpdateGraphs(
     )
 {
     Context->GraphState.Valid = FALSE;
-    Context->GraphState.TooltipIndex = -1;
+    Context->GraphState.TooltipIndex = ULONG_MAX;
     Graph_MoveGrid(Context->GraphHandle, 1);
     Graph_Draw(Context->GraphHandle);
     Graph_UpdateTooltip(Context->GraphHandle);
@@ -319,7 +319,7 @@ BOOLEAN PerfCounterSectionCallback(
         {
             PPH_SYSINFO_DRAW_PANEL drawPanel = (PPH_SYSINFO_DRAW_PANEL)Parameter1;
 
-            drawPanel->Title = PhCreateString(Section->Name.Buffer);
+            drawPanel->Title = PhCreateString2(&Section->Name);
             drawPanel->SubTitle = PhFormatUInt64(context->Entry->HistoryDelta.Value, TRUE);
         }
         return TRUE;
@@ -336,8 +336,7 @@ VOID PerfMonCounterSysInfoInitializing(
     PH_SYSINFO_SECTION section;
     PPH_PERFMON_SYSINFO_CONTEXT context;
 
-    context = (PPH_PERFMON_SYSINFO_CONTEXT)PhAllocate(sizeof(PH_PERFMON_SYSINFO_CONTEXT));
-    memset(context, 0, sizeof(PH_PERFMON_SYSINFO_CONTEXT));
+    context = (PPH_PERFMON_SYSINFO_CONTEXT)PhAllocateZero(sizeof(PH_PERFMON_SYSINFO_CONTEXT));
     memset(&section, 0, sizeof(PH_SYSINFO_SECTION));
 
     context->Entry = Entry;

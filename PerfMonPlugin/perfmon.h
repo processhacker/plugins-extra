@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Performance Monitor Plugin
  *
- * Copyright (C) 2015-2016 dmex
+ * Copyright (C) 2015-2019 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -22,8 +22,6 @@
 
 #ifndef _PERFMON_H_
 #define _PERFMON_H_
-
-#pragma comment(lib, "pdh.lib")
 
 #define PLUGIN_NAME L"dmex.PerfMonPlugin"
 #define SETTING_NAME_PERFMON_LIST (PLUGIN_NAME L".PerfMonList")
@@ -72,24 +70,30 @@ typedef struct _PERF_COUNTER_ENTRY
 VOID PerfMonInitialize(
     VOID
     );
+
 VOID PerfMonUpdate(
     VOID
     );
+
 VOID InitializePerfCounterId(
     _Out_ PPERF_COUNTER_ID Id,
-    _In_ PPH_STRING DevicePath
+    _In_ PPH_STRING PerfCounterPath
     );
+
 VOID CopyPerfCounterId(
     _Out_ PPERF_COUNTER_ID Destination,
     _In_ PPERF_COUNTER_ID Source
     );
+
 VOID DeletePerfCounterId(
     _Inout_ PPERF_COUNTER_ID Id
     );
+
 BOOLEAN EquivalentPerfCounterId(
     _In_ PPERF_COUNTER_ID Id1,
     _In_ PPERF_COUNTER_ID Id2
     );
+
 PPERF_COUNTER_ENTRY CreatePerfCounterEntry(
     _In_ PPERF_COUNTER_ID Id
     );
@@ -101,7 +105,6 @@ VOID PerfMonSaveList(
     VOID
     );
 
-
 typedef struct _PH_PERFMON_ENTRY
 {
     PPH_STRING Name;
@@ -112,6 +115,7 @@ typedef struct _PH_PERFMON_CONTEXT
     BOOLEAN OptionsChanged;
     BOOLEAN AddedChanged;
     HWND ListViewHandle;
+    PH_LAYOUT_MANAGER LayoutManager;
 } PH_PERFMON_CONTEXT, *PPH_PERFMON_CONTEXT;
 
 typedef struct _PH_PERFMON_SYSINFO_CONTEXT
@@ -131,13 +135,16 @@ typedef struct _PH_PERFMON_SYSINFO_CONTEXT
 #define ITEM_CHECKED (INDEXTOSTATEIMAGEMASK(2))
 #define ITEM_UNCHECKED (INDEXTOSTATEIMAGEMASK(1))
 
-VOID ShowOptionsDialog(
-    _In_ HWND ParentHandle
-    );
-
 VOID PerfMonCounterSysInfoInitializing(
     _In_ PPH_PLUGIN_SYSINFO_POINTERS Pointers,
     _In_ PPERF_COUNTER_ENTRY Entry
+    );
+
+INT_PTR CALLBACK OptionsDlgProc(
+    _In_ HWND hwndDlg,
+    _In_ UINT uMsg,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
     );
 
 #endif _ROTHEADER_

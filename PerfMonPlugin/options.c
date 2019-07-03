@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Performance Monitor Plugin
  *
- * Copyright (C) 2015-2016 dmex
+ * Copyright (C) 2015-2019 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -22,31 +22,6 @@
 
 #include "perfmon.h"
 
-INT AddListViewItemGroupId(
-    _In_ HWND ListViewHandle,
-    _In_ INT Index,
-    _In_ PWSTR Text,
-    _In_opt_ PVOID Param
-)
-{
-    LVITEM item;
-
-    memset(&item, 0, sizeof(LVITEM));
-
-    item.mask = LVIF_TEXT;
-    item.iItem = Index;
-    item.iSubItem = 0;
-    item.pszText = Text;
-
-    if (Param)
-    {
-        item.mask |= LVIF_PARAM;
-        item.lParam = (LPARAM)Param;
-    }
-
-    return ListView_InsertItem(ListViewHandle, &item);
-}
-
 VOID PerfMonAddCounter(
     _In_ PPH_PERFMON_CONTEXT Context,
     _In_ PPH_STRING CounterPath
@@ -62,14 +37,18 @@ VOID PerfMonAddCounter(
 
     entry->UserReference = TRUE;
 
-    lvItemIndex = AddListViewItemGroupId(
+    PhAcquireQueuedLockShared(&PerfCounterListLock);
+
+    lvItemIndex = PhAddListViewItem(
         Context->ListViewHandle,
         MAXINT,
         PhGetStringOrEmpty(entry->Id.PerfCounterPath),
         entry
         );
 
-    ListView_SetItemState(Context->ListViewHandle, lvItemIndex, ITEM_CHECKED, LVIS_STATEIMAGEMASK);
+    ListView_SetCheckState(Context->ListViewHandle, lvItemIndex, TRUE);
+
+    PhReleaseQueuedLockShared(&PerfCounterListLock);
 }
 
 VOID PerfMonLoadCounters(
@@ -77,6 +56,7 @@ VOID PerfMonLoadCounters(
     )
 {
     PhAcquireQueuedLockShared(&PerfCounterListLock);
+
     for (ULONG i = 0; i < PerfCounterList->Count; i++)
     {
         INT lvItemIndex;
@@ -87,7 +67,7 @@ VOID PerfMonLoadCounters(
 
         if (entry->UserReference)
         {
-            lvItemIndex = AddListViewItemGroupId(
+            lvItemIndex = PhAddListViewItem(
                 Context->ListViewHandle,
                 MAXINT,
                 PhGetStringOrEmpty(entry->Id.PerfCounterPath),
@@ -97,6 +77,7 @@ VOID PerfMonLoadCounters(
             ListView_SetItemState(Context->ListViewHandle, lvItemIndex, ITEM_CHECKED, LVIS_STATEIMAGEMASK);
         }
     }
+
     PhReleaseQueuedLockShared(&PerfCounterListLock);
 }
 
@@ -139,6 +120,7 @@ VOID PerfMonSaveList(
     PhInitializeStringBuilder(&stringBuilder, 260);
 
     PhAcquireQueuedLockShared(&PerfCounterListLock);
+
     for (ULONG i = 0; i < PerfCounterList->Count; i++)
     {
         PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(PerfCounterList->Items[i]);
@@ -153,6 +135,7 @@ VOID PerfMonSaveList(
 
         PhDereferenceObjectDeferDelete(entry);
     }
+
     PhReleaseQueuedLockShared(&PerfCounterListLock);
 
     if (stringBuilder.String->Length != 0)
@@ -170,6 +153,7 @@ BOOLEAN PerfMonFindEntry(
     BOOLEAN found = FALSE;
 
     PhAcquireQueuedLockShared(&PerfCounterListLock);
+
     for (ULONG i = 0; i < PerfCounterList->Count; i++)
     {
         PPERF_COUNTER_ENTRY entry = PhReferenceObjectSafe(PerfCounterList->Items[i]);
@@ -198,6 +182,7 @@ BOOLEAN PerfMonFindEntry(
             PhDereferenceObjectDeferDelete(entry);
         }
     }
+
     PhReleaseQueuedLockShared(&PerfCounterListLock);
 
     return found;
@@ -208,98 +193,96 @@ VOID PerfMonShowCounters(
     _In_ HWND Parent
     )
 {
-    PDH_STATUS counterStatus = 0;
-    PPH_STRING counterPathString = NULL;
-    PPH_STRING counterWildCardString = NULL;
-    PDH_BROWSE_DLG_CONFIG browseConfig = { 0 };
-    WCHAR counterPathBuffer[PDH_MAX_COUNTER_PATH] = L"";
+    PDH_BROWSE_DLG_CONFIG browseConfig;
+    WCHAR counterPathBuffer[PDH_MAX_COUNTER_PATH + 1] = L"";
 
-    browseConfig.bIncludeInstanceIndex = FALSE;
-    browseConfig.bSingleCounterPerAdd = FALSE; // Fix empty CounterPathBuffer
+    memset(&browseConfig, 0, sizeof(PDH_BROWSE_DLG_CONFIG));
+    browseConfig.szDialogBoxCaption = L"Select a counter to monitor.";
     browseConfig.bSingleCounterPerDialog = TRUE;
-    browseConfig.bLocalCountersOnly = FALSE;
-    browseConfig.bWildCardInstances = TRUE; // Seems to cause a lot of crashes
-    browseConfig.bHideDetailBox = TRUE;
-    browseConfig.bInitializePath = FALSE;
-    browseConfig.bDisableMachineSelection = FALSE;
-    browseConfig.bIncludeCostlyObjects = FALSE;
-    browseConfig.bShowObjectBrowser = FALSE;
+    browseConfig.bWildCardInstances = TRUE;
+    browseConfig.bHideDetailBox = TRUE;   
+    browseConfig.dwDefaultDetailLevel = PERF_DETAIL_EXPERT;
     browseConfig.hWndOwner = Parent;
     browseConfig.szReturnPathBuffer = counterPathBuffer;
     browseConfig.cchReturnPathLength = PDH_MAX_COUNTER_PATH;
-    browseConfig.CallBackStatus = ERROR_SUCCESS;
-    browseConfig.dwDefaultDetailLevel = PERF_DETAIL_WIZARD;
-    browseConfig.szDialogBoxCaption = L"Select a counter to monitor.";
 
-    if ((counterStatus = PdhBrowseCounters(&browseConfig)) != ERROR_SUCCESS)
-    {
-        goto CleanupExit;
-    }
+    if (PdhBrowseCounters(&browseConfig) != ERROR_SUCCESS)
+        return;
     
     if (PhCountStringZ(counterPathBuffer) == 0)
+        return;
+
+    for (PWSTR counterPath = counterPathBuffer; *counterPath; counterPath += PhCountStringZ(counterPath) + 1)
     {
-        goto CleanupExit;
-    }
+        PPH_STRING counterPathString = PhCreateString(counterPath);
 
-    counterPathString = PhCreateString(counterPathBuffer);
-
-    if (PhFindCharInString(counterPathString, 0, '*') != -1) // Check for wildcards
-    {
-        ULONG wildCardLength = 0;
-
-        PdhExpandWildCardPath(
-            NULL,
-            PhGetString(counterPathString),
-            NULL,
-            &wildCardLength,
-            0
-            );
-
-        counterWildCardString = PhCreateStringEx(NULL, wildCardLength * sizeof(WCHAR));
-
-        if (PdhExpandWildCardPath(
-            NULL, 
-            PhGetString(counterPathString), 
-            PhGetString(counterWildCardString), 
-            &wildCardLength, 
-            0
-            ) == ERROR_SUCCESS)
+        if (PhFindCharInString(counterPathString, 0, '*') != -1) // Check for wildcards
         {
-            PH_STRINGREF part;
-            PH_STRINGREF remaining = counterWildCardString->sr;
+            PPH_STRING counterWildCardString;
+            ULONG wildCardLength = 0;
 
-            while (remaining.Length != 0)
+            PdhExpandWildCardPath(
+                NULL,
+                PhGetString(counterPathString),
+                NULL,
+                &wildCardLength,
+                0
+                );
+
+            counterWildCardString = PhCreateStringEx(NULL, wildCardLength * sizeof(WCHAR));
+
+            if (PdhExpandWildCardPath(
+                NULL,
+                PhGetString(counterPathString),
+                PhGetString(counterWildCardString),
+                &wildCardLength,
+                0
+                ) == ERROR_SUCCESS)
             {
-                if (!PhSplitStringRefAtChar(&remaining, '\0', &part, &remaining))
-                    break;
-                if (remaining.Length == 0)
-                    break;
+                PH_STRINGREF part;
+                PH_STRINGREF remaining;
 
-                if (PdhValidatePath(part.Buffer) != ERROR_SUCCESS)
+                remaining = counterWildCardString->sr;
+
+                while (remaining.Length != 0)
                 {
-                    goto CleanupExit;
+                    PPH_STRING counterPart;
+
+                    if (!PhSplitStringRefAtChar(&remaining, L'\0', &part, &remaining))
+                        break;
+                    if (remaining.Length == 0)
+                        break;
+
+                    counterPart = PhCreateString2(&part);
+
+                    if (PdhValidatePath(PhGetString(counterPart)) != ERROR_SUCCESS)
+                    {
+                        PhDereferenceObject(counterPart);
+                        PhDereferenceObject(counterWildCardString);
+                        PhDereferenceObject(counterPathString);
+                        continue;
+                    }
+
+                    PerfMonAddCounter(Context, counterPart);
+                    PhDereferenceObject(counterPart);
                 }
-
-                PerfMonAddCounter(Context, PhCreateString2(&part));
             }
+
+            PhDereferenceObject(counterWildCardString);
         }
-    }
-    else
-    {
-        if (PdhValidatePath(PhGetString(counterPathString)) != ERROR_SUCCESS)
+        else
         {
-            goto CleanupExit;
+            if (PdhValidatePath(PhGetString(counterPathString)) != ERROR_SUCCESS)
+            {
+                PhDereferenceObject(counterPathString);
+                continue;
+            }
+
+            PerfMonAddCounter(Context, counterPathString);
         }
 
-        PerfMonAddCounter(Context, PhCreateString2(&counterPathString->sr));
-    }
-
-CleanupExit:
-    if (counterWildCardString)
-        PhDereferenceObject(counterWildCardString);
-
-    if (counterPathString)
         PhDereferenceObject(counterPathString);
+    }
 }
 
 INT_PTR CALLBACK OptionsDlgProc(
@@ -321,14 +304,6 @@ INT_PTR CALLBACK OptionsDlgProc(
     else
     {
         context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
-
-        if (uMsg == WM_DESTROY)
-        {
-            PerfMonSaveList();
-
-            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
-            PhFree(context);
-        }
     }
 
     if (context == NULL)
@@ -339,8 +314,6 @@ INT_PTR CALLBACK OptionsDlgProc(
     case WM_INITDIALOG:
         {
             context->ListViewHandle = GetDlgItem(hwndDlg, IDC_PERFCOUNTER_LISTVIEW);
- 
-            PhCenterWindow(hwndDlg, GetParent(hwndDlg));
 
             PhSetListViewStyle(context->ListViewHandle, FALSE, TRUE);
             ListView_SetExtendedListViewStyleEx(context->ListViewHandle, 
@@ -350,21 +323,39 @@ INT_PTR CALLBACK OptionsDlgProc(
             PhAddListViewColumn(context->ListViewHandle, 0, 0, 0, LVCFMT_LEFT, 500, L"Counter");
             PhSetExtendedListView(context->ListViewHandle);
 
+            PhInitializeLayoutManager(&context->LayoutManager, hwndDlg);
+            PhAddLayoutItem(&context->LayoutManager, context->ListViewHandle, NULL, PH_ANCHOR_ALL);
+            PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDC_ADD_BUTTON), NULL, PH_ANCHOR_RIGHT | PH_ANCHOR_BOTTOM);
+
             PerfMonLoadCounters(context);
+        }
+        break;
+    case WM_DESTROY:
+        {
+            if (context->OptionsChanged)
+                PerfMonSaveList();
+
+            PhDeleteLayoutManager(&context->LayoutManager);
+
+            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
+            PhFree(context);
         }
         break;
     case WM_COMMAND:
         {
-            switch (LOWORD(wParam))
+            switch (GET_WM_COMMAND_ID(wParam, lParam))
             {
             case IDC_ADD_BUTTON:
                 PerfMonShowCounters(context, hwndDlg);
                 break;
-            case IDCANCEL:
-            case IDOK:
-                EndDialog(hwndDlg, IDOK);
-                break;
             }
+        }
+        break;
+    case WM_SIZE:
+        {
+            PhLayoutManagerLayout(&context->LayoutManager);
+
+            ExtendedListView_SetColumnWidth(context->ListViewHandle, 0, ELVSCW_AUTOSIZE_REMAININGSPACE);
         }
         break;
     case WM_NOTIFY:
@@ -382,7 +373,7 @@ INT_PTR CALLBACK OptionsDlgProc(
                 {
                     switch (listView->uNewState & LVIS_STATEIMAGEMASK)
                     {
-                    case 0x2000: // checked
+                    case INDEXTOSTATEIMAGEMASK(2): // checked
                         {
                             PPERF_COUNTER_ID param = (PPERF_COUNTER_ID)listView->lParam;
 
@@ -397,11 +388,14 @@ INT_PTR CALLBACK OptionsDlgProc(
                             context->OptionsChanged = TRUE;
                         }
                         break;
-                    case 0x1000: // unchecked
+                    case INDEXTOSTATEIMAGEMASK(1): // unchecked
                         {
                             PPERF_COUNTER_ID param = (PPERF_COUNTER_ID)listView->lParam;
 
                             PerfMonFindEntry(param, TRUE);
+
+                            // HACK: Remove item from listview since this code currently doesn't re-reference the existing object.
+                            ListView_DeleteItem(listView->hdr.hwndFrom, listView->iItem);
 
                             context->OptionsChanged = TRUE;
                         }
@@ -414,16 +408,4 @@ INT_PTR CALLBACK OptionsDlgProc(
     }
 
     return FALSE;
-}
-
-VOID ShowOptionsDialog(
-    _In_ HWND ParentHandle
-    )
-{
-    DialogBox(
-        PluginInstance->DllBase,
-        MAKEINTRESOURCE(IDD_PERFMON_OPTIONS),
-        ParentHandle,
-        OptionsDlgProc
-        );
 }

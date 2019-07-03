@@ -2,7 +2,7 @@
  * Process Hacker Plugins -
  *   Performance Monitor Plugin
  *
- * Copyright (C) 2016 dmex
+ * Copyright (C) 2016-2019 dmex
  *
  * This file is part of Process Hacker.
  *
