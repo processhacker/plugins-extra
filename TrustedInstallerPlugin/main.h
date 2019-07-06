@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Trusted Installer Plugin
  *
- * Copyright (C) 2016 dmex
+ * Copyright (C) 2016-2019 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -26,12 +26,11 @@
 #define PLUGIN_NAME L"dmex.TrustedInstallerPlugin"
 #define RUNAS_MENU_ITEM 1
 
-#define CINTERFACE
-#define COBJMACROS
 #include <phdk.h>
 #include <phappresource.h>
-#include <verify.h>
+
 #include <windowsx.h>
+
 #include "resource.h"
 
 extern PPH_PLUGIN PluginInstance;

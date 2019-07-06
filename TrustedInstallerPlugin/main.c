@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Trusted Installer Plugin
  *
- * Copyright (C) 2016 dmex
+ * Copyright (C) 2016-2019 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -68,12 +68,10 @@ VOID NTAPI MainMenuInitializingCallback(
     PPH_EMENU_ITEM runAsMenuItem;
     ULONG indexOfMenuItem;
 
-    if (menuInfo->u.MainMenu.SubMenuIndex != 0) // 0 = Hacker menu
+    if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_HACKER)
         return;
 
-    runAsMenuItem = PhFindEMenuItem(menuInfo->Menu, PH_EMENU_FIND_STARTSWITH, L"Run as...", 0);
-
-    if (!runAsMenuItem)
+    if (!(runAsMenuItem = PhFindEMenuItem(menuInfo->Menu, PH_EMENU_FIND_STARTSWITH, L"Run as...", 0)))
         return;
  
     indexOfMenuItem = PhIndexOfEMenuItem(menuInfo->Menu, runAsMenuItem);

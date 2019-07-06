@@ -2,7 +2,7 @@
  * Process Hacker Extra Plugins -
  *   Trusted Installer Plugin
  *
- * Copyright (C) 2016-2017 dmex
+ * Copyright (C) 2016-2019 dmex
  *
  * This file is part of Process Hacker.
  *
@@ -61,8 +61,5 @@ VOID ShowRunAsDialog(
     _In_opt_ HWND Parent
     )
 {
-    HANDLE threadHandle;
-
-    if (threadHandle = PhCreateThread(0, RunAsTrustedInstallerThread, NULL))
-        NtClose(threadHandle);
+    PhCreateThread2(RunAsTrustedInstallerThread, NULL);
 }
