@@ -90,7 +90,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dialog.c" />
-    <ClCompile Include="fw.c" />
     <ClCompile Include="fwdialog.c" />
     <ClCompile Include="fwtab.c" />
     <ClCompile Include="main.c" />

@@ -27,9 +27,6 @@
     <ClCompile Include="fwdialog.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="fw.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="dialog.c">
       <Filter>Source Files</Filter>
     </ClCompile>

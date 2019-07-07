@@ -120,20 +120,8 @@ VOID NTAPI FwItemsUpdatedHandler(
     _In_opt_ PVOID Context
     );
 
-VOID NTAPI OnFwItemAdded(
-    _In_ PVOID Parameter
-    );
-
-VOID NTAPI OnFwItemModified(
-    _In_ PVOID Parameter
-    );
-
-VOID NTAPI OnFwItemRemoved(
-    _In_ PVOID Parameter
-    );
-
 VOID NTAPI OnFwItemsUpdated(
-    _In_ PVOID Parameter
+    _In_ ULONG RunId
     );
 
 BOOLEAN NTAPI FwSearchFilterCallback(

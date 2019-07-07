@@ -117,75 +117,111 @@ NTSTATUS FWRulesEnumThreadStart(
     )
 {
     PBOOT_WINDOW_CONTEXT context = (PBOOT_WINDOW_CONTEXT)Parameter;
-        
-    if (InitializeFirewallApi())
+
+    HANDLE FwEngineHandle = NULL;
+    FWPM_SESSION session = { 0 };
+    session.flags = 0;// FWPM_SESSION_FLAG_DYNAMIC;
+    session.displayData.name = L"PhFirewallFilterSession";
+    session.displayData.description = L"Non-Dynamic session for Process Hacker";
+
+    // Create a non-dynamic BFE session
+    if (FwpmEngineOpen(
+        NULL,
+        RPC_C_AUTHN_WINNT,
+        NULL,
+        &session,
+        &FwEngineHandle
+        ) != ERROR_SUCCESS)
     {
-        EnumerateFirewallRules(FW_PROFILE_TYPE_CURRENT, FW_DIR_IN, WfAddRules, context);
-        FreeFirewallApi();
-    } 
+        return FALSE;
+    }
+
+    HANDLE FwEnumHandle = NULL;
+    FWPM_FILTER_ENUM_TEMPLATE enumTemplate = { 0 };
+    //enumTemplate.actionMask = 0;// 0xFFFFFFFF; // We want to see all filters regardless of action.
+
+    enumTemplate.enumType = FWP_FILTER_ENUM_FULLY_CONTAINED;
+    enumTemplate.flags = FWP_FILTER_ENUM_FLAG_INCLUDE_BOOTTIME;// | FWP_FILTER_ENUM_FLAG_INCLUDE_DISABLED;
+    enumTemplate.actionMask = 0xFFFFFFFF;
+
+    FwpmFilterCreateEnumHandle0(FwEngineHandle, NULL, &FwEnumHandle);
+
+
+    FWPM_FILTER** filters = NULL;
+    UINT32 numFilters = 0;
+
+    if (FwpmFilterEnum(FwEngineHandle, FwEnumHandle, UINT_MAX, &filters, &numFilters) == ERROR_SUCCESS)
+    {
+        for (UINT32 i = 0; i < numFilters; i++)
+        {
+            FWPM_FILTER* entry = filters[i];
+            INT lvItemIndex;
+            WCHAR string[MAX_PATH];
+
+            if (SUCCEEDED(SHLoadIndirectString(entry->displayData.name, string, RTL_NUMBER_OF(string), NULL)))
+            {
+                lvItemIndex = PhAddListViewItem(context->ListViewHandle, MAXINT, string, NULL);
+            }
+            else
+            {
+                lvItemIndex = PhAddListViewItem(context->ListViewHandle, MAXINT, entry->displayData.name, NULL);
+            }
+
+            if (entry->displayData.description && PhCountStringZ(entry->displayData.description) > 0)
+            {
+                if (SUCCEEDED(SHLoadIndirectString(entry->displayData.description, string, RTL_NUMBER_OF(string), NULL)))
+                {
+                    ListView_SetItemText(context->ListViewHandle, lvItemIndex, 1, string);
+                }
+                else
+                {
+                    ListView_SetItemText(context->ListViewHandle, lvItemIndex, 1, entry->displayData.description);
+                }       
+            }
+
+            switch (entry->action.type)
+            {
+            case FWP_ACTION_BLOCK:
+                ListView_SetItemText(context->ListViewHandle, lvItemIndex, 2, L"Block");
+                break;
+            case FWP_ACTION_PERMIT:
+                ListView_SetItemText(context->ListViewHandle, lvItemIndex, 2, L"Allow");
+                break;
+            default:
+                ListView_SetItemText(context->ListViewHandle, lvItemIndex, 2, L"ERROR");
+                break;
+            }
+
+            //if (entry->numFilterConditions)
+            //{
+            //    for (UINT32 ii = 0; ii < entry->numFilterConditions; ii++)
+            //    {
+            //        FWPM_FILTER_CONDITION0 filterCondition = entry->filterCondition[ii];
+            //
+            //        PPH_STRING str = PhFormatGuid(&filterCondition.fieldKey);
+            //
+            //        dprintf("%S\n", str->Buffer);
+            //
+            //        if (IsEqualGUID(&filterCondition.fieldKey, &FWPM_CONDITION_DIRECTION))
+            //        {
+            //
+            //        }
+            //    }
+            //
+            //    dprintf("\n");
+            //}
+        }
+
+        //FwpmFreeMemory(filters);
+    }
+
+    //if (InitializeFirewallApi())
+    //{
+    //    EnumerateFirewallRules(FW_PROFILE_TYPE_CURRENT, FW_DIR_IN, WfAddRules, context);
+    //    FreeFirewallApi();
+    //} 
 
     return STATUS_SUCCESS;
-}
-
-NTSTATUS EnumerateEnvironmentValues(
-    _In_ PVOID Parameter
-    )
-{
-    //ExtendedListView_SetRedraw(ListViewHandle, FALSE);
-    //ListView_DeleteAllItems(ListViewHandle);
-
-    PhCreateThread(0, FWRulesEnumThreadStart, Parameter);
-
-    //if (NT_SUCCESS(status = EnumerateFirmwareValues(&variables)))
-    //  {
-    //PVARIABLE_NAME_AND_VALUE i;
-
-    // for (i = PH_FIRST_EFI_VARIABLE(variables); i; i = PH_NEXT_EFI_VARIABLE(i))
-    //  {       
-    /*   INT index;
-    GUID vendorGuid;
-    PPH_STRING guidString;
-
-    vendorGuid = i->VendorGuid;
-    guidString = PhFormatGuid(&vendorGuid);
-
-    index = PhAddListViewItem(
-    ListViewHandle,
-    MAXINT,
-    i->Name,
-    NULL
-    );
-    PhSetListViewSubItem(
-    ListViewHandle,
-    index,
-    1,
-    FirmwareAttributeToString(i->Attributes)->Buffer
-    );
-
-    PhSetListViewSubItem(
-    ListViewHandle,
-    index,
-    2,
-    FirmwareGuidToNameString(&vendorGuid)
-    );
-
-    PhSetListViewSubItem(
-    ListViewHandle,
-    index,
-    3,
-    guidString->Buffer
-    );
-
-    PhSetListViewSubItem(ListViewHandle, index, 4, PhaFormatSize(i->ValueLength, -1)->Buffer);
-
-    PhDereferenceObject(guidString);
-    }*/
-    //}
-
-  //  ExtendedListView_SortItems(ListViewHandle);
-   // ExtendedListView_SetRedraw(ListViewHandle, TRUE);
-
-    return 0;
 }
 
 PPH_STRING PhGetSelectedListViewItemText(
@@ -203,14 +239,18 @@ PPH_STRING PhGetSelectedListViewItemText(
         WCHAR textBuffer[DOS_MAX_PATH_LENGTH] = L"";
 
         LVITEM item;
+
+        memset(&item, 0, sizeof(LVITEM));
         item.mask = LVIF_TEXT;
         item.iItem = index;
         item.iSubItem = 0;
         item.pszText = textBuffer;
-        item.cchTextMax = ARRAYSIZE(textBuffer);
+        item.cchTextMax = RTL_NUMBER_OF(textBuffer);
 
         if (ListView_GetItem(hWnd, &item))
+        {
             return PhCreateString(textBuffer);
+        }
     }
 
     return NULL;
@@ -302,6 +342,7 @@ LRESULT SysButtonCustomDraw(
         DeleteBrush(BrushNormal);
         DeleteBrush(BrushSelected);
         DeleteBrush(BrushPushed);
+
         return CDRF_SKIPDEFAULT;
     }
 
@@ -393,8 +434,6 @@ INT_PTR CALLBACK FwEntriesDlgProc(
                     );
             }
 
-            PhCenterWindow(hwndDlg, PhMainWndHandle);
-
             PhSetListViewStyle(context->ListViewHandle, FALSE, TRUE);
             PhSetControlTheme(context->ListViewHandle, L"explorer");
             PhAddListViewColumn(context->ListViewHandle, 0, 0, 0, LVCFMT_LEFT, 450, L"Name");
@@ -411,9 +450,13 @@ INT_PTR CALLBACK FwEntriesDlgProc(
             PhInitializeLayoutManager(&context->LayoutManager, hwndDlg);
             PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDC_SEARCHBOX), NULL, PH_ANCHOR_TOP | PH_ANCHOR_RIGHT);
             PhAddLayoutItem(&context->LayoutManager, context->ListViewHandle, NULL, PH_ANCHOR_ALL);
-            PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
+
+            if (PhGetIntegerPairSetting(SETTING_NAME_WINDOW_POSITION).X != 0)
+                PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
+            else
+                PhCenterWindow(hwndDlg, PhMainWndHandle);
             
-            EnumerateEnvironmentValues(context);
+            PhCreateThread2(FWRulesEnumThreadStart, context);
         }
         break;
     case WM_SIZE:
@@ -470,6 +513,7 @@ VOID ShowFwDialog(
         NULL,
         FwEntriesDlgProc
         );
+
     //if (!DbgDialogThreadHandle)
     //{
     //    if (!(DbgDialogThreadHandle = PhCreateThread(0, DbgViewDialogThread, NULL)))

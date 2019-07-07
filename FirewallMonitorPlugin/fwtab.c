@@ -32,6 +32,8 @@ static PPH_MAIN_TAB_PAGE addedTabPage;
 
 BOOLEAN FwEnabled;
 PPH_LIST FwNodeList;
+ULONG FwRunCount = 0;
+static PH_PROVIDER_EVENT_QUEUE FwNetworkEventQueue;
 static PH_QUEUED_LOCK FwLock = PH_QUEUED_LOCK_INIT;
 static PH_CALLBACK_REGISTRATION FwItemAddedRegistration;
 static PH_CALLBACK_REGISTRATION FwItemModifiedRegistration;
@@ -112,6 +114,8 @@ BOOLEAN FwTabPageCallback(
             }
 
             FwTreeNewCreated = TRUE;
+
+            PhInitializeProviderEventQueue(&FwNetworkEventQueue, 100);
 
             InitializeFwTreeList(hwnd);
 
@@ -306,21 +310,6 @@ VOID RemoveFwNode(
     if ((index = PhFindItemList(FwNodeList, FwNode)) != -1)
         PhRemoveItemList(FwNodeList, index); 
     PhReleaseQueuedLockExclusive(&FwLock);
-        
-    PhClearReference(&FwNode->TooltipText);
-    PhClearReference(&FwNode->ProcessNameString);
-    PhClearReference(&FwNode->ProcessBaseString);
-    PhClearReference(&FwNode->LocalPortString);
-    PhClearReference(&FwNode->LocalAddressString);
-    PhClearReference(&FwNode->RemotePortString);
-    PhClearReference(&FwNode->RemoteAddressString);
-    PhClearReference(&FwNode->FwRuleNameString);
-    PhClearReference(&FwNode->FwRuleDescriptionString);
-    PhClearReference(&FwNode->FwRuleLayerNameString);
-    PhClearReference(&FwNode->FwRuleLayerDescriptionString);
-
-    if (FwNode->Icon)
-        DestroyIcon(FwNode->Icon);
 
     PhDereferenceObject(FwNode);
 
@@ -335,6 +324,25 @@ VOID UpdateFwNode(
 
     PhInvalidateTreeNewNode(&FwNode->Node, TN_CACHE_ICON);
     TreeNew_NodesStructured(FwTreeNewHandle);
+}
+
+VOID FwTickNodes(
+    VOID
+    )
+{
+    // Text invalidation
+
+    for (ULONG i = 0; i < FwNodeList->Count; i++)
+    {
+        PFW_EVENT_ITEM node = (PFW_EVENT_ITEM)FwNodeList->Items[i];
+
+        // The name and file name never change, so we don't invalidate that.
+        memset(&node->TextCache[1], 0, sizeof(PH_STRINGREF) * (FW_COLUMN_MAXIMUM - 2));
+        // Always get the newest tooltip text from the process tree.
+        PhSwapReference(&node->TooltipText, NULL);
+    }
+
+    InvalidateRect(FwTreeNewHandle, NULL, FALSE);
 }
 
 static int __cdecl FwTreeNewCompareIndex(
@@ -522,15 +530,48 @@ BOOLEAN NTAPI FwTreeNewCallback(
         {
             PPH_TREENEW_GET_NODE_ICON getNodeIcon = (PPH_TREENEW_GET_NODE_ICON)Parameter1;
             node = (PFW_EVENT_ITEM)getNodeIcon->Node;
-    
-            if (node->Icon)
+
+            if (node->ProcessIconValid && node->ProcessIcon)
             {
-                getNodeIcon->Icon = node->Icon;
+                getNodeIcon->Icon = node->ProcessIcon;
             }
             else
             {
-                node->Icon = PhGetFileShellIcon(PhGetString(node->ProcessFileNameString), L".exe", FALSE);
-                getNodeIcon->Icon = node->Icon;
+                if (!node->ProcessIconValid && node->ProcessFileNameString)
+                {
+                    PPH_PROCESS_ITEM* processes;
+                    ULONG numberOfProcesses;
+                    ULONG i;
+
+                    PhEnumProcessItems(&processes, &numberOfProcesses);
+
+                    for (i = 0; i < numberOfProcesses; i++)
+                    {
+                        PPH_PROCESS_ITEM process = processes[i];
+
+                        if (process->FileName && PhEqualString(process->FileName, node->ProcessFileNameString, TRUE))
+                        {
+                            if (PhTestEvent(&process->Stage1Event))
+                            {
+                                PhSetReference(&node->ProcessItem, process);
+                                node->ProcessIcon = process->SmallIcon;
+                                node->ProcessIconValid = TRUE;
+                                break;
+                            }
+                        }
+                    }
+
+                    PhDereferenceObjects(processes, numberOfProcesses);
+                }
+            }
+
+            if (node->ProcessIconValid && node->ProcessIcon)
+            {
+                getNodeIcon->Icon = node->ProcessIcon;
+            }
+            else
+            {
+                PhGetStockApplicationIcon(&getNodeIcon->Icon, NULL);
             }
 
             getNodeIcon->Flags = TN_CACHE;
@@ -795,7 +836,7 @@ VOID NTAPI FwItemAddedHandler(
     PFW_EVENT_ITEM fwItem = (PFW_EVENT_ITEM)Parameter;
 
     PhReferenceObject(fwItem);
-    ProcessHacker_Invoke(PhMainWndHandle, OnFwItemAdded, fwItem);
+    PhPushProviderEventQueue(&FwNetworkEventQueue, ProviderAddedEvent, Parameter, FwRunCount);
 }
 
 VOID NTAPI FwItemModifiedHandler(
@@ -803,7 +844,7 @@ VOID NTAPI FwItemModifiedHandler(
     _In_opt_ PVOID Context
     )
 {
-    ProcessHacker_Invoke(PhMainWndHandle, OnFwItemModified, (PFW_EVENT_ITEM)Parameter);
+    PhPushProviderEventQueue(&FwNetworkEventQueue, ProviderModifiedEvent, Parameter, FwRunCount);
 }
 
 VOID NTAPI FwItemRemovedHandler(
@@ -811,7 +852,7 @@ VOID NTAPI FwItemRemovedHandler(
     _In_opt_ PVOID Context
     )
 {
-    ProcessHacker_Invoke(PhMainWndHandle, OnFwItemRemoved, (PFW_EVENT_ITEM)Parameter);
+    PhPushProviderEventQueue(&FwNetworkEventQueue, ProviderRemovedEvent, Parameter, FwRunCount);
 }
 
 VOID NTAPI FwItemsUpdatedHandler(
@@ -819,72 +860,50 @@ VOID NTAPI FwItemsUpdatedHandler(
     _In_opt_ PVOID Context
     )
 {
-    ProcessHacker_Invoke(PhMainWndHandle, OnFwItemsUpdated, NULL);
-}
-
-VOID NTAPI OnFwItemAdded(
-    _In_ PVOID Parameter
-    )
-{
-    PFW_EVENT_ITEM fwItem = (PFW_EVENT_ITEM)Parameter;
-    PFW_EVENT_ITEM fwNode;
-
-    if (!FwNeedsRedraw)
-    {
-       //TreeNew_SetRedraw(FwTreeNewHandle, FALSE);
-       //FwNeedsRedraw = TRUE;
-    }
-
-    fwNode = AddFwNode(fwItem);
-    PhDereferenceObject(fwItem);
-}
-
-VOID NTAPI OnFwItemModified(
-    _In_ PVOID Parameter
-    )
-{
-    PFW_EVENT_ITEM fwNode = (PFW_EVENT_ITEM)Parameter;
-
-    UpdateFwNode(fwNode);
-}
-
-VOID NTAPI OnFwItemRemoved(
-    _In_ PVOID Parameter
-    )
-{
-    PFW_EVENT_ITEM fwNode = (PFW_EVENT_ITEM)Parameter;
-
-    if (!FwNeedsRedraw)
-    {
-        TreeNew_SetRedraw(FwTreeNewHandle, FALSE);
-        FwNeedsRedraw = TRUE;
-    }
-
-    RemoveFwNode(fwNode);
+    ProcessHacker_Invoke(PhMainWndHandle, OnFwItemsUpdated, FwRunCount);
 }
 
 VOID NTAPI OnFwItemsUpdated(
-    _In_ PVOID Parameter
+    _In_ ULONG RunId
     )
 {
-    if (FwNeedsRedraw)
+    PPH_PROVIDER_EVENT events;
+    ULONG count;
+    ULONG i;
+
+    events = PhFlushProviderEventQueue(&FwNetworkEventQueue, RunId, &count);
+
+    if (events)
     {
+        TreeNew_SetRedraw(FwTreeNewHandle, FALSE);
+
+        for (i = 0; i < count; i++)
+        {
+            PH_PROVIDER_EVENT_TYPE type = PH_PROVIDER_EVENT_TYPE(events[i]);
+            PFW_EVENT_ITEM fwEventItem = PH_PROVIDER_EVENT_OBJECT(events[i]);
+
+            switch (type)
+            {
+            case ProviderAddedEvent:
+                AddFwNode(fwEventItem);
+                PhDereferenceObject(fwEventItem);
+                break;
+            case ProviderModifiedEvent:
+                UpdateFwNode(fwEventItem);
+                break;
+            case ProviderRemovedEvent:
+                RemoveFwNode(fwEventItem);
+                break;
+            }
+        }
+
+        PhFree(events);
+    }
+
+    FwTickNodes();
+
+    if (count != 0)
         TreeNew_SetRedraw(FwTreeNewHandle, TRUE);
-        FwNeedsRedraw = FALSE;
-    }
-
-    // Text invalidation
-    for (ULONG i = 0; i < FwNodeList->Count; i++)
-    {
-        PFW_EVENT_ITEM node = (PFW_EVENT_ITEM)FwNodeList->Items[i];
-
-        // The name and file name never change, so we don't invalidate that.
-        memset(&node->TextCache[1], 0, sizeof(PH_STRINGREF) * (FW_COLUMN_MAXIMUM - 2));
-        // Always get the newest tooltip text from the process tree.
-        PhSwapReference(&node->TooltipText, NULL);
-    }
-
-    InvalidateRect(FwTreeNewHandle, NULL, FALSE);
 }
 
 VOID NTAPI FwSearchChangedHandler(

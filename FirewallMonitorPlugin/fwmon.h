@@ -65,7 +65,10 @@ typedef struct _BOOT_WINDOW_CONTEXT
 typedef struct _FW_EVENT_ITEM
 {
     PH_TREENEW_NODE Node;
-    HICON Icon;
+
+    PPH_PROCESS_ITEM ProcessItem;
+    HICON ProcessIcon;
+    BOOLEAN ProcessIconValid;
 
     BOOLEAN Loopback;
     UINT16 LocalPort;
