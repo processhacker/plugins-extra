@@ -81,20 +81,32 @@ VOID NTAPI FwObjectTypeDeleteProcedure(
         PhDereferenceObject(event->ProcessItem);
 }
 
-VOID CALLBACK DropEventCallback(
-    _Inout_ PVOID FwContext,
-    _In_ const FWPM_NET_EVENT* FwEvent
+PFW_EVENT_ITEM FwCreateEventItem(
+    _In_ FWPM_NET_EVENT_TYPE FwRuleEventType,
+    _In_ UINT32 FwRuleEventDirection
     )
 {
     PFW_EVENT_ITEM fwEventItem;
     SYSTEMTIME systemTime;
 
     fwEventItem = PhCreateObjectZero(sizeof(FW_EVENT_ITEM), FwObjectType);
+
     PhQuerySystemTime(&fwEventItem->AddedTime);
     PhLargeIntegerToLocalSystemTime(&systemTime, &fwEventItem->AddedTime);
-
-    fwEventItem->FwRuleEventType = FwEvent->type;
     fwEventItem->TimeString = PhFormatDateTime(&systemTime);
+
+    fwEventItem->FwRuleEventType = FwRuleEventType;
+    fwEventItem->FwRuleEventDirection = FwRuleEventDirection;
+
+    return fwEventItem;
+}
+
+VOID CALLBACK DropEventCallback(
+    _Inout_ PVOID FwContext,
+    _In_ const FWPM_NET_EVENT* FwEvent
+    )
+{
+    PFW_EVENT_ITEM fwEventItem = NULL;
 
     if (FwEvent->type == FWPM_NET_EVENT_TYPE_CLASSIFY_DROP)
     {
@@ -103,25 +115,22 @@ VOID CALLBACK DropEventCallback(
         FWPM_NET_EVENT_CLASSIFY_DROP* fwDropEvent = FwEvent->classifyDrop;
 
         if (fwDropEvent->isLoopback)
-        {
-            PhDereferenceObject(fwEventItem);
             return;
-        }
 
         switch (fwDropEvent->msFwpDirection)
         {
         case FWP_DIRECTION_IN:
         case FWP_DIRECTION_INBOUND:
-            fwEventItem->FwRuleEventDirection = FWP_DIRECTION_INBOUND;
+            fwEventItem = FwCreateEventItem(FWPM_NET_EVENT_TYPE_CLASSIFY_DROP, FWP_DIRECTION_INBOUND);
             break;
         case FWP_DIRECTION_OUT:
         case FWP_DIRECTION_OUTBOUND:
-            fwEventItem->FwRuleEventDirection = FWP_DIRECTION_OUTBOUND;
+            fwEventItem = FwCreateEventItem(FWPM_NET_EVENT_TYPE_CLASSIFY_DROP, FWP_DIRECTION_OUTBOUND);
             break;
-        default:
-            PhDereferenceObject(fwEventItem);
-            return;
         }
+
+        if (!fwEventItem)
+            return;
 
         if (fwDropEvent->layerId && FwpmLayerGetById(FwEngineHandle, fwDropEvent->layerId, &fwLayerItem) == ERROR_SUCCESS)
         {
@@ -163,25 +172,22 @@ VOID CALLBACK DropEventCallback(
         FWPM_NET_EVENT_CLASSIFY_ALLOW* fwAllowEvent = FwEvent->classifyAllow;
 
         if (fwAllowEvent->isLoopback)
-        {
-            PhDereferenceObject(fwEventItem);
             return;
-        }
 
         switch (fwAllowEvent->msFwpDirection)
         {
         case FWP_DIRECTION_IN:
         case FWP_DIRECTION_INBOUND:
-            fwEventItem->FwRuleEventDirection = FWP_DIRECTION_INBOUND;
+            fwEventItem = FwCreateEventItem(FWPM_NET_EVENT_TYPE_CLASSIFY_ALLOW, FWP_DIRECTION_INBOUND);
             break;
         case FWP_DIRECTION_OUT:
         case FWP_DIRECTION_OUTBOUND:
-            fwEventItem->FwRuleEventDirection = FWP_DIRECTION_OUTBOUND;
+            fwEventItem = FwCreateEventItem(FWPM_NET_EVENT_TYPE_CLASSIFY_ALLOW, FWP_DIRECTION_OUTBOUND);
             break;
-        default:
-            PhDereferenceObject(fwEventItem);
-            return;
         }
+
+        if (!fwEventItem)
+            return;
 
         if (fwAllowEvent->layerId && FwpmLayerGetById(FwEngineHandle, fwAllowEvent->layerId, &fwLayerItem) == ERROR_SUCCESS)
         {
@@ -216,11 +222,9 @@ VOID CALLBACK DropEventCallback(
             FwpmFreeMemory(&fwFilterItem);
         }
     }
-    else
-    {
-        PhDereferenceObject(fwEventItem);
+
+    if (!fwEventItem)
         return;
-    }
 
     if ((FwEvent->header.flags & FWPM_NET_EVENT_FLAG_IP_VERSION_SET) != 0)
     {

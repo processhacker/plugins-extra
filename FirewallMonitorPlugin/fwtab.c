@@ -281,7 +281,6 @@ PFW_EVENT_ITEM AddFwNode(
     _In_ PFW_EVENT_ITEM FwItem
     )
 {
-    PhReferenceObject(FwItem);
     PhInitializeTreeNewNode(&FwItem->Node);
 
     memset(FwItem->TextCache, 0, sizeof(PH_STRINGREF) * FW_COLUMN_MAXIMUM);
