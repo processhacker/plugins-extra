@@ -106,7 +106,7 @@ INT_PTR CALLBACK ViewPolicyDlgProc(
             PhAddLayoutItem(&ViewLayoutManager, GetDlgItem(hwndDlg, IDC_POLICYEDIT), NULL, PH_ANCHOR_ALL);
             PhAddLayoutItem(&ViewLayoutManager, GetDlgItem(hwndDlg, IDOK), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_RIGHT);
 
-            SetWindowText(GetDlgItem(hwndDlg, IDC_POLICYEDIT), value->Buffer);
+            PhSetWindowText(GetDlgItem(hwndDlg, IDC_POLICYEDIT), value->Buffer);
         }
         break;    
     case WM_SIZE:

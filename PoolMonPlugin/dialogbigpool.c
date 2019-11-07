@@ -120,7 +120,7 @@ INT_PTR CALLBACK BigPoolMonDlgProc(
 
             PhCenterWindow(hwndDlg, NULL);
 
-            SetWindowText(hwndDlg, PhaFormatString(L"Large Allocations (%s)", context->TagString)->Buffer);
+            PhSetWindowText(hwndDlg, PhaFormatString(L"Large Allocations (%s)", context->TagString)->Buffer);
 
             PhRegisterDialog(hwndDlg);
             PhSetListViewStyle(context->ListviewHandle, FALSE, TRUE);

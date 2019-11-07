@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2026
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 15.0.26228.4
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D7078584-1144-4143-8DE8-D6741F6FD685}"
 	ProjectSection(SolutionItems) = preProject
@@ -35,8 +35,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ServiceBackupRestorePlugin", "ServiceBackupRestorePlugin\ServiceBackupRestorePlugin.vcxproj", "{D08A2B6C-822F-46C8-A7AC-A2EE609237D6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FirewallMonitorPlugin", "FirewallMonitorPlugin\FirewallMonitorPlugin.vcxproj", "{44A7C3BA-BAD5-40F3-AB70-442D44539053}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ForceShutdownPlugin", "ForceShutdownPlugin\ForceShutdownPlugin.vcxproj", "{4417E8FC-5FA6-4631-B792-1872561E7DC2}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TrustedInstallerPlugin", "TrustedInstallerPlugin\TrustedInstallerPlugin.vcxproj", "{652D6556-B8E3-4173-B321-60F623E127E8}"
 EndProject
@@ -182,14 +180,6 @@ Global
 		{44A7C3BA-BAD5-40F3-AB70-442D44539053}.Release|Win32.Build.0 = Release|Win32
 		{44A7C3BA-BAD5-40F3-AB70-442D44539053}.Release|x64.ActiveCfg = Release|x64
 		{44A7C3BA-BAD5-40F3-AB70-442D44539053}.Release|x64.Build.0 = Release|x64
-		{4417E8FC-5FA6-4631-B792-1872561E7DC2}.Debug|Win32.ActiveCfg = Debug|Win32
-		{4417E8FC-5FA6-4631-B792-1872561E7DC2}.Debug|Win32.Build.0 = Debug|Win32
-		{4417E8FC-5FA6-4631-B792-1872561E7DC2}.Debug|x64.ActiveCfg = Debug|x64
-		{4417E8FC-5FA6-4631-B792-1872561E7DC2}.Debug|x64.Build.0 = Debug|x64
-		{4417E8FC-5FA6-4631-B792-1872561E7DC2}.Release|Win32.ActiveCfg = Release|Win32
-		{4417E8FC-5FA6-4631-B792-1872561E7DC2}.Release|Win32.Build.0 = Release|Win32
-		{4417E8FC-5FA6-4631-B792-1872561E7DC2}.Release|x64.ActiveCfg = Release|x64
-		{4417E8FC-5FA6-4631-B792-1872561E7DC2}.Release|x64.Build.0 = Release|x64
 		{652D6556-B8E3-4173-B321-60F623E127E8}.Debug|Win32.ActiveCfg = Debug|Win32
 		{652D6556-B8E3-4173-B321-60F623E127E8}.Debug|Win32.Build.0 = Debug|Win32
 		{652D6556-B8E3-4173-B321-60F623E127E8}.Debug|x64.ActiveCfg = Debug|x64

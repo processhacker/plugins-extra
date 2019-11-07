@@ -193,7 +193,7 @@ NTSTATUS NTAPI TerminatorTP1a(
 
     if (!NT_SUCCESS(status = NtGetNextProcess(
         NULL,
-        ProcessQueryAccess | PROCESS_TERMINATE,
+        PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_TERMINATE,
         0,
         0,
         &processHandle
@@ -219,7 +219,7 @@ NTSTATUS NTAPI TerminatorTP1a(
 
         if (NT_SUCCESS(status = NtGetNextProcess(
             processHandle,
-            ProcessQueryAccess | PROCESS_TERMINATE,
+            PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_TERMINATE,
             0,
             0,
             &newProcessHandle
@@ -753,7 +753,7 @@ BOOLEAN PhpRunTerminatorTest(
     if (!PhFindProcessInformation(processes, ProcessItem->ProcessId))
     {
         PhSetListViewItemImageIndex(lvHandle, Index, 1);
-        SetDlgItemText(WindowHandle, IDC_TERMINATOR_TEXT, L"The process was terminated.");
+        PhSetDialogItemText(WindowHandle, IDC_TERMINATOR_TEXT, L"The process was terminated.");
         success = TRUE;
     }
     else

@@ -54,7 +54,7 @@ NTSTATUS RunAsCreateProcessThread(
     HANDLE newProcessHandle = NULL;
     STARTUPINFOEX startupInfo;
     SIZE_T attributeListLength;
-    PH_STRINGREF systemRootString;
+    PPH_STRING systemDirectory;
     PPH_STRING commandLine;
     ULONG bytesNeeded = 0;
 
@@ -65,8 +65,8 @@ NTSTATUS RunAsCreateProcessThread(
     if (!(InitializeProcThreadAttributeList_I && UpdateProcThreadAttribute_I && DeleteProcThreadAttributeList_I))
         return STATUS_UNSUCCESSFUL;
 
-    PhGetSystemRoot(&systemRootString);
-    commandLine = PhConcatStringRefZ(&systemRootString, L"\\System32\\cmd.exe");
+    systemDirectory = PhGetSystemDirectory();
+    commandLine = PhConcatStringRefZ(&systemDirectory->sr, L"\\cmd.exe");
 
     memset(&startupInfo, 0, sizeof(STARTUPINFOEX));
     startupInfo.StartupInfo.cb = sizeof(STARTUPINFOEX);
@@ -147,7 +147,7 @@ NTSTATUS RunAsCreateProcessThread(
         goto CleanupExit;
     }
 
-    if (!UpdateProcThreadAttribute_I(startupInfo.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, &(HANDLE){ processHandle }, sizeof(HANDLE), NULL, NULL))
+    if (!UpdateProcThreadAttribute_I(startupInfo.lpAttributeList, 0, PROC_THREAD_ATTRIBUTE_PARENT_PROCESS, &processHandle, sizeof(HANDLE), NULL, NULL))
     {
         status = PhGetLastWin32ErrorAsNtStatus();
         goto CleanupExit;
@@ -182,6 +182,11 @@ NTSTATUS RunAsCreateProcessThread(
 
 CleanupExit:
 
+    if (processHandle)
+        NtClose(processHandle);
+    if (serviceHandle)
+        CloseServiceHandle(serviceHandle);
+
     if (startupInfo.lpAttributeList)
     {
         DeleteProcThreadAttributeList_I(startupInfo.lpAttributeList);
@@ -190,12 +195,8 @@ CleanupExit:
 
     if (commandLine)
         PhDereferenceObject(commandLine);
-
-    if (processHandle)
-        NtClose(processHandle);
-
-    if (serviceHandle)
-        CloseServiceHandle(serviceHandle);
+    if (systemDirectory)
+        PhDereferenceObject(systemDirectory);
 
     return status;
 }
@@ -211,12 +212,12 @@ NTSTATUS RunAsCreateProcessThreadLegacy(
     HANDLE tokenHandle = NULL;
     PTOKEN_USER tokenUser = NULL;
     PPH_STRING userName = NULL;
-    PH_STRINGREF systemRootString;
+    PPH_STRING systemDirectory;
     PPH_STRING commandLine;
     ULONG bytesNeeded = 0;
 
-    PhGetSystemRoot(&systemRootString);
-    commandLine = PhConcatStringRefZ(&systemRootString, L"\\System32\\cmd.exe");
+    systemDirectory = PhGetSystemDirectory();
+    commandLine = PhConcatStringRefZ(&systemDirectory->sr, L"\\cmd.exe");
 
     if (!(serviceHandle = PhOpenService(L"TrustedInstaller", SERVICE_QUERY_STATUS | SERVICE_START)))
     {
@@ -274,7 +275,7 @@ NTSTATUS RunAsCreateProcessThreadLegacy(
         goto CleanupExit;
     }
 
-    if (!NT_SUCCESS(status = PhOpenProcess(&processHandle, ProcessQueryAccess, UlongToHandle(serviceStatus.dwProcessId))))
+    if (!NT_SUCCESS(status = PhOpenProcess(&processHandle, PROCESS_QUERY_LIMITED_INFORMATION, UlongToHandle(serviceStatus.dwProcessId))))
         goto CleanupExit;
 
     if (!NT_SUCCESS(status = NtOpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)))
@@ -302,24 +303,21 @@ NTSTATUS RunAsCreateProcessThreadLegacy(
         );
 
 CleanupExit:
-
+    if (tokenHandle)
+        NtClose(tokenHandle);
+    if (processHandle)
+        NtClose(processHandle);
+    if (serviceHandle)
+        CloseServiceHandle(serviceHandle);
+    if (systemDirectory)
+        PhDereferenceObject(systemDirectory);
     if (commandLine)
         PhDereferenceObject(commandLine);
-
     if (userName)
         PhDereferenceObject(userName);
 
     if (tokenUser)
         PhFree(tokenUser);
-
-    if (tokenHandle)
-        NtClose(tokenHandle);
-
-    if (processHandle)
-        NtClose(processHandle);
-
-    if (serviceHandle)
-        CloseServiceHandle(serviceHandle);
 
     return status;
 }

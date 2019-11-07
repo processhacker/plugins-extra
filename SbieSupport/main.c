@@ -614,7 +614,7 @@ INT_PTR CALLBACK OptionsDlgProc(
                     if (PhShowFileDialog(hwndDlg, fileDialog))
                     {
                         fileName = PH_AUTO(PhGetFileDialogFileName(fileDialog));
-                        SetDlgItemText(hwndDlg, IDC_SBIEDLLPATH, fileName->Buffer);
+                        PhSetDialogItemText(hwndDlg, IDC_SBIEDLLPATH, fileName->Buffer);
                     }
 
                     PhFreeFileDialog(fileDialog);

@@ -134,7 +134,7 @@ INT_PTR CALLBACK PerfCounterDialogProc(
             PhAddLayoutItemEx(&context->LayoutManager, context->GraphHandle, NULL, PH_ANCHOR_ALL, panelItem->Margin);
 
             SendMessage(GetDlgItem(hwndDlg, IDC_COUNTERNAME), WM_SETFONT, (WPARAM)context->SysinfoSection->Parameters->LargeFont, FALSE);
-            SetDlgItemText(hwndDlg, IDC_COUNTERNAME, context->SysinfoSection->Name.Buffer);
+            PhSetDialogItemText(hwndDlg, IDC_COUNTERNAME, context->SysinfoSection->Name.Buffer);
 
             PhRegisterCallback(
                 PhGetGeneralCallback(GeneralCallbackProcessProviderUpdatedEvent),
@@ -212,7 +212,7 @@ INT_PTR CALLBACK PerfCounterDialogProc(
                                 PhMoveReference(&context->GraphState.TooltipText, PhFormatString(
                                     L"%s\n%s",
                                     PhaFormatUInt64(counterValue, TRUE)->Buffer,
-                                    ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
+                                    ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                                     ));
                             }
 
@@ -309,7 +309,7 @@ BOOLEAN PerfCounterSectionCallback(
             PhMoveReference(&Section->GraphState.TooltipText, PhFormatString(
                 L"%s\n%s",
                 PhaFormatUInt64(counterValue, TRUE)->Buffer,
-                ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
+                ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                 ));
 
             getTooltipText->Text = Section->GraphState.TooltipText->sr;

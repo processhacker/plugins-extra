@@ -133,7 +133,7 @@ INT_PTR CALLBACK UefiEditorDlgProc(
 
             SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)PH_LOAD_SHARED_ICON_SMALL(PhInstanceHandle, MAKEINTRESOURCE(PHAPP_IDI_PROCESSHACKER)));
             SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)PH_LOAD_SHARED_ICON_LARGE(PhInstanceHandle, MAKEINTRESOURCE(PHAPP_IDI_PROCESSHACKER)));
-            SetWindowText(hwndDlg, PhGetString(context->Name));
+            PhSetWindowText(hwndDlg, PhGetString(context->Name));
 
             if (!NT_SUCCESS(status = UefiQueryVariable(context, context->Name, context->GuidString)))
             {

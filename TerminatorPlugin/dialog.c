@@ -172,7 +172,7 @@ INT_PTR CALLBACK PhpProcessTerminatorDlgProc(
             HWND lvHandle;
             HIMAGELIST imageList;
                        
-            SetWindowText(hwndDlg, PhaFormatString(
+            PhSetWindowText(hwndDlg, PhaFormatString(
                 L"Terminator - %s (%u)",
                 context->ProcessItem->ProcessName->Buffer,
                 HandleToUlong(context->ProcessItem->ProcessId)
@@ -219,7 +219,7 @@ INT_PTR CALLBACK PhpProcessTerminatorDlgProc(
 
             ListView_SetImageList(lvHandle, imageList, LVSIL_SMALL);
 
-            SetDlgItemText(
+            PhSetDialogItemText(
                 hwndDlg,
                 IDC_TERMINATOR_TEXT,
                 L"Double-click a termination method or click Run Selected."

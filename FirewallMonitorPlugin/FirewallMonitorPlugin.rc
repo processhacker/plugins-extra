@@ -47,45 +47,6 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Version
-//
-
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,0
- PRODUCTVERSION 1,0,0,0
- FILEFLAGSMASK 0x17L
-#ifdef _DEBUG
- FILEFLAGS 0x1L
-#else
- FILEFLAGS 0x0L
-#endif
- FILEOS 0x4L
- FILETYPE 0x2L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "0c0904b0"
-        BEGIN
-            VALUE "CompanyName", "dmex"
-            VALUE "FileDescription", "Firewall Monitor plugin for Process Hacker"
-            VALUE "FileVersion", "1.0"
-            VALUE "InternalName", "dmex.FirewallMonitor"
-            VALUE "LegalCopyright", "Licensed under the GNU GPL, v3."
-            VALUE "OriginalFilename", "FirewallMonitorPlugin.dll"
-            VALUE "ProductName", "Firewall Monitor plugin for Process Hacker"
-            VALUE "ProductVersion", "1.0.0.0"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0xc09, 1200
-    END
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Menu
 //
 
@@ -159,6 +120,11 @@ END
 //
 
 IDD_FWTABLE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_FWERROR AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

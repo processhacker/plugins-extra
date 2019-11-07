@@ -62,14 +62,14 @@ VOID MenuItemCallback(
 {
     PPH_PLUGIN_MENU_ITEM menuItem = (PPH_PLUGIN_MENU_ITEM)Parameter;
 
-    if (menuItem != NULL)
+    if (!menuItem)
+        return;
+
+    switch (menuItem->Id)
     {
-        switch (menuItem->Id)
-        {
-        case 1:
-            ShowFwDialog();
-            break;
-        }
+    case 1:
+        ShowFwDialog();
+        break;
     }
 }
 
@@ -89,6 +89,9 @@ VOID NTAPI MainMenuInitializingCallback(
     PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
     PPH_EMENU_ITEM systemMenu;
     PPH_EMENU_ITEM bootMenuItem;
+
+    if (!menuInfo)
+        return;
 
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;

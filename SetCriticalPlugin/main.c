@@ -23,11 +23,13 @@
 #include <phdk.h>
 #include "resource.h"
 
-#define CRITICAL_MENU_ITEM 1
+#define CRITICAL_PROCESS_MENU_ITEM 1
+#define CRITICAL_THREAD_MENU_ITEM 2
 
-static PPH_PLUGIN PluginInstance;
-static PH_CALLBACK_REGISTRATION MenuItemCallbackRegistration;
-static PH_CALLBACK_REGISTRATION ProcessMenuInitializingCallbackRegistration;
+PPH_PLUGIN PluginInstance;
+PH_CALLBACK_REGISTRATION MenuItemCallbackRegistration;
+PH_CALLBACK_REGISTRATION ProcessMenuInitializingCallbackRegistration;
+PH_CALLBACK_REGISTRATION ThreadMenuInitializingCallbackRegistration;
 
 VOID NTAPI MenuItemCallback(
     _In_opt_ PVOID Parameter,
@@ -38,7 +40,7 @@ VOID NTAPI MenuItemCallback(
 
     switch (menuItem->Id)
     {
-    case CRITICAL_MENU_ITEM:
+    case CRITICAL_PROCESS_MENU_ITEM:
         {
             NTSTATUS status;
             PPH_PROCESS_ITEM processItem = menuItem->Context;
@@ -107,7 +109,7 @@ VOID NTAPI ProcessMenuInitializingCallback(
         return;
 
     processItem = menuInfo->u.Process.NumberOfProcesses == 1 ? menuInfo->u.Process.Processes[0] : NULL;
-    criticalMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, CRITICAL_MENU_ITEM, L"&Critical", processItem);
+    criticalMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, CRITICAL_PROCESS_MENU_ITEM, L"&Critical", processItem);
     PhInsertEMenuItem(miscMenuItem, criticalMenuItem, -1);
 
     if (processItem)
@@ -124,6 +126,48 @@ VOID NTAPI ProcessMenuInitializingCallback(
             }
 
             NtClose(processHandle);
+        }
+    }
+    else
+    {
+        criticalMenuItem->Flags |= PH_EMENU_DISABLED;
+    }
+}
+
+VOID NTAPI ThreadMenuInitializingCallback(
+    _In_opt_ PVOID Parameter,
+    _In_opt_ PVOID Context
+    )
+{
+    PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
+    PPH_EMENU_ITEM miscMenuItem;
+    PPH_EMENU_ITEM criticalMenuItem;
+    PPH_THREAD_ITEM threadItem;
+    ULONG indexOfMenuItem;
+
+    if (miscMenuItem = PhFindEMenuItem(menuInfo->Menu, 0, L"Analyze", 0))
+        indexOfMenuItem = PhIndexOfEMenuItem(menuInfo->Menu, miscMenuItem) + 1;
+    else
+        indexOfMenuItem = ULONG_MAX;
+
+    threadItem = menuInfo->u.Thread.NumberOfThreads == 1 ? menuInfo->u.Thread.Threads[0] : NULL;
+    criticalMenuItem = PhPluginCreateEMenuItem(PluginInstance, 0, CRITICAL_THREAD_MENU_ITEM, L"&Critical", threadItem);
+    PhInsertEMenuItem(menuInfo->Menu, criticalMenuItem, indexOfMenuItem);
+
+    if (threadItem)
+    {
+        HANDLE threadHandle;
+        ULONG breakOnTermination;
+
+        if (NT_SUCCESS(PhOpenThread(&threadHandle, THREAD_QUERY_INFORMATION, threadItem->ThreadId)))
+        {
+            if (NT_SUCCESS(NtQueryInformationThread(threadHandle, ThreadBreakOnTermination, &breakOnTermination, sizeof(ULONG), NULL)))
+            {
+                if (breakOnTermination)
+                    criticalMenuItem->Flags |= PH_EMENU_CHECKED;
+            }
+
+            NtClose(threadHandle);
         }
     }
     else
@@ -162,6 +206,12 @@ LOGICAL DllMain(
             ProcessMenuInitializingCallback, 
             NULL, 
             &ProcessMenuInitializingCallbackRegistration
+            );
+        PhRegisterCallback(
+            PhGetGeneralCallback(GeneralCallbackThreadMenuInitializing),
+            ThreadMenuInitializingCallback,
+            NULL,
+            &ThreadMenuInitializingCallbackRegistration
             );
     }
 

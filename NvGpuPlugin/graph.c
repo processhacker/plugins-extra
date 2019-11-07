@@ -313,7 +313,7 @@ VOID NvGpuNotifyUsageGraph(
                     PhMoveReference(&Context->GpuGraphState.TooltipText, PhFormatString(
                         L"%.0f%%\n%s",
                         gpuUsageValue * 100,
-                        ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
+                        ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                         ));
                 }
 
@@ -398,7 +398,7 @@ VOID NvGpuNotifyMemoryGraph(
                         PhaFormatSize(UInt32x32To64(usedPages, 1024), -1)->Buffer,
                         PhaFormatSize(UInt32x32To64(GpuMemoryLimit, 1024), -1)->Buffer,
                         (FLOAT)usedPages / GpuMemoryLimit * 100,
-                        ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
+                        ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                         ));
                 }
 
@@ -465,7 +465,7 @@ VOID NvGpuNotifySharedGraph(
                     PhMoveReference(&Context->SharedGraphState.TooltipText, PhFormatString(
                         L"%.0f%%\n%s",
                         usedPages * 100,
-                        ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
+                        ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                         ));
                 }
 
@@ -532,7 +532,7 @@ VOID NvGpuNotifyBusGraph(
                     PhMoveReference(&Context->BusGraphState.TooltipText, PhFormatString(
                         L"%.0f%%\n%s",
                         busUsage * 100,
-                        ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
+                        ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                         ));
                 }
 
@@ -582,24 +582,24 @@ VOID NvGpuUpdatePanel(
 {
     NvGpuUpdateVoltage();
 
-    SetDlgItemText(Context->GpuPanel, IDC_CLOCK_CORE, PhaFormatString(L"%lu MHz", GpuCurrentCoreClock)->Buffer);
-    SetDlgItemText(Context->GpuPanel, IDC_CLOCK_MEMORY, PhaFormatString(L"%lu MHz", GpuCurrentMemoryClock)->Buffer);
-    SetDlgItemText(Context->GpuPanel, IDC_CLOCK_SHADER, PhaFormatString(L"%lu MHz", GpuCurrentShaderClock)->Buffer);
-    SetDlgItemText(Context->GpuPanel, IDC_FAN_PERCENT, ((PPH_STRING)PhAutoDereferenceObject(NvGpuQueryFanSpeed()))->Buffer);
+    PhSetDialogItemText(Context->GpuPanel, IDC_CLOCK_CORE, PhaFormatString(L"%lu MHz", GpuCurrentCoreClock)->Buffer);
+    PhSetDialogItemText(Context->GpuPanel, IDC_CLOCK_MEMORY, PhaFormatString(L"%lu MHz", GpuCurrentMemoryClock)->Buffer);
+    PhSetDialogItemText(Context->GpuPanel, IDC_CLOCK_SHADER, PhaFormatString(L"%lu MHz", GpuCurrentShaderClock)->Buffer);
+    PhSetDialogItemText(Context->GpuPanel, IDC_FAN_PERCENT, ((PPH_STRING)PH_AUTO(NvGpuQueryFanSpeed()))->Buffer);
 
     if (PhGetIntegerSetting(SETTING_NAME_ENABLE_FAHRENHEIT))
     {
         FLOAT fahrenheit = (FLOAT)(GpuCurrentCoreTemp * 1.8 + 32);
 
-        SetDlgItemText(Context->GpuPanel, IDC_TEMP_VALUE, PhaFormatString(L"%.1f\u00b0F", fahrenheit)->Buffer);
+        PhSetDialogItemText(Context->GpuPanel, IDC_TEMP_VALUE, PhaFormatString(L"%.1f\u00b0F", fahrenheit)->Buffer);
     }
     else
     {
-        SetDlgItemText(Context->GpuPanel, IDC_TEMP_VALUE, PhaFormatString(L"%lu\u00b0C", GpuCurrentCoreTemp)->Buffer);
+        PhSetDialogItemText(Context->GpuPanel, IDC_TEMP_VALUE, PhaFormatString(L"%lu\u00b0C", GpuCurrentCoreTemp)->Buffer);
     }
 
-    //SetDlgItemText(Context->GpuPanel, IDC_TEMP_VALUE, PhaFormatString(L"%s\u00b0C", PhaFormatUInt64(GpuCurrentBoardTemp, TRUE)->Buffer)->Buffer);
-    SetDlgItemText(Context->GpuPanel, IDC_VOLTAGE, PhaFormatString(L"%lu mV", GpuCurrentVoltage)->Buffer);
+    //PhSetDialogItemText(Context->GpuPanel, IDC_TEMP_VALUE, PhaFormatString(L"%s\u00b0C", PhaFormatUInt64(GpuCurrentBoardTemp, TRUE)->Buffer)->Buffer);
+    PhSetDialogItemText(Context->GpuPanel, IDC_VOLTAGE, PhaFormatString(L"%lu mV", GpuCurrentVoltage)->Buffer);
 }
 
 INT_PTR CALLBACK NvGpuDialogProc(
@@ -673,9 +673,9 @@ INT_PTR CALLBACK NvGpuDialogProc(
             context->GpuGraphMargin = graphItem->Margin;
             panelItem = PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDC_PANEL_LAYOUT), NULL, PH_ANCHOR_LEFT | PH_ANCHOR_RIGHT | PH_ANCHOR_BOTTOM);
 
-            SendMessage(GetDlgItem(hwndDlg, IDC_TITLE), WM_SETFONT, (WPARAM)context->Section->Parameters->LargeFont, FALSE);
-            SendMessage(GetDlgItem(hwndDlg, IDC_GPUNAME), WM_SETFONT, (WPARAM)context->Section->Parameters->MediumFont, FALSE);
-            SetDlgItemText(hwndDlg, IDC_GPUNAME, context->GpuName->Buffer);
+            SetWindowFont(GetDlgItem(hwndDlg, IDC_TITLE), context->Section->Parameters->LargeFont, FALSE);
+            SetWindowFont(GetDlgItem(hwndDlg, IDC_GPUNAME), context->Section->Parameters->MediumFont, FALSE);
+            PhSetDialogItemText(hwndDlg, IDC_GPUNAME, context->GpuName->Buffer);
 
             context->GpuPanel = CreateDialogParam(PluginInstance->DllBase, MAKEINTRESOURCE(IDD_GPU_PANEL), hwndDlg, NvGpuPanelDialogProc, (LPARAM)context);
             ShowWindow(context->GpuPanel, SW_SHOW);
@@ -788,7 +788,7 @@ BOOLEAN NvGpuSectionCallback(
             PhMoveReference(&Section->GraphState.TooltipText, PhFormatString(
                 L"%.0f%%\n%s",
                 gpuUsageValue * 100,
-                ((PPH_STRING)PhAutoDereferenceObject(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
+                ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                 ));
 
             getTooltipText->Text = Section->GraphState.TooltipText->sr;

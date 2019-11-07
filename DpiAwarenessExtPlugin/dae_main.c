@@ -471,7 +471,7 @@ static ULONG DaepGetDpiAwareness(_In_ PPH_PROCESS_ITEM ProcessItem, _Inout_ PHAN
 
         if (!*VmReadHandle)
         {
-            if (!NT_SUCCESS(PhOpenProcess(VmReadHandle, ProcessQueryAccess | PROCESS_VM_READ, ProcessItem->ProcessId)))
+            if (!NT_SUCCESS(PhOpenProcess(VmReadHandle, PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, ProcessItem->ProcessId)))
                 return DAE_DPI_AWARENESS_UNKNOWN;
         }
         if (!NT_SUCCESS(
@@ -501,7 +501,7 @@ static ULONG DaepGetDpiAwarenessForced(_In_ PPROCESS_EXTENSION Extension, _Inout
 
     if (!*VmReadHandle)
     {
-        if (!NT_SUCCESS(PhOpenProcess(VmReadHandle, ProcessQueryAccess | PROCESS_VM_READ, Extension->ProcessItem->ProcessId)))
+        if (!NT_SUCCESS(PhOpenProcess(VmReadHandle, PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, Extension->ProcessItem->ProcessId)))
             return DAE_TRIS_UNKNOWN;
     }
 

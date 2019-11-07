@@ -102,7 +102,7 @@ INT_PTR CALLBACK OptionsDlgProc(
         {
             PPH_STRING graphTypeString;
 
-            graphTypeString = PhAutoDereferenceObject(PhGetWindowText(GetDlgItem(hwndDlg, IDC_GRAPH_TYPE)));
+            graphTypeString = PH_AUTO(PhGetWindowText(GetDlgItem(hwndDlg, IDC_GRAPH_TYPE)));
             PhSetIntegerSetting(SETTING_NAME_TASKBAR_ICON_TYPE, GraphTypeGetTypeInteger(graphTypeString->Buffer));
         }
         break;
