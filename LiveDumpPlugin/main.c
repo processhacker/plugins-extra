@@ -33,6 +33,9 @@ VOID MenuItemCallback(
 {
     PPH_PLUGIN_MENU_ITEM menuItem = Parameter;
 
+    if (!menuItem)
+        return;
+
     switch (menuItem->Id)
     {
     case PLUGIN_MENU_ITEM:
@@ -47,17 +50,24 @@ VOID NTAPI MainMenuInitializingCallback(
     )
 {
     PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
-    PPH_EMENU_ITEM liveDumpMenu;
+    PPH_EMENU_ITEM menuItem;
+    ULONG indexOfMenuItem;
+
+    if (!menuInfo)
+        return;
 
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
 
-    PhInsertEMenuItem(menuInfo->Menu, liveDumpMenu = PhPluginCreateEMenuItem(PluginInstance, 0, PLUGIN_MENU_ITEM, L"&Live kernel dump...", NULL), -1);
+    menuItem = PhFindEMenuItem(menuInfo->Menu, PH_EMENU_FIND_STARTSWITH, NULL, PHAPP_ID_TOOLS_CREATESERVICE);
 
-    if (WindowsVersion < WINDOWS_8_1 || !PhGetOwnTokenAttributes().Elevated)
-    {
-        liveDumpMenu->Flags |= PH_EMENU_DISABLED;
-    }
+    if (menuItem)
+        indexOfMenuItem = PhIndexOfEMenuItem(menuInfo->Menu, menuItem) + 1;
+    else
+        indexOfMenuItem = ULONG_MAX;
+
+    menuItem = PhPluginCreateEMenuItem(PluginInstance, 0, PLUGIN_MENU_ITEM, L"&Create kernel dump...", NULL);
+    PhInsertEMenuItem(menuInfo->Menu, menuItem, indexOfMenuItem);
 }
 
 LOGICAL DllMain(

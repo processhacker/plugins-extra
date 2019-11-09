@@ -161,11 +161,11 @@ NTSTATUS WaitChainCallbackThread(
         THREAD_BASIC_INFORMATION basicInfo;
 
         status = NtGetNextThread(
-            context->ProcessItem->QueryHandle, 
-            NULL, 
-            ThreadQueryAccess,
-            0, 
-            0, 
+            context->ProcessItem->QueryHandle,
+            NULL,
+            THREAD_QUERY_LIMITED_INFORMATION,
+            0,
+            0,
             &threadHandle
             );
 
@@ -179,14 +179,13 @@ NTSTATUS WaitChainCallbackThread(
             status = NtGetNextThread(
                 context->ProcessItem->QueryHandle, 
                 threadHandle, 
-                ThreadQueryAccess, 
+                THREAD_QUERY_LIMITED_INFORMATION,
                 0, 
                 0, 
                 &newThreadHandle
                 );
 
             NtClose(threadHandle);
-
             threadHandle = newThreadHandle;
         }
     }

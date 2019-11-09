@@ -33,7 +33,7 @@ VOID NTAPI DbgLoggedEventCallback(
 {
     PPH_DBGEVENTS_CONTEXT context = (PPH_DBGEVENTS_CONTEXT)Context;
 
-    if (context->DialogHandle)
+    if (context && context->DialogHandle)
     {
         PostMessage(context->DialogHandle, WM_DEBUG_LOG_UPDATED, 0, 0);
     }
@@ -377,6 +377,7 @@ INT_PTR CALLBACK DbgViewDlgProc(
         {
             PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
             PhFree(context);
+            context = NULL;
         }
     }
 
