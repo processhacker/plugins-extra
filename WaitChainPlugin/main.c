@@ -446,6 +446,7 @@ VOID NTAPI ThreadMenuInitializingCallback(
     PPH_THREAD_ITEM threadItem = NULL;
     PPH_EMENU_ITEM menuItem = NULL;
     PPH_EMENU_ITEM miscMenuItem = NULL;
+    ULONG indexOfMenuItem;
 
     menuInfo = (PPH_PLUGIN_MENU_INFORMATION)Parameter;
 
@@ -460,16 +461,17 @@ VOID NTAPI ThreadMenuInitializingCallback(
     context->IsProcessItem = FALSE;
     context->ThreadItem = threadItem;
 
-    miscMenuItem = PhFindEMenuItem(menuInfo->Menu, 0, L"Analyze", 0);
-    if (miscMenuItem)
-    {
-        menuItem = PhPluginCreateEMenuItem(PluginInstance, 0, IDD_WCT_MENUITEM, L"Wait Chain Tra&versal", context);
-        PhInsertEMenuItem(miscMenuItem, menuItem, -1);
+    if (miscMenuItem = PhFindEMenuItem(menuInfo->Menu, 0, L"Analyze", 0))
+        indexOfMenuItem = PhIndexOfEMenuItem(menuInfo->Menu, miscMenuItem) + 1;
+    else
+        indexOfMenuItem = -1;
 
-        // Disable menu if current process selected.
-        if (threadItem == NULL || menuInfo->u.Thread.ProcessId == NtCurrentProcessId())
-            menuItem->Flags |= PH_EMENU_DISABLED;
-    }
+    menuItem = PhPluginCreateEMenuItem(PluginInstance, 0, IDD_WCT_MENUITEM, L"Wait Chain Tra&versal", context);
+    PhInsertEMenuItem(menuInfo->Menu, menuItem, indexOfMenuItem);
+
+    // Disable menu if current process selected.
+    if (threadItem == NULL || menuInfo->u.Thread.ProcessId == NtCurrentProcessId())
+        menuItem->Flags |= PH_EMENU_DISABLED;
 }
 
 LOGICAL DllMain(
