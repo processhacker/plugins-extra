@@ -71,7 +71,7 @@ typedef struct _PROCESS_EXTENSION
     WCHAR DpiAwarenessExtDescription[32];
 } PROCESS_EXTENSION, *PPROCESS_EXTENSION;
 
-static VOID DaepUpdateDpiAwareness(PPH_PROCESS_ITEM ProcessItem, PPROCESS_EXTENSION Extension);
+static VOID DaepUpdateDpiAwareness(_In_ PPH_PROCESS_ITEM ProcessItem, _In_opt_ PPROCESS_EXTENSION Extension);
 static VOID DaepUpdateDpiAwarenessDescription(_In_ PPROCESS_EXTENSION Extension);
 
 static PPH_PLUGIN PluginInstance;
@@ -99,6 +99,9 @@ static VOID DaepTreeNewMessageCallback(
     )
 {
     PPH_PLUGIN_TREENEW_MESSAGE message = Parameter;
+
+    if (!message)
+        return;
 
     switch (message->Message)
     {
@@ -187,6 +190,9 @@ static VOID DaepProcessTreeNewInitializingCallback(
     PPH_PLUGIN_TREENEW_INFORMATION info = Parameter;
     PH_TREENEW_COLUMN column;
 
+    if (!info)
+        return;
+
     memset(&column, 0, sizeof(PH_TREENEW_COLUMN));
     column.Text = L"DPI awareness extended";
     column.Width = 50;
@@ -217,6 +223,10 @@ VOID DaepProcessAddedHandler(
     )
 {
     PPH_PROCESS_ITEM processItem = Parameter;
+
+    if (!processItem)
+        return;
+
     PPROCESS_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, processItem, EmProcessItemType);
 
     InsertTailList(&ProcessListHead, &extension->ListEntry);
@@ -228,6 +238,10 @@ VOID DaepProcessRemovedHandler(
     )
 {
     PPH_PROCESS_ITEM processItem = Parameter;
+
+    if (!processItem)
+        return;
+
     PPROCESS_EXTENSION extension = PhPluginGetObjectExtension(PluginInstance, processItem, EmProcessItemType);
 
     RemoveEntryList(&extension->ListEntry);
@@ -430,7 +444,11 @@ static void DaepInitDpiAwarenessValues(
     PBYTE isProcessDPIAware = 0;
     PVOID user32Base;
 
+    *GetProcessDpiAwarenessInternal = NULL;
     *GfDPIAwareOffset = 0;
+#ifdef _WIN64
+    *GfDPIAwareOffset32 = 0;
+#endif
     user32Base = PhGetDllHandle(L"user32.dll");
     if (!user32Base)
         return;
