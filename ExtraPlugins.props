@@ -28,7 +28,6 @@
             <TreatWarningAsError>true</TreatWarningAsError>
             <WarningLevel>Level3</WarningLevel>
             <SDLCheck>false</SDLCheck>
-            <CallingConvention>StdCall</CallingConvention>
             <MinimalRebuild>false</MinimalRebuild>
             <MultiProcessorCompilation>true</MultiProcessorCompilation>
             <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -37,7 +36,6 @@
         <Link>
             <AdditionalDependencies>ProcessHacker.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
             <GenerateDebugInformation>true</GenerateDebugInformation>
-            <MinimumRequiredVersion>6.01</MinimumRequiredVersion>
             <SubSystem>Windows</SubSystem>
         </Link>
         <BuildLog>
@@ -77,19 +75,34 @@
     <!-- Win32 Builds -->
     <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
         <ClCompile>
+            <CallingConvention>StdCall</CallingConvention>
             <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
         </ClCompile>
         <Link>
             <AdditionalLibraryDirectories>../../sdk/lib/i386;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
             <TargetMachine>MachineX86</TargetMachine>
+            <MinimumRequiredVersion>6.01</MinimumRequiredVersion>
         </Link>
     </ItemDefinitionGroup>
 
     <!-- x64 Builds -->
     <ItemDefinitionGroup Condition="'$(Platform)'=='x64'">
+        <ClCompile>
+            <CallingConvention>StdCall</CallingConvention>
+        </ClCompile>
         <Link>
             <AdditionalLibraryDirectories>../../sdk/lib/amd64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
             <TargetMachine>MachineX64</TargetMachine>
+            <MinimumRequiredVersion>6.01</MinimumRequiredVersion>
+        </Link>
+    </ItemDefinitionGroup>
+
+    <!-- ARM64 Builds -->
+    <ItemDefinitionGroup Condition="'$(Platform)'=='ARM64'">
+        <Link>
+            <AdditionalLibraryDirectories>../../sdk/lib/arm64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+            <TargetMachine>MachineARM64</TargetMachine>
+            <MinimumRequiredVersion>10.0</MinimumRequiredVersion>
         </Link>
     </ItemDefinitionGroup>
 
@@ -107,6 +120,13 @@
         </ClCompile>
     </ItemDefinitionGroup>
 
+    <!-- Debug|ARM64 Builds -->
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+        <ClCompile>
+            <PreprocessorDefinitions>WIN64;_DEBUG;DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+    </ItemDefinitionGroup>
+
     <!-- Release|Win32 Builds -->
     <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
         <ClCompile>
@@ -116,6 +136,13 @@
 
     <!-- Release|x64 Builds -->
     <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+        <ClCompile>
+            <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        </ClCompile>
+    </ItemDefinitionGroup>
+
+    <!-- Release|ARM64 Builds -->
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
         <ClCompile>
             <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
         </ClCompile>
