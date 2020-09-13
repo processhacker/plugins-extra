@@ -268,9 +268,7 @@ INT_PTR CALLBACK UefiEntriesDlgProc(
         {
             context->ListViewHandle = GetDlgItem(hwndDlg, IDC_BOOT_LIST);
 
-            SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)PH_LOAD_SHARED_ICON_SMALL(PhInstanceHandle, MAKEINTRESOURCE(PHAPP_IDI_PROCESSHACKER)));
-            SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)PH_LOAD_SHARED_ICON_LARGE(PhInstanceHandle, MAKEINTRESOURCE(PHAPP_IDI_PROCESSHACKER)));
-
+            PhSetApplicationWindowIcon(hwndDlg);
             PhRegisterDialog(hwndDlg);
             PhSetListViewStyle(context->ListViewHandle, FALSE, TRUE);
             PhSetControlTheme(context->ListViewHandle, L"explorer");
