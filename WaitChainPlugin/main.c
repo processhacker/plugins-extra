@@ -247,8 +247,6 @@ INT_PTR CALLBACK WaitChainDlgProc(
     {
     case WM_INITDIALOG:
         {
-            HANDLE threadHandle = NULL;
-
             context->TreeNewHandle = GetDlgItem(hwndDlg, IDC_CUSTOM1);
 
             PhRegisterDialog(hwndDlg);
@@ -258,8 +256,7 @@ INT_PTR CALLBACK WaitChainDlgProc(
             PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDOK), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_RIGHT);
             PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
 
-            if (threadHandle = PhCreateThread(0, WaitChainCallbackThread, (PVOID)context))
-                NtClose(threadHandle);
+            PhCreateThread2(WaitChainCallbackThread, (PVOID)context);
         }
         break;
     case WM_SIZE:
@@ -267,7 +264,7 @@ INT_PTR CALLBACK WaitChainDlgProc(
         break;
     case WM_COMMAND:
         {
-            switch (LOWORD(wParam))
+            switch (GET_WM_COMMAND_ID(wParam, lParam))
             {
             case IDCANCEL:
             case IDOK:

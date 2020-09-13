@@ -53,7 +53,7 @@ PPH_STRING GetSelectedTreeViewPath(
         treeItem = TreeView_GetParent(Context->TreeViewHandle, treeItem);
     }
 
-    return PhConcatStrings(2, L"\\", treePath->Buffer);
+    return PhConcatStrings(2, L"\\", PhGetStringOrEmpty(treePath));
 }
 
 HTREEITEM TreeViewAddItem(
@@ -449,7 +449,7 @@ INT_PTR CALLBACK WinObjDlgProc(
     _In_ LPARAM lParam
     )
 {
-    POBJ_CONTEXT context;
+    POBJ_CONTEXT context = NULL;
 
     if (uMsg == WM_INITDIALOG)
     {

@@ -120,8 +120,6 @@ INT_PTR CALLBACK RotViewDlgProc(
     {
     case WM_INITDIALOG:
         {
-            HANDLE threadHandle;
-
             context->ListViewHandle = GetDlgItem(hwndDlg, IDC_LIST1);
 
             PhRegisterDialog(hwndDlg);
@@ -136,10 +134,7 @@ INT_PTR CALLBACK RotViewDlgProc(
             PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDOK), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_RIGHT);
             PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
 
-            if (threadHandle = PhCreateThread(0, EnumRunningObjectTable, context->ListViewHandle))
-            {
-                NtClose(threadHandle);
-            }
+            PhCreateThread2(EnumRunningObjectTable, context->ListViewHandle);
         }
         break;
     case WM_SIZE:
@@ -147,18 +142,13 @@ INT_PTR CALLBACK RotViewDlgProc(
         break;
     case WM_COMMAND:
         {
-            switch (LOWORD(wParam))
+            switch (GET_WM_COMMAND_ID(wParam, lParam))
             {
             case IDC_ROTREFRESH:
                 {
                     ListView_DeleteAllItems(context->ListViewHandle);
 
-                    HANDLE threadHandle;
-
-                    if (threadHandle = PhCreateThread(0, EnumRunningObjectTable, context->ListViewHandle))
-                    {
-                        NtClose(threadHandle);
-                    }
+                    PhCreateThread2(EnumRunningObjectTable, context->ListViewHandle);
                 }
                 break;
             case IDCANCEL:

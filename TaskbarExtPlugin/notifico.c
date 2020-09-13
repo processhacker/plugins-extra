@@ -51,7 +51,7 @@ static VOID PhBeginBitmap2(
     {
         HDC hdc;
 
-        hdc = CreateIC(L"DISPLAY", NULL, NULL, NULL);
+        hdc = GetDC(NULL);
         Context->Hdc = CreateCompatibleDC(hdc);
 
         memset(&Context->Header, 0, sizeof(BITMAPINFOHEADER));
@@ -62,7 +62,7 @@ static VOID PhBeginBitmap2(
         Context->Header.biBitCount = 32;
         Context->Bitmap = CreateDIBSection(hdc, (BITMAPINFO*)&Context->Header, DIB_RGB_COLORS, &Context->Bits, NULL, 0);
 
-        DeleteDC(hdc);
+        ReleaseDC(NULL, hdc);
 
         Context->Initialized = TRUE;
     }

@@ -35,6 +35,9 @@ VOID NTAPI MenuItemCallback(
 {
     PPH_PLUGIN_MENU_ITEM menuItem = Parameter;
 
+    if (!menuItem)
+        return;
+
     switch (menuItem->Id)
     {
     case MEMORY_LIST_MENU_ITEM:   
@@ -52,6 +55,8 @@ VOID NTAPI MainMenuInitializingCallback(
     PPH_EMENU_ITEM systemMenu;
     PPH_EMENU_ITEM pageMenu;
 
+    if (!menuInfo)
+        return;
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
 

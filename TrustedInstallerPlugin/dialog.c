@@ -30,7 +30,7 @@ NTSTATUS RunAsTrustedInstallerThread(
     HANDLE threadHandle;
     THREAD_BASIC_INFORMATION basicInfo;
 
-    if (threadHandle = PhCreateThread(0, RunAsCreateProcessThread, NULL))
+    if (NT_SUCCESS(PhCreateThreadEx(&threadHandle, RunAsCreateProcessThread, NULL)))
     {
         NtWaitForSingleObject(threadHandle, FALSE, NULL);
         

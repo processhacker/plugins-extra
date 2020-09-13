@@ -281,7 +281,6 @@ BOOLEAN DbgEventsCreate(
         LARGE_INTEGER maximumSize;
         OBJECT_ATTRIBUTES objectAttributes;
         UNICODE_STRING objectName;
-        HANDLE threadHandle = NULL;
 
         maximumSize.QuadPart = PAGE_SIZE;
         viewSize = sizeof(DBWIN_PAGE_BUFFER);
@@ -340,10 +339,7 @@ BOOLEAN DbgEventsCreate(
 
         Context->CaptureGlobalEnabled = TRUE;
 
-        if (threadHandle = PhCreateThread(0, DbgEventsGlobalThread, Context))
-        {
-            NtClose(threadHandle);
-        }
+        PhCreateThread2(DbgEventsGlobalThread, Context);
     }
     else
     {
@@ -410,10 +406,7 @@ BOOLEAN DbgEventsCreate(
 
         Context->CaptureLocalEnabled = TRUE;
 
-        if (threadHandle = PhCreateThread(0, DbgEventsLocalThread, Context))
-        {
-            NtClose(threadHandle);
-        }
+        PhCreateThread2(DbgEventsLocalThread, Context);
     }
 
     return TRUE;

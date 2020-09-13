@@ -81,6 +81,8 @@ VOID PhBackupService(
             __leave;
         }
 
+        //RegCopyTreeW();
+
         if (!NT_SUCCESS(status = NtSaveKeyEx(
             keyHandle, 
             fileHandle, 
@@ -164,15 +166,14 @@ VOID PhRestoreService(
 
         ofdFileName = PhGetFileDialogFileName(fileDialog);
 
-        HKEY appKeyHandle;
+        HANDLE appKeyHandle;
 
-        if (RegLoadAppKey(
-            ofdFileName->Buffer,
+        if (NT_SUCCESS(PhLoadAppKey(
             &appKeyHandle,
+            ofdFileName->Buffer,
             KEY_ALL_ACCESS,
-            REG_PROCESS_APPKEY, // REG_APP_HIVE
-            0
-            ) == ERROR_SUCCESS)
+            REG_APP_HIVE // REG_PROCESS_APPKEY
+            )))
         {
             PPH_STRING displayName = PhQueryRegistryString(appKeyHandle, L"DisplayName");
             PPH_STRING currentDisplayName = PhQueryRegistryString(keyHandle, L"DisplayName");

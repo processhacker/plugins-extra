@@ -33,7 +33,7 @@ static TASKBAR_ICON TaskbarIconType = TASKBAR_ICON_NONE;
 static ULONG ProcessesUpdatedCount = 0;
 static UINT TaskbarButtonCreatedMsgId = 0;
 static ITaskbarList3* TaskbarListClass = NULL;
-static WNDPROC MainWindowHookProc = NULL;
+static WNDPROC OldMainWindowProc = NULL;
 static HICON BlackIcon = NULL;
 static HIMAGELIST ButtonsImageList = NULL;
 static THUMBBUTTON ButtonsArray[4] = { 0 }; // maximum 8
@@ -47,10 +47,11 @@ VOID NTAPI ProcessesUpdatedCallback(
     ULONG taskbarIconType = TASKBAR_ICON_NONE;
     PH_PLUGIN_SYSTEM_STATISTICS statistics;
 
-    ProcessesUpdatedCount++;
-
-    if (ProcessesUpdatedCount < 2)
+    if (ProcessesUpdatedCount != 3)
+    {
+        ProcessesUpdatedCount++;
         return;
+    }
     
     PhPluginGetSystemStatistics(&statistics);
 
@@ -106,7 +107,7 @@ LRESULT CALLBACK MainWndSubclassProc(
 {
     if (uMsg == WM_DESTROY)
     {
-        SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)MainWindowHookProc);
+        SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)OldMainWindowProc);
     }
     else if (uMsg == TaskbarButtonCreatedMsgId)
     {
@@ -164,7 +165,7 @@ LRESULT CALLBACK MainWndSubclassProc(
         }
     }
 
-    return CallWindowProc(MainWindowHookProc, hWnd, uMsg, wParam, lParam);
+    return CallWindowProc(OldMainWindowProc, hWnd, uMsg, wParam, lParam);
 }
 
 VOID NTAPI LoadCallback(
@@ -179,14 +180,14 @@ VOID NTAPI LoadCallback(
     TaskbarButtonCreatedMsgId = RegisterWindowMessage(L"TaskbarButtonCreated");
 
     // Allow the TaskbarButtonCreated message to pass through UIPI.
-    ChangeWindowMessageFilter(TaskbarButtonCreatedMsgId, MSGFLT_ALLOW);
+    ChangeWindowMessageFilterEx(PhMainWndHandle, TaskbarButtonCreatedMsgId, MSGFLT_ALLOW, NULL);
     // Allow WM_COMMAND messages to pass through UIPI (Required for ThumbBar buttons if elevated...TODO: Review security.)
-    ChangeWindowMessageFilter(WM_COMMAND, MSGFLT_ALLOW);
+    ChangeWindowMessageFilterEx(PhMainWndHandle, WM_COMMAND, MSGFLT_ALLOW, NULL);
 
     // Set the process-wide AppUserModelID
-    SetCurrentProcessExplicitAppUserModelID(L"ProcessHacker2");
+    //SetCurrentProcessExplicitAppUserModelID(L"ProcessHacker3");
 
-    if (SUCCEEDED(CoCreateInstance(&CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskbarList3, &TaskbarListClass)))
+    if (SUCCEEDED(PhGetClassObject(L"explorerframe.dll", &CLSID_TaskbarList, &IID_ITaskbarList3, &TaskbarListClass)))
     {
         if (!SUCCEEDED(ITaskbarList3_HrInit(TaskbarListClass)))
         {
@@ -203,8 +204,13 @@ VOID NTAPI UnloadCallback(
     _In_opt_ PVOID Context
     )
 {
-    SetWindowLongPtr(PhMainWndHandle, GWLP_WNDPROC, (LONG_PTR)MainWindowHookProc);
     PhUnregisterCallback(PhGetGeneralCallback(GeneralCallbackProcessProviderUpdatedEvent), &ProcessesUpdatedCallbackRegistration);
+
+    if (TaskbarListClass)
+    {
+        ITaskbarList3_Release(TaskbarListClass);
+        TaskbarListClass = NULL;
+    }
 }
 
 VOID NTAPI ShowOptionsCallback(
@@ -213,6 +219,9 @@ VOID NTAPI ShowOptionsCallback(
     )
 {
     PPH_PLUGIN_OPTIONS_POINTERS optionsEntry = (PPH_PLUGIN_OPTIONS_POINTERS)Parameter;
+
+    if (!optionsEntry)
+        return;
 
     optionsEntry->CreateSection(
         L"Taskbar Extensions",
@@ -228,7 +237,7 @@ VOID NTAPI MainWindowShowingCallback(
     _In_opt_ PVOID Context
     )
 {
-    MainWindowHookProc = (WNDPROC)GetWindowLongPtr(PhMainWndHandle, GWLP_WNDPROC);
+    OldMainWindowProc = (WNDPROC)GetWindowLongPtr(PhMainWndHandle, GWLP_WNDPROC);
     SetWindowLongPtr(PhMainWndHandle, GWLP_WNDPROC, (LONG_PTR)MainWndSubclassProc);
 }
 
@@ -283,7 +292,7 @@ LOGICAL DllMain(
                 &MainWindowShowingCallbackRegistration
                 );
 
-            PhAddSettings(settings, ARRAYSIZE(settings));
+            PhAddSettings(settings, RTL_NUMBER_OF(settings));
         }
         break;
     }

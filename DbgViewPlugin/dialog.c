@@ -680,9 +680,9 @@ VOID ShowDebugEventsDialog(
 {
     if (!DbgDialogThreadHandle)
     {
-        if (!(DbgDialogThreadHandle = PhCreateThread(0, DbgViewDialogThread, NULL)))
+        if (!NT_SUCCESS(PhCreateThreadEx(&DbgDialogThreadHandle, DbgViewDialogThread, NULL)))
         {
-            PhShowStatus(PhMainWndHandle, L"Unable to create the window.", 0, GetLastError());
+            PhShowError(PhMainWndHandle, L"Unable to create the window.");
             return;
         }
 
