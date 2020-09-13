@@ -163,18 +163,20 @@ NTSTATUS NTAPI TerminatorTT2(
             process->Threads[i].ClientId.UniqueThread
             )))
         {
+            context.ContextFlags = CONTEXT_CONTROL;
+            Ph2GetThreadContext(threadHandle, &context);
+
 #ifdef _M_IX86
-            context.ContextFlags = CONTEXT_CONTROL;
-            Ph2GetThreadContext(threadHandle, &context);
-            context.Eip = (ULONG)PhGetModuleProcAddress(L"ntdll.dll", "RtlExitUserProcess");
-            Ph2SetThreadContext(threadHandle, &context);
-#else
-            context.ContextFlags = CONTEXT_CONTROL;
-            Ph2GetThreadContext(threadHandle, &context);
-            context.Rip = (ULONG64)PhGetModuleProcAddress(L"ntdll.dll", "RtlExitUserProcess");
-            Ph2SetThreadContext(threadHandle, &context);
+            context.Eip = (DWORD)PhGetModuleProcAddress(L"ntdll.dll", "RtlExitUserProcess");
+#endif
+#ifdef _M_AMD64
+            context.Rip = (DWORD64)PhGetModuleProcAddress(L"ntdll.dll", "RtlExitUserProcess");
+#endif
+#ifdef _M_ARM64
+            context.Pc = (DWORD64)PhGetModuleProcAddress(L"ntdll.dll", "RtlExitUserProcess");
 #endif
 
+            Ph2SetThreadContext(threadHandle, &context);
             NtClose(threadHandle);
         }
     }
