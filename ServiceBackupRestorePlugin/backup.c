@@ -183,7 +183,7 @@ VOID PhRestoreService(
                 PhDereferenceObject(currentDisplayName);
                 PhDereferenceObject(displayName);
                 NtClose(appKeyHandle);
-                PhShowError(OwnerWindow, L"The display name does not match the backup of this service.");
+                PhShowError(OwnerWindow, L"%s", L"The display name does not match the backup of this service.");
                 __leave;
             }
 
@@ -194,7 +194,7 @@ VOID PhRestoreService(
 
         if (PhFindStringInString(ofdFileName, 0, ServiceItem->Name->Buffer) == -1)
         {
-           PhShowError(OwnerWindow, L"The file name does not match the name of this service.");
+           PhShowError(OwnerWindow, L"%s", L"The file name does not match the name of this service.");
             __leave;
         }
 

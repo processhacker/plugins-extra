@@ -415,7 +415,7 @@ VOID ShowPoolMonDialog(
     {
         if (!NT_SUCCESS(PhCreateThreadEx(&PoolTagDialogThreadHandle, ShowPoolMonDialogThread, NULL)))
         {
-            PhShowError(PhMainWndHandle, L"Unable to create the pool monitor window.");
+            PhShowError(PhMainWndHandle, L"%s", L"Unable to create the pool monitor window.");
             return;
         }
 

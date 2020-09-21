@@ -58,13 +58,16 @@ VOID NTAPI MenuItemCallback(
 {
     PPH_PLUGIN_MENU_ITEM menuItem = (PPH_PLUGIN_MENU_ITEM)Parameter;
 
+    if (!menuItem)
+        return;
+
     switch (menuItem->Id)
     {
     case BOOT_ENTRIES_MENUITEM:
         {
             if (!EfiSupported())
             {
-                PhShowError(menuItem->OwnerWindow, L"Windows was installed using legacy BIOS.");
+                PhShowError(menuItem->OwnerWindow, L"%s", L"Windows was installed using legacy BIOS.");
                 return;
             }
 
@@ -88,7 +91,7 @@ VOID NTAPI MainMenuInitializingCallback(
     PPH_EMENU_ITEM systemMenu;
     PPH_EMENU_ITEM bootMenuItem;
 
-    if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
+    if (!menuInfo || menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
 
     if (!(systemMenu = PhFindEMenuItem(menuInfo->Menu, 0, L"System", 0)))

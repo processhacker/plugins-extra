@@ -25,7 +25,7 @@
 PH_CALLBACK_DECLARE(DbgLoggedCallback);
 
 VOID DbgFreeLogEntry(
-    _Inout_ PDEBUG_LOG_ENTRY Entry
+    _In_ PDEBUG_LOG_ENTRY Entry
     )
 {
     PhClearReference(&Entry->FilePath);
@@ -75,7 +75,7 @@ VOID DbgShowErrorMessage(
 
     if (errorMessage)
     {
-        PhShowError(Context->DialogHandle, PhaFormatString(L"%s: [%u] %s", Type, errorCode, errorMessage->Buffer)->Buffer);
+        PhShowError(Context->DialogHandle, L"%s: [%u] %s", Type, errorCode, errorMessage->Buffer);
         PhDereferenceObject(errorMessage);
     }
 }

@@ -278,7 +278,7 @@ VOID ShowDropdownMenu(
             {
                 if (!PhGetOwnTokenAttributes().Elevated)
                 {
-                    PhShowInformation(Context->DialogHandle, L"This option requires elevation.");
+                    PhShowInformation(Context->DialogHandle, L"%s", L"This option requires elevation.");
                     break;
                 }
 
@@ -682,7 +682,7 @@ VOID ShowDebugEventsDialog(
     {
         if (!NT_SUCCESS(PhCreateThreadEx(&DbgDialogThreadHandle, DbgViewDialogThread, NULL)))
         {
-            PhShowError(PhMainWndHandle, L"Unable to create the window.");
+            PhShowError(PhMainWndHandle, L"%s", L"Unable to create the window.");
             return;
         }
 

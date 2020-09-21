@@ -999,7 +999,7 @@ VOID NTAPI DbgLoggedEventCallback(
 {
     PROT_WINDOW_CONTEXT context = (PROT_WINDOW_CONTEXT)Context;
 
-    if (context->WindowHandle)
+    if (context && context->WindowHandle)
     {
         PostMessage(context->WindowHandle, MEM_LOG_UPDATED, 0, 0);
     }
@@ -1156,7 +1156,6 @@ INT_PTR CALLBACK RotViewDlgProc(
         {
             PhSaveWindowPlacementToSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
             PhDeleteLayoutManager(&context->LayoutManager);
-            PhUnregisterDialog(hwndDlg);
             PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
             
             //PhDereferenceObject(MmPfnDatabase);      
@@ -1215,14 +1214,10 @@ INT_PTR CALLBACK RotViewDlgProc(
     {
     case WM_INITDIALOG:
         {
-            HANDLE threadHandle;
-
             context->WindowHandle = hwndDlg;
             context->ListViewHandle = GetDlgItem(hwndDlg, IDC_LIST1);
             context->SearchboxHandle = GetDlgItem(hwndDlg, IDC_SEARCH);
             context->LogMessageList = PhCreateList(0x1000 * 0x1000);
-
-            PhRegisterDialog(hwndDlg);
 
             PhCreateSearchControl(hwndDlg, context->SearchboxHandle, L"Search (Ctrl+K)");
 
@@ -1247,10 +1242,7 @@ INT_PTR CALLBACK RotViewDlgProc(
 
             PhReferenceObject(context);
 
-            if (threadHandle = PhCreateThread(0, EnumeratePageTable, context))
-            {
-                NtClose(threadHandle);
-            }
+            PhCreateThread2(EnumeratePageTable, context);
         }
         break;    
     case MEM_LOG_UPDATED:
@@ -1481,7 +1473,7 @@ VOID ShowPageTableWindow(VOID)
 {
     if (!PageTableThreadHandle)
     {
-        if (!(PageTableThreadHandle = PhCreateThread(0, PageTableDialogThread, NULL)))
+        if (!NT_SUCCESS(PhCreateThreadEx(&PageTableThreadHandle, PageTableDialogThread, NULL)))
         {
             PhShowStatus(PhMainWndHandle, L"Unable to create the window.", 0, GetLastError());
             return;

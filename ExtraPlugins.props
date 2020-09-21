@@ -25,12 +25,14 @@
     <ItemDefinitionGroup>
         <ClCompile>
             <AdditionalIncludeDirectories>../../sdk/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
             <TreatWarningAsError>true</TreatWarningAsError>
             <WarningLevel>Level3</WarningLevel>
-            <SDLCheck>false</SDLCheck>
+            <LanguageStandard>stdcpplatest</LanguageStandard>
+            <LanguageStandard_C>stdc17</LanguageStandard_C>
             <MinimalRebuild>false</MinimalRebuild>
             <MultiProcessorCompilation>true</MultiProcessorCompilation>
-            <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+            <SDLCheck>false</SDLCheck>
             <StringPooling>true</StringPooling>
         </ClCompile>
         <Link>
