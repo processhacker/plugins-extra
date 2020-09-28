@@ -232,31 +232,17 @@ INT_PTR CALLBACK UefiEntriesDlgProc(
     _In_ LPARAM lParam
     )
 {
-    PUEFI_WINDOW_CONTEXT context;
+    PUEFI_WINDOW_CONTEXT context = NULL;
 
     if (uMsg == WM_INITDIALOG)
     {
-        context = (PUEFI_WINDOW_CONTEXT)PhAllocate(sizeof(UEFI_WINDOW_CONTEXT));
-        memset(context, 0, sizeof(UEFI_WINDOW_CONTEXT));
+        context = PhAllocateZero(sizeof(UEFI_WINDOW_CONTEXT));
 
         PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, context);
     }
     else
     {
         context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
-
-        if (uMsg == WM_DESTROY)
-        {
-            FreeListViewFirmwareEntries(context);
-
-            PhSaveListViewColumnsToSetting(SETTING_NAME_LISTVIEW_COLUMNS, context->ListViewHandle);
-            PhSaveWindowPlacementToSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
-            PhDeleteLayoutManager(&context->LayoutManager);
-            PhUnregisterDialog(hwndDlg);
-
-            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
-            PhFree(context);
-        }
     }
 
     if (!context)
@@ -266,10 +252,10 @@ INT_PTR CALLBACK UefiEntriesDlgProc(
     {
     case WM_INITDIALOG:
         {
+            PhSetApplicationWindowIcon(hwndDlg);
+
             context->ListViewHandle = GetDlgItem(hwndDlg, IDC_BOOT_LIST);
 
-            PhSetApplicationWindowIcon(hwndDlg);
-            PhRegisterDialog(hwndDlg);
             PhSetListViewStyle(context->ListViewHandle, FALSE, TRUE);
             PhSetControlTheme(context->ListViewHandle, L"explorer");
             PhAddListViewColumn(context->ListViewHandle, 0, 0, 0, LVCFMT_LEFT, 100, L"Name");
@@ -292,6 +278,18 @@ INT_PTR CALLBACK UefiEntriesDlgProc(
             PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
             
             EnumerateFirmwareEntries(context);
+        }
+        break;
+    case WM_DESTROY:
+        {
+            FreeListViewFirmwareEntries(context);
+
+            PhSaveListViewColumnsToSetting(SETTING_NAME_LISTVIEW_COLUMNS, context->ListViewHandle);
+            PhSaveWindowPlacementToSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
+            PhDeleteLayoutManager(&context->LayoutManager);
+
+            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
+            PhFree(context);
         }
         break;
     case WM_SIZE:

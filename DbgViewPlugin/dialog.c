@@ -177,9 +177,9 @@ VOID ShowListViewMenu(
 
                     if (processNode = PhFindProcessNode(entry->ProcessId))
                     {
-                        ProcessHacker_ToggleVisible(PhMainWndHandle, TRUE);
-                        ProcessHacker_SelectTabPage(PhMainWndHandle, 0);
-                        ProcessHacker_SelectProcessNode(PhMainWndHandle, processNode);
+                        ProcessHacker_ToggleVisible(TRUE);
+                        ProcessHacker_SelectTabPage(0);
+                        ProcessHacker_SelectProcessNode(processNode);
                     }
                 }
                 break;

@@ -483,24 +483,28 @@ BOOLEAN StartFwMonitor(
     VOID
     )
 {
+    PVOID moduleHandle;
     FWP_VALUE value = { FWP_EMPTY };
     FWPM_SESSION session = { 0 };
     FWPM_NET_EVENT_SUBSCRIPTION subscription = { 0 };
     FWPM_NET_EVENT_ENUM_TEMPLATE eventTemplate = { 0 };
 
+    if (!(moduleHandle = LoadLibrary(L"fwpuclnt.dll")))
+        return FALSE;
+
     if (WindowsVersion >= WINDOWS_10_RS5)
     {
-        FwpmNetEventSubscribe4_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe4");
+        FwpmNetEventSubscribe4_I = PhGetProcedureAddress(moduleHandle, "FwpmNetEventSubscribe4", 0);
     }
     else if (WindowsVersion >= WINDOWS_10_RS4)
     {
-        FwpmNetEventSubscribe3_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe3");
+        FwpmNetEventSubscribe3_I = PhGetProcedureAddress(moduleHandle, "FwpmNetEventSubscribe3", 0);
     }
     else
     {
-        if (!(FwpmNetEventSubscribe2_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe2")))
+        if (!(FwpmNetEventSubscribe2_I = PhGetProcedureAddress(moduleHandle, "FwpmNetEventSubscribe2", 0)))
         {
-            FwpmNetEventSubscribe1_I = PhGetModuleProcAddress(L"fwpuclnt.dll", "FwpmNetEventSubscribe1");
+            FwpmNetEventSubscribe1_I = PhGetProcedureAddress(moduleHandle, "FwpmNetEventSubscribe1", 0);
         }
     }
    

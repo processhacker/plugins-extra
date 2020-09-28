@@ -310,7 +310,7 @@ INT_PTR CALLBACK WaitChainDlgProc(
                     {
                         if (processNode = PhFindProcessNode(selectedNode->ProcessId))
                         {
-                            ProcessHacker_SelectTabPage(PhMainWndHandle, 0);
+                            ProcessHacker_SelectTabPage(0);
                             PhSelectAndEnsureVisibleProcessNode(processNode);
                         }
                     }

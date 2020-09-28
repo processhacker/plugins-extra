@@ -28,13 +28,14 @@ static BOOLEAN FwTreeNewCreated = FALSE;
 static HWND FwTreeNewHandle = NULL;
 static ULONG FwTreeNewSortColumn = 0;
 static PH_SORT_ORDER FwTreeNewSortOrder;
+static PH_STRINGREF FwTreeEmptyText = PH_STRINGREF_INIT(L"Firewall monitoring requires Process Hacker to be restarted with administrative privileges.");
+static PPH_STRING FwTreeErrorText = NULL;
 static PPH_MAIN_TAB_PAGE addedTabPage;
 
 BOOLEAN FwEnabled;
 PPH_LIST FwNodeList;
 ULONG FwRunCount = 0;
 static PH_PROVIDER_EVENT_QUEUE FwNetworkEventQueue;
-static PH_QUEUED_LOCK FwLock = PH_QUEUED_LOCK_INIT;
 static PH_CALLBACK_REGISTRATION FwItemAddedRegistration;
 static PH_CALLBACK_REGISTRATION FwItemModifiedRegistration;
 static PH_CALLBACK_REGISTRATION FwItemRemovedRegistration;
@@ -48,12 +49,6 @@ static PH_CALLBACK_REGISTRATION SearchChangedRegistration;
 HWND NTAPI EtpToolStatusGetTreeNewHandle(
     VOID
     );
-INT_PTR CALLBACK FwTabErrorDialogProc(
-    _In_ HWND hwndDlg,
-    _In_ UINT uMsg,
-    _In_ WPARAM wParam,
-    _In_ LPARAM lParam
-    );
 
 BOOLEAN FwTabPageCallback(
     _In_ struct _PH_MAIN_TAB_PAGE *Page,
@@ -66,58 +61,49 @@ BOOLEAN FwTabPageCallback(
     case MainTabPageCreateWindow:
         {
             HWND hwnd;
+            ULONG thinRows;
+            ULONG treelistBorder;
+            ULONG treelistCustomColors;
+            PH_TREENEW_CREATEPARAMS treelistCreateParams = { 0 };
 
-            if (FwEnabled)
+            thinRows = PhGetIntegerSetting(L"ThinRows") ? TN_STYLE_THIN_ROWS : 0;
+            treelistBorder = (PhGetIntegerSetting(L"TreeListBorderEnable") && !PhGetIntegerSetting(L"EnableThemeSupport")) ? WS_BORDER : 0;
+            treelistCustomColors = PhGetIntegerSetting(L"TreeListCustomColorsEnable") ? TN_STYLE_CUSTOM_COLORS : 0;
+
+            if (treelistCustomColors)
             {
-                ULONG thinRows;
-                ULONG treelistBorder;
-                ULONG treelistCustomColors;
-                PH_TREENEW_CREATEPARAMS treelistCreateParams;
-
-                thinRows = PhGetIntegerSetting(L"ThinRows") ? TN_STYLE_THIN_ROWS : 0;
-                treelistBorder = (PhGetIntegerSetting(L"TreeListBorderEnable") && !PhGetIntegerSetting(L"EnableThemeSupport")) ? WS_BORDER : 0;
-                treelistCustomColors = PhGetIntegerSetting(L"TreeListCustomColorsEnable") ? TN_STYLE_CUSTOM_COLORS : 0;
-
-                if (treelistCustomColors)
-                {
-                    treelistCreateParams.TextColor = PhGetIntegerSetting(L"TreeListCustomColorText");
-                    treelistCreateParams.FocusColor = PhGetIntegerSetting(L"TreeListCustomColorFocus");
-                    treelistCreateParams.SelectionColor = PhGetIntegerSetting(L"TreeListCustomColorSelection");
-                }
-
-                hwnd = CreateWindow(
-                    PH_TREENEW_CLASSNAME,
-                    NULL,
-                    WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | TN_STYLE_ICONS | TN_STYLE_DOUBLE_BUFFERED | thinRows | treelistBorder | treelistCustomColors,
-                    0,
-                    0,
-                    3,
-                    3,
-                    PhMainWndHandle,
-                    NULL,
-                    PluginInstance->DllBase,
-                    &treelistCreateParams
-                    );
-
-                if (!hwnd)
-                    return FALSE;
+                treelistCreateParams.TextColor = PhGetIntegerSetting(L"TreeListCustomColorText");
+                treelistCreateParams.FocusColor = PhGetIntegerSetting(L"TreeListCustomColorFocus");
+                treelistCreateParams.SelectionColor = PhGetIntegerSetting(L"TreeListCustomColorSelection");
             }
-            else
-            {
-                *(HWND*)Parameter1 = CreateDialog(
-                    PluginInstance->DllBase,
-                    MAKEINTRESOURCE(IDD_FWERROR),
-                    PhMainWndHandle,
-                    FwTabErrorDialogProc);
 
-                return TRUE;
-            }
+            hwnd = CreateWindow(
+                PH_TREENEW_CLASSNAME,
+                NULL,
+                WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | TN_STYLE_ICONS | TN_STYLE_DOUBLE_BUFFERED | thinRows | treelistBorder | treelistCustomColors,
+                0,
+                0,
+                3,
+                3,
+                PhMainWndHandle,
+                NULL,
+                PluginInstance->DllBase,
+                &treelistCreateParams
+                );
+
+            if (!hwnd)
+                return FALSE;
 
             FwTreeNewCreated = TRUE;
 
             PhInitializeProviderEventQueue(&FwNetworkEventQueue, 100);
 
             InitializeFwTreeList(hwnd);
+
+            if (!FwEnabled)
+            {
+                TreeNew_SetEmptyText(hwnd, &FwTreeEmptyText, 0);
+            }
 
             PhRegisterCallback(
                 &FwItemAddedEvent,
@@ -185,7 +171,7 @@ VOID InitializeFwTab(
     memset(&page, 0, sizeof(PH_MAIN_TAB_PAGE));
     PhInitializeStringRef(&page.Name, L"Firewall");
     page.Callback = FwTabPageCallback;
-    addedTabPage = ProcessHacker_CreateTabPage(PhMainWndHandle, &page);
+    addedTabPage = ProcessHacker_CreateTabPage(&page);
 
     if (toolStatusPlugin = PhFindPlugin(TOOLSTATUS_PLUGIN_NAME))
     {
@@ -287,9 +273,7 @@ PFW_EVENT_ITEM AddFwNode(
     FwItem->Node.TextCache = FwItem->TextCache;
     FwItem->Node.TextCacheSize = FW_COLUMN_MAXIMUM;
 
-    PhAcquireQueuedLockExclusive(&FwLock);
     PhInsertItemList(FwNodeList, 0, FwItem);
-    PhReleaseQueuedLockExclusive(&FwLock);
         
     if (FilterSupport.NodeList)
         FwItem->Node.Visible = PhApplyTreeNewFiltersToNode(&FilterSupport, &FwItem->Node);
@@ -305,10 +289,8 @@ VOID RemoveFwNode(
 {
     ULONG index;
 
-    PhAcquireQueuedLockExclusive(&FwLock);
-    if ((index = PhFindItemList(FwNodeList, FwNode)) != -1)
-        PhRemoveItemList(FwNodeList, index); 
-    PhReleaseQueuedLockExclusive(&FwLock);
+    if ((index = PhFindItemList(FwNodeList, FwNode)) != ULONG_MAX)
+        PhRemoveItemList(FwNodeList, index);
 
     PhDereferenceObject(FwNode);
 
@@ -859,7 +841,7 @@ VOID NTAPI FwItemsUpdatedHandler(
     _In_opt_ PVOID Context
     )
 {
-    ProcessHacker_Invoke(PhMainWndHandle, OnFwItemsUpdated, FwRunCount);
+    ProcessHacker_Invoke(OnFwItemsUpdated, FwRunCount);
 }
 
 VOID NTAPI OnFwItemsUpdated(
@@ -966,66 +948,4 @@ HWND NTAPI FwToolStatusGetTreeNewHandle(
     )
 {
     return FwTreeNewHandle;
-}
-
-INT_PTR CALLBACK FwTabErrorDialogProc(
-    _In_ HWND hwndDlg,
-    _In_ UINT uMsg,
-    _In_ WPARAM wParam,
-    _In_ LPARAM lParam
-    )
-{
-    switch (uMsg)
-    {
-    case WM_INITDIALOG:
-        {
-            if (!PhGetOwnTokenAttributes().Elevated)
-            {
-                SendMessage(GetDlgItem(hwndDlg, IDC_RESTART), BCM_SETSHIELD, 0, TRUE);
-            }
-            else
-            {
-                //PhSetDialogItemText(hwndDlg, IDC_ERROR, L"Unable to start the kernel event tracing session.");
-                ShowWindow(GetDlgItem(hwndDlg, IDC_RESTART), SW_HIDE);
-            }
-        }
-        break;
-    case WM_COMMAND:
-        {
-            switch (LOWORD(wParam))
-            {
-            case IDC_RESTART:
-                ProcessHacker_PrepareForEarlyShutdown(PhMainWndHandle);
-
-                if (PhShellProcessHacker(
-                    PhMainWndHandle,
-                    L"-v -selecttab Firewall",
-                    SW_SHOW,
-                    PH_SHELL_EXECUTE_ADMIN,
-                    PH_SHELL_APP_PROPAGATE_PARAMETERS | PH_SHELL_APP_PROPAGATE_PARAMETERS_IGNORE_VISIBILITY,
-                    0,
-                    NULL
-                    ))
-                {
-                    ProcessHacker_Destroy(PhMainWndHandle);
-                }
-                else
-                {
-                    ProcessHacker_CancelEarlyShutdown(PhMainWndHandle);
-                }
-
-                break;
-            }
-        }
-        break;
-    case WM_CTLCOLORBTN:
-    case WM_CTLCOLORSTATIC:
-        {
-            SetBkMode((HDC)wParam, TRANSPARENT);
-            return (INT_PTR)GetSysColorBrush(COLOR_WINDOW);
-        }
-        break;
-    }
-
-    return FALSE;
 }

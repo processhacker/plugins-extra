@@ -3,9 +3,7 @@
 // Used by FirewallMonitorPlugin.rc
 //
 #define IDR_FW_MENU                     101
-#define IDD_FWERROR                     102
 #define IDD_FWTABLE                     103
-#define IDC_RESTART                     1001
 #define IDC_LIST1                       1002
 #define IDC_INBOUND                     1036
 #define IDC_BROWSE                      1037
