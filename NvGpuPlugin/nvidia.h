@@ -599,4 +599,118 @@ typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetPCIEInfo)(_In_ NvPhysicalGpuHandle 
 _NvAPI_GPU_GetPCIEInfo NvAPI_GPU_GetPCIEInfo;
 
 
+NV_DECLARE_HANDLE(NvmlDeviceHandle);
+
+typedef enum _nvmlReturn_t
+{
+    NVML_SUCCESS = 0,                   //!< The operation was successful
+    NVML_ERROR_UNINITIALIZED = 1,       //!< NVML was not first initialized with nvmlInit()
+    NVML_ERROR_INVALID_ARGUMENT = 2,    //!< A supplied argument is invalid
+    NVML_ERROR_NOT_SUPPORTED = 3,       //!< The requested operation is not available on target device
+    NVML_ERROR_NO_PERMISSION = 4,       //!< The current user does not have permission for operation
+    NVML_ERROR_ALREADY_INITIALIZED = 5, //!< Deprecated: Multiple initializations are now allowed through ref counting
+    NVML_ERROR_NOT_FOUND = 6,           //!< A query to find an object was unsuccessful
+    NVML_ERROR_INSUFFICIENT_SIZE = 7,   //!< An input argument is not large enough
+    NVML_ERROR_INSUFFICIENT_POWER = 8,  //!< A device's external power cables are not properly attached
+    NVML_ERROR_DRIVER_NOT_LOADED = 9,   //!< NVIDIA driver is not loaded
+    NVML_ERROR_TIMEOUT = 10,            //!< User provided timeout passed
+    NVML_ERROR_UNKNOWN = 999            //!< An internal driver error occurred
+} nvmlReturn_t;
+
+typedef enum _NvmlPcieUtilCounter
+{
+    NVML_PCIE_UTIL_TX_BYTES = 0,
+    NVML_PCIE_UTIL_RX_BYTES = 1,
+    NVML_PCIE_UTIL_COUNT
+} NvmlPcieUtilCounter;
+
+typedef enum _nvmlClockType_t
+{
+    NVML_CLOCK_GRAPHICS = 0,
+    NVML_CLOCK_SM = 1,
+    NVML_CLOCK_MEM = 2,
+    NVML_CLOCK_VIDEO = 3,
+    NVML_CLOCK_COUNT
+} nvmlClockType_t;
+
+typedef enum _nvmlClockId_t
+{
+    NVML_CLOCK_ID_CURRENT = 0,
+    NVML_CLOCK_ID_APP_CLOCK_TARGET = 1,
+    NVML_CLOCK_ID_APP_CLOCK_DEFAULT = 2,
+    NVML_CLOCK_ID_CUSTOMER_BOOST_MAX = 3,
+    NVML_CLOCK_ID_COUNT
+} nvmlClockId_t;
+
+typedef nvmlReturn_t (WINAPIV* _nvmlInit)(VOID);
+_nvmlInit NvmlInit;
+
+typedef nvmlReturn_t (WINAPIV* _nvmlInit_v2)(VOID);
+_nvmlInit_v2 NvmlInit_v2;
+
+typedef nvmlReturn_t (WINAPIV* _nvmlShutdown)(VOID);
+_nvmlShutdown NvmlShutdown;
+
+typedef PSTR (WINAPIV* _nvmlErrorString)(VOID);
+_nvmlErrorString NvmlErrorString;
+
+// Retrieves the globally unique immutable UUID associated with this device, as a 5 part hexadecimal string, that augments the immutable, board serial identifier.
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetUUID)(_In_ NvmlDeviceHandle DeviceHandle, _Inout_ PSTR uuid, _In_ UINT32 length);
+_nvmlDeviceGetUUID NvmlDeviceGetUUID;
+
+// Retrieves the globally unique board serial number associated with this device's board.
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetSerial)(_In_ NvmlDeviceHandle DeviceHandle, _Inout_ PSTR serial, _In_ UINT32 length);
+_nvmlDeviceGetSerial NvmlDeviceGetSerial;
+
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetHandleByIndex_v2)(_In_ UINT32 index, _Out_ NvmlDeviceHandle* DeviceHandle);
+_nvmlDeviceGetHandleByIndex_v2 NvmlDeviceGetHandleByIndex_v2;
+
+// Acquire the handle for a particular device, based on its PCI bus id.
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetHandleByPciBusId)(_In_ PSTR PciBusId, _Out_ NvmlDeviceHandle* DeviceHandle);
+_nvmlDeviceGetHandleByPciBusId NvmlDeviceGetHandleByPciBusId;
+
+// Acquire the handle for a particular device, based on its PCI bus id.
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetHandleByPciBusId_v2)(_In_ PSTR PciBusId, _Out_ NvmlDeviceHandle* DeviceHandle);
+_nvmlDeviceGetHandleByPciBusId_v2 NvmlDeviceGetHandleByPciBusId_v2;
+
+// Retrieves power usage for this GPU in milliwatts and its associated circuitry (e.g. memory)
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetPowerUsage)(_In_ NvmlDeviceHandle DeviceHandle, _Out_ PULONG Usage);
+_nvmlDeviceGetPowerUsage NvmlDeviceGetPowerUsage;
+
+// Retrieves the current temperature readings for the device, in degrees C.
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetTemperature)(_In_ NvmlDeviceHandle DeviceHandle, _Out_ PULONG Temperature);
+_nvmlDeviceGetTemperature NvmlDeviceGetTemperature;
+
+// Retrieves the intended operating speed of the device's fan.
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetFanSpeed)(_In_ NvmlDeviceHandle DeviceHandle, _Out_ PULONG Temperature);
+_nvmlDeviceGetFanSpeed NvmlDeviceGetFanSpeed;
+
+// Retrieves the current PCIe link width
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetCurrPcieLinkGeneration)(_In_ NvmlDeviceHandle DeviceHandle, _Out_ PULONG Generation);
+_nvmlDeviceGetCurrPcieLinkGeneration NvmlDeviceGetCurrPcieLinkGeneration;
+
+// Retrieves the maximum PCIe link generation possible with this device and system
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetMaxPcieLinkGeneration)(_In_ NvmlDeviceHandle DeviceHandle, _Out_ PULONG Generation);
+_nvmlDeviceGetMaxPcieLinkGeneration NvmlDeviceGetMaxPcieLinkGeneration;
+
+// Retrieves the current PCIe link width
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetCurrPcieLinkWidth)(_In_ NvmlDeviceHandle DeviceHandle, _Out_ PULONG Width);
+_nvmlDeviceGetCurrPcieLinkWidth NvmlDeviceGetCurrPcieLinkWidth;
+
+ // Retrieves the maximum PCIe link width possible with this device and system
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetMaxPcieLinkWidth)(_In_ NvmlDeviceHandle DeviceHandle, _Out_ PULONG Width);
+_nvmlDeviceGetMaxPcieLinkWidth NvmlDeviceGetMaxPcieLinkWidth;
+
+// Retrieve PCIe utilization information. This function is querying a byte counter over a 20ms interval and thus is the PCIe throughput over that interval.
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetPcieThroughput)(_In_ NvmlDeviceHandle DeviceHandle, _In_ NvmlPcieUtilCounter counter, _Out_ PULONG Usage);
+_nvmlDeviceGetPcieThroughput NvmlDeviceGetPcieThroughput;
+
+// Retrieves the clock speed for the clock specified by the clock type and clock ID.
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetClock)(_In_ NvmlDeviceHandle DeviceHandle, _In_ nvmlClockType_t clockType, _In_ nvmlClockId_t clockId, _Out_ PULONG clockMHz);
+_nvmlDeviceGetClock NvmlDeviceGetClock;
+
+// Retrieves total energy consumption for this GPU in millijoules (mJ) since the driver was last reloaded
+typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetTotalEnergyConsumption)(_In_ NvmlDeviceHandle DeviceHandle, _Out_ PULONG64 energ);
+_nvmlDeviceGetTotalEnergyConsumption NvmlDeviceGetTotalEnergyConsumption;
+
 #include <poppack.h>

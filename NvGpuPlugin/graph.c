@@ -279,7 +279,7 @@ VOID NvGpuNotifyUsageGraph(
                 HDC hdc = Graph_GetBufferedContext(Context->GpuGraphHandle);
 
                 PhMoveReference(&Context->GpuGraphState.Text,
-                    PhFormatString(L"%.0f%%", GpuCurrentGpuUsage * 100)
+                    PhFormatString(L"%.0f%%", (DOUBLE)GpuCurrentGpuUsage * 100)
                     );
 
                 SelectObject(hdc, PhApplicationFont);
@@ -312,7 +312,7 @@ VOID NvGpuNotifyUsageGraph(
 
                     PhMoveReference(&Context->GpuGraphState.TooltipText, PhFormatString(
                         L"%.0f%%\n%s",
-                        gpuUsageValue * 100,
+                        (DOUBLE)gpuUsageValue * 100,
                         ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                         ));
                 }
@@ -348,7 +348,7 @@ VOID NvGpuNotifyMemoryGraph(
                     L"%s / %s (%.2f%%)", 
                     PhaFormatSize(UInt32x32To64(GpuCurrentMemUsage, 1024), -1)->Buffer,
                     PhaFormatSize(UInt32x32To64(GpuMemoryLimit, 1024), -1)->Buffer,
-                    (FLOAT)GpuCurrentMemUsage / GpuMemoryLimit * 100
+                    (DOUBLE)GpuCurrentMemUsage / GpuMemoryLimit * 100
                     ));
 
                 SelectObject(hdc, PhApplicationFont);
@@ -397,7 +397,7 @@ VOID NvGpuNotifyMemoryGraph(
                         L"%s / %s (%.2f%%)\n%s",
                         PhaFormatSize(UInt32x32To64(usedPages, 1024), -1)->Buffer,
                         PhaFormatSize(UInt32x32To64(GpuMemoryLimit, 1024), -1)->Buffer,
-                        (FLOAT)usedPages / GpuMemoryLimit * 100,
+                        (DOUBLE)usedPages / GpuMemoryLimit * 100,
                         ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                         ));
                 }
@@ -431,7 +431,7 @@ VOID NvGpuNotifySharedGraph(
 
                 PhMoveReference(&Context->SharedGraphState.Text, PhFormatString(
                     L"%.0f%%",
-                    (FLOAT)GpuCurrentCoreUsage * 100
+                    (DOUBLE)GpuCurrentCoreUsage * 100
                     ));
 
                 SelectObject(hdc, PhApplicationFont);
@@ -464,7 +464,7 @@ VOID NvGpuNotifySharedGraph(
 
                     PhMoveReference(&Context->SharedGraphState.TooltipText, PhFormatString(
                         L"%.0f%%\n%s",
-                        usedPages * 100,
+                        (DOUBLE)usedPages * 100,
                         ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                         ));
                 }
@@ -498,7 +498,7 @@ VOID NvGpuNotifyBusGraph(
 
                 PhMoveReference(&Context->BusGraphState.Text, PhFormatString(
                     L"%.0f%%",
-                    (FLOAT)GpuCurrentBusUsage * 100
+                    (DOUBLE)GpuCurrentBusUsage * 100
                     ));
 
                 SelectObject(hdc, PhApplicationFont);
@@ -531,7 +531,7 @@ VOID NvGpuNotifyBusGraph(
 
                     PhMoveReference(&Context->BusGraphState.TooltipText, PhFormatString(
                         L"%.0f%%\n%s",
-                        busUsage * 100,
+                        (DOUBLE)busUsage * 100,
                         ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                         ));
                 }
@@ -600,6 +600,9 @@ VOID NvGpuUpdatePanel(
 
     //PhSetDialogItemText(Context->GpuPanel, IDC_TEMP_VALUE, PhaFormatString(L"%s\u00b0C", PhaFormatUInt64(GpuCurrentBoardTemp, TRUE)->Buffer)->Buffer);
     PhSetDialogItemText(Context->GpuPanel, IDC_VOLTAGE, PhaFormatString(L"%lu mV", GpuCurrentVoltage)->Buffer);
+    PhSetDialogItemText(Context->GpuPanel, IDC_TX, PhaFormatString(L"%s/s", PhaFormatSize(GpuPcieThroughputTx, ULONG_MAX)->Buffer)->Buffer);
+    PhSetDialogItemText(Context->GpuPanel, IDC_RX, PhaFormatString(L"%s/s", PhaFormatSize(GpuPcieThroughputRx, ULONG_MAX)->Buffer)->Buffer);
+    PhSetDialogItemText(Context->GpuPanel, IDC_POWER, PhaFormatString(L"%.2f mW\n", (DOUBLE)GpuPciePowerUsage * 0.001f)->Buffer);
 }
 
 INT_PTR CALLBACK NvGpuDialogProc(
@@ -757,6 +760,9 @@ BOOLEAN NvGpuSectionCallback(
         {
             PPH_SYSINFO_CREATE_DIALOG createDialog = (PPH_SYSINFO_CREATE_DIALOG)Parameter1;
 
+            if (!createDialog)
+                break;
+
             createDialog->Instance = PluginInstance->DllBase;
             createDialog->Template = MAKEINTRESOURCE(IDD_GPU_DIALOG);
             createDialog->DialogProc = NvGpuDialogProc;
@@ -766,6 +772,9 @@ BOOLEAN NvGpuSectionCallback(
     case SysInfoGraphGetDrawInfo:
         {
             PPH_GRAPH_DRAW_INFO drawInfo = (PPH_GRAPH_DRAW_INFO)Parameter1;
+
+            if (!drawInfo)
+                break;
 
             drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y;
             Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
@@ -783,11 +792,14 @@ BOOLEAN NvGpuSectionCallback(
             FLOAT gpuUsageValue;
             PPH_SYSINFO_GRAPH_GET_TOOLTIP_TEXT getTooltipText = (PPH_SYSINFO_GRAPH_GET_TOOLTIP_TEXT)Parameter1;
 
+            if (!getTooltipText)
+                break;
+
             gpuUsageValue = PhGetItemCircularBuffer_FLOAT(&GpuUtilizationHistory, getTooltipText->Index);
 
             PhMoveReference(&Section->GraphState.TooltipText, PhFormatString(
                 L"%.0f%%\n%s",
-                gpuUsageValue * 100,
+                (DOUBLE)gpuUsageValue * 100,
                 ((PPH_STRING)PH_AUTO(PhGetStatisticsTimeString(NULL, getTooltipText->Index)))->Buffer
                 ));
 
@@ -798,10 +810,13 @@ BOOLEAN NvGpuSectionCallback(
         {
             PPH_SYSINFO_DRAW_PANEL drawPanel = (PPH_SYSINFO_DRAW_PANEL)Parameter1;
 
+            if (!drawPanel)
+                break;
+
             drawPanel->Title = PhCreateString(Section->Name.Buffer);
             drawPanel->SubTitle = PhFormatString(
                 L"%.0f%%",
-                GpuCurrentGpuUsage * 100
+                (DOUBLE)GpuCurrentGpuUsage * 100
                 );
         }
         return TRUE;

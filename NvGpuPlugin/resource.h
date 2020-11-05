@@ -18,8 +18,11 @@
 #define IDC_TEMP_VALUE                  114
 #define IDC_CLOCK_SHADER                115
 #define IDD_OPTIONS                     116
+#define IDC_TX                          116
 #define IDC_VOLTAGE                     117
 #define IDD_GPU_DETAILS                 117
+#define IDC_RX                          118
+#define IDC_POWER                       119
 #define IDC_DETAILS                     1001
 #define IDC_ENABLENVIDIASUPPORT         1002
 #define IDC_EDIT1                       1003

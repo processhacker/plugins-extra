@@ -52,6 +52,9 @@ extern ULONG GpuCurrentCoreClock;
 extern ULONG GpuCurrentMemoryClock;
 extern ULONG GpuCurrentShaderClock;
 extern ULONG GpuCurrentVoltage;
+extern ULONG GpuPcieThroughputTx;
+extern ULONG GpuPcieThroughputRx;
+extern ULONG GpuPciePowerUsage;
 
 BOOLEAN InitializeNvApi(VOID);
 BOOLEAN DestroyNvApi(VOID);

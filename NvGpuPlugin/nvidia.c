@@ -32,8 +32,10 @@
 #include <Ntddvdeo.h>
 
 static PVOID NvApiLibrary = NULL;
+static PVOID NvmlLibrary = NULL;
 static PPH_LIST NvGpuPhysicalHandleList = NULL;
 static PPH_LIST NvGpuDisplayHandleList = NULL;
+static PPH_LIST NvGpuNvmlHandleList = NULL;
 static NvU32 GpuArchType = 0;
 
 ULONG GpuMemoryLimit = 0;
@@ -49,8 +51,89 @@ ULONG GpuCurrentMemoryClock = 0;
 ULONG GpuCurrentShaderClock = 0;
 ULONG GpuCurrentVoltage = 0;
 //NVAPI_GPU_PERF_DECREASE GpuPerfDecreaseReason = NV_GPU_PERF_DECREASE_NONE;
+ULONG GpuPcieThroughputTx = 0;
+ULONG GpuPcieThroughputRx = 0;
+ULONG GpuPciePowerUsage = 0;
 
-VOID NvGpuEnumPhysicalHandles(VOID)
+NvDisplayHandle NvGpuDisplayFromPhysical(
+    _In_ NvPhysicalGpuHandle Physical
+    )
+{
+    NvLogicalGpuHandle logicalPhysical = NULL;
+
+    //NvLogicalGpuHandle gpuLogicalHandles[NVAPI_MAX_LOGICAL_GPUS];
+    //NvAPI_EnumLogicalGPUs(gpuLogicalHandles, &gpuCount)
+    //NvAPI_GetPhysicalGPUsFromLogicalGPU();;
+
+    for (ULONG i = 0; i < NvGpuPhysicalHandleList->Count; i++)
+    {
+        if (NvGpuPhysicalHandleList->Items[i] == Physical)
+        {
+            NvLogicalGpuHandle logical = NULL;
+
+            if (NvAPI_GetLogicalGPUFromPhysicalGPU(NvGpuPhysicalHandleList->Items[i], &logical) == NVAPI_OK)
+            {
+                logicalPhysical = logical;
+                break;
+            }
+        }
+    }
+
+    for (ULONG i = 0; i < NvGpuDisplayHandleList->Count; i++)
+    {
+        NvLogicalGpuHandle logical = NULL;
+
+        if (NvAPI_GetLogicalGPUFromDisplay(NvGpuDisplayHandleList->Items[i], &logical) == NVAPI_OK)
+        {
+            if (logicalPhysical == logical)
+            {
+                return NvGpuDisplayHandleList->Items[i];
+            }
+        }
+    }
+
+    return NULL;
+}
+
+NvPhysicalGpuHandle NvGpuPhysicalFromDisplay(
+    _In_ NvDisplayHandle Display
+    )
+{
+    NvLogicalGpuHandle logicalDisplay = NULL;
+
+    for (ULONG i = 0; i < NvGpuDisplayHandleList->Count; i++)
+    {
+        if (NvGpuDisplayHandleList->Items[i] == Display)
+        {
+            NvLogicalGpuHandle logical = NULL;
+
+            if (NvAPI_GetLogicalGPUFromDisplay(NvGpuDisplayHandleList->Items[i], &logical) == NVAPI_OK)
+            {
+                logicalDisplay = logical;
+                break;
+            }
+        }
+    }
+
+    for (ULONG i = 0; i < NvGpuPhysicalHandleList->Count; i++)
+    {
+        NvLogicalGpuHandle logical = NULL;
+
+        if (NvAPI_GetLogicalGPUFromPhysicalGPU(NvGpuPhysicalHandleList->Items[i], &logical) == NVAPI_OK)
+        {
+            if (logicalDisplay == logical)
+            {
+                return NvGpuPhysicalHandleList->Items[i];
+            }
+        }
+    }
+
+    return NULL;
+}
+
+VOID NvGpuEnumPhysicalHandles(
+    VOID
+    )
 {
     NvU32 gpuCount = 0;
     NvPhysicalGpuHandle gpuHandles[NVAPI_MAX_PHYSICAL_GPUS];
@@ -59,11 +142,37 @@ VOID NvGpuEnumPhysicalHandles(VOID)
 
     if (NvAPI_EnumPhysicalGPUs && NvAPI_EnumPhysicalGPUs(gpuHandles, &gpuCount) == NVAPI_OK)
     {
+        for (NvU32 i = 0; i < gpuCount; i++)
+        {
+            NvU32 busId = 0;
+
+            if (NvAPI_GPU_GetBusId && NvAPI_GPU_GetBusId(gpuHandles[i], &busId) == NVAPI_OK)
+            {
+                NvmlDeviceHandle deviceHandle = 0;
+                PPH_STRING busIdString;
+                PPH_BYTES busIdStringUtf8;
+
+                // "0000:" + busId + ":00.0"
+                busIdString = PhFormatString(L"0000:%x:00.0", busId);
+                busIdStringUtf8 = PhConvertUtf16ToUtf8Ex(busIdString->Buffer, busIdString->Length);
+
+                if (NvmlDeviceGetHandleByPciBusId && NvmlDeviceGetHandleByPciBusId(busIdStringUtf8->Buffer, &deviceHandle) == NVML_SUCCESS)
+                {
+                    PhAddItemList(NvGpuNvmlHandleList, deviceHandle);
+                }
+
+                PhDereferenceObject(busIdStringUtf8);
+                PhDereferenceObject(busIdString);
+            }
+        }
+
         PhAddItemsList(NvGpuPhysicalHandleList, gpuHandles, gpuCount);
     }
 }
 
-VOID NvGpuEnumDisplayHandles(VOID)
+VOID NvGpuEnumDisplayHandles(
+    VOID
+    )
 {
     if (!NvAPI_EnumNvidiaDisplayHandle)
         return;
@@ -79,12 +188,20 @@ VOID NvGpuEnumDisplayHandles(VOID)
 
         PhAddItemList(NvGpuDisplayHandleList, displayHandle);
     }
+
+    //for (NvU32 i = 0; i < NvGpuPhysicalHandleList->Count; i++)
+    //{
+    //    NvGpuDisplayFromPhysical(NvGpuPhysicalHandleList->Items[i]);
+    //}
 }
 
-BOOLEAN InitializeNvApi(VOID)
+BOOLEAN InitializeNvApi(
+    VOID
+    )
 {
     NvGpuPhysicalHandleList = PhCreateList(1);
     NvGpuDisplayHandleList = PhCreateList(1);
+    NvGpuNvmlHandleList = PhCreateList(1);
 
 #ifdef _M_IX86
     if (!(NvApiLibrary = LoadLibrary(L"nvapi.dll")))
@@ -93,10 +210,9 @@ BOOLEAN InitializeNvApi(VOID)
     if (!(NvApiLibrary = LoadLibrary(L"nvapi64.dll")))
         return FALSE;
 #endif
-    
+
     if (!(NvAPI_QueryInterface = PhGetProcedureAddress(NvApiLibrary, "nvapi_QueryInterface", 0)))
         return FALSE;
-
     if (!(NvAPI_Initialize = NvAPI_QueryInterface(0x150E828UL)))
         return FALSE;
     if (!(NvAPI_Unload = NvAPI_QueryInterface(0xD22BDD7EUL)))
@@ -107,6 +223,10 @@ BOOLEAN InitializeNvApi(VOID)
         return FALSE;
     if (!(NvAPI_EnumNvidiaDisplayHandle = NvAPI_QueryInterface(0x9ABDD40DUL)))
         return FALSE;
+
+    NvAPI_EnumLogicalGPUs = NvAPI_QueryInterface(0x48B3EA59);
+
+    NvAPI_GPU_GetBusId = NvAPI_QueryInterface(0x1BE0B8E5);
 
     // Information functions
     NvAPI_SYS_GetDriverAndBranchVersion = NvAPI_QueryInterface(0x2926AAADUL);
@@ -124,7 +244,6 @@ BOOLEAN InitializeNvApi(VOID)
     NvAPI_GPU_GetUsages = NvAPI_QueryInterface(0x189A1FDFUL);
     NvAPI_GPU_GetAllClocks = NvAPI_QueryInterface(0x1BD69F49UL);
     NvAPI_GPU_GetVoltageDomainsStatus = NvAPI_QueryInterface(0xC16C7E2CUL);
-
     //NvAPI_GPU_GetPerfClocks = NvAPI_QueryInterface(0x1EA54A3B);
     //NvAPI_GPU_GetVoltages = NvAPI_QueryInterface(0x7D656244);
     //NvAPI_GPU_QueryActiveApps = NvAPI_QueryInterface(0x65B1C5F5);
@@ -135,17 +254,14 @@ BOOLEAN InitializeNvApi(VOID)
     NvAPI_GPU_GetRamType = NvAPI_QueryInterface(0x57F7CAACUL);
     NvAPI_GPU_GetRamMaker = NvAPI_QueryInterface(0x42AEA16AUL);
     NvAPI_GPU_GetFoundry = NvAPI_QueryInterface(0x5D857A00UL);
-
     //NvAPI_GetDisplayDriverMemoryInfo = NvAPI_QueryInterface(0x774AA982);
     //NvAPI_GetPhysicalGPUsFromDisplay = NvAPI_QueryInterface(0x34EF9506);
     NvAPI_GetDisplayDriverVersion = NvAPI_QueryInterface(0xF951A4D1UL);
     NvAPI_GetDisplayDriverRegistryPath = NvAPI_QueryInterface(0x0E24CEEEUL);
     //NvAPI_RestartDisplayDriver = NvAPI_QueryInterface(0xB4B26B65UL);
-
     //NvAPI_GPU_GetBoardInfo = NvAPI_QueryInterface(0x22D54523);
     //NvAPI_GPU_GetBusType = NvAPI_QueryInterface(0x1BB18724);
     //NvAPI_GPU_GetIRQ = NvAPI_QueryInterface(0xE4715417);
-
     NvAPI_GPU_GetVbiosVersionString = NvAPI_QueryInterface(0xA561FD7DUL);
     NvAPI_GPU_GetShortName = NvAPI_QueryInterface(0xD988F0F3UL);
     NvAPI_GPU_GetArchInfo = NvAPI_QueryInterface(0xD8265D24UL);
@@ -155,6 +271,9 @@ BOOLEAN InitializeNvApi(VOID)
     NvAPI_GPU_GetPCIEInfo = NvAPI_QueryInterface(0xE3795199UL);
     NvAPI_GPU_GetFBWidthAndLocation = NvAPI_QueryInterface(0x11104158UL);
     NvAPI_GPU_ClientPowerTopologyGetStatus = NvAPI_QueryInterface(0x0EDCF624EUL);
+
+    NvAPI_GetLogicalGPUFromPhysicalGPU = NvAPI_QueryInterface(0x0ADD604D1UL);
+    NvAPI_GetLogicalGPUFromDisplay = NvAPI_QueryInterface(0x0EE1370CFUL);
 
     //typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverBuildTitle)(_In_ NvDisplayHandle hNvDisplay, NvAPI_ShortString pDriverBuildTitle);
     //typedef NvAPI_Status (WINAPIV *_NvAPI_GetDisplayDriverCompileType)(_In_ NvDisplayHandle hNvDisplay, NvU32* pDriverCompileType);
@@ -177,6 +296,22 @@ BOOLEAN InitializeNvApi(VOID)
     //NvAPI_GetDisplayDriverBuildTitle = NvAPI_QueryInterface(0x7562E947);
     //NvAPI_GetDisplayDriverCompileType = NvAPI_QueryInterface(0x988AEA78);
     //NvAPI_GetDisplayDriverSecurityLevel = NvAPI_QueryInterface(0x9D772BBA);
+
+    if (NvmlLibrary = LoadLibrary(L"nvml.dll"))
+    {
+        NvmlInit = PhGetProcedureAddress(NvmlLibrary, "nvmlInit", 0);
+        NvmlInit_v2 = PhGetProcedureAddress(NvmlLibrary, "nvmlInit_v2", 0);
+        NvmlShutdown = PhGetProcedureAddress(NvmlLibrary, "nvmlShutdown", 0);
+        NvmlErrorString = PhGetProcedureAddress(NvmlLibrary, "nvmlErrorString", 0);
+        NvmlDeviceGetHandleByIndex_v2 = PhGetProcedureAddress(NvmlLibrary, "nvmlDeviceGetHandleByIndex_v2", 0);
+        NvmlDeviceGetHandleByPciBusId = PhGetProcedureAddress(NvmlLibrary, "nvmlDeviceGetHandleByPciBusId", 0);
+        NvmlDeviceGetHandleByPciBusId_v2 = PhGetProcedureAddress(NvmlLibrary, "nvmlDeviceGetHandleByPciBusId_v2", 0);
+        NvmlDeviceGetPowerUsage = PhGetProcedureAddress(NvmlLibrary, "nvmlDeviceGetPowerUsage", 0);
+        NvmlDeviceGetPcieThroughput = PhGetProcedureAddress(NvmlLibrary, "nvmlDeviceGetPcieThroughput", 0);
+        NvmlDeviceGetTotalEnergyConsumption = PhGetProcedureAddress(NvmlLibrary, "nvmlDeviceGetTotalEnergyConsumption", 0);
+
+        NvmlInit_v2();
+    }
 
     if (NvAPI_Initialize() == NVAPI_OK)
     {
@@ -218,7 +353,9 @@ PPH_STRING NvGpuQueryDriverVersion(VOID)
     if (NvAPI_SYS_GetDriverAndBranchVersion)
     {
         NvU32 driverVersion = 0;
-        NvAPI_ShortString driverAndBranchString = "";
+        NvAPI_ShortString driverAndBranchString;
+
+        memset(driverAndBranchString, 0, sizeof(driverAndBranchString));
 
         if (NvAPI_SYS_GetDriverAndBranchVersion(&driverVersion, driverAndBranchString) == NVAPI_OK)
         {
@@ -251,7 +388,9 @@ PPH_STRING NvGpuQueryVbiosVersionString(VOID)
 {
     if (NvAPI_GPU_GetVbiosVersionString)
     {
-        NvAPI_ShortString biosRevision = "";
+        NvAPI_ShortString biosRevision;
+
+        memset(biosRevision, 0, sizeof(biosRevision));
 
         if (NvAPI_GPU_GetVbiosVersionString(NvGpuPhysicalHandleList->Items[0], biosRevision) == NVAPI_OK)
         {
@@ -266,7 +405,9 @@ PPH_STRING NvGpuQueryName(VOID)
 {
     if (NvAPI_GPU_GetFullName)
     {
-        NvAPI_ShortString nvNameAnsiString = "";
+        NvAPI_ShortString nvNameAnsiString;
+
+        memset(nvNameAnsiString, 0, sizeof(nvNameAnsiString));
 
         if (NvAPI_GPU_GetFullName(NvGpuPhysicalHandleList->Items[0], nvNameAnsiString) == NVAPI_OK)
         {
@@ -281,7 +422,9 @@ PPH_STRING NvGpuQueryShortName(VOID)
 {
     if (NvAPI_GPU_GetShortName)
     {
-        NvAPI_ShortString nvShortNameAnsiString = "";
+        NvAPI_ShortString nvShortNameAnsiString;
+
+        memset(nvShortNameAnsiString, 0, sizeof(nvShortNameAnsiString));
 
         if (NvAPI_GPU_GetShortName(NvGpuPhysicalHandleList->Items[0], nvShortNameAnsiString) == NVAPI_OK)
         {
@@ -549,7 +692,9 @@ PPH_STRING NvGpuQueryDriverSettings(VOID)
 {
     if (NvAPI_GetDisplayDriverRegistryPath)
     {
-        NvAPI_LongString nvKeyPathAnsiString = "";
+        NvAPI_LongString nvKeyPathAnsiString;
+
+        memset(nvKeyPathAnsiString, 0, sizeof(nvKeyPathAnsiString));
 
         if (NvAPI_GetDisplayDriverRegistryPath(NvGpuDisplayHandleList->Items[0], nvKeyPathAnsiString) == NVAPI_OK)
         {
@@ -644,10 +789,12 @@ BOOLEAN NvGpuDriverIsWHQL(VOID)
     PPH_STRING keyPath = NULL;
     PPH_STRING matchingDeviceIdString;
     PPH_STRING keyServicePath;
-    NvAPI_LongString nvNameAnsiString = "";
+    CHAR nvNameAnsiString[NVAPI_LONG_STRING_MAX];
 
     if (!NvAPI_GetDisplayDriverRegistryPath)
         goto CleanupExit;
+
+    memset(nvNameAnsiString, 0, sizeof(nvNameAnsiString));
 
     if (NvAPI_GetDisplayDriverRegistryPath(NvGpuDisplayHandleList->Items[0], nvNameAnsiString) != NVAPI_OK)
         goto CleanupExit;
@@ -927,13 +1074,42 @@ VOID NvGpuUpdateValues(VOID)
     NV_GPU_THERMAL_SETTINGS thermalSettings = { NV_GPU_THERMAL_SETTINGS_VER };
     NV_GPU_CLOCK_FREQUENCIES clkFreqs  = { NV_GPU_CLOCK_FREQUENCIES_VER };
     NV_CLOCKS_INFO clocksInfo = { NV_CLOCKS_INFO_VER };
+    ULONG pcieThroughputTx = 0;
+    ULONG pcieThroughputRx = 0;
+    ULONG pciePowerUsage = 0;
 
-    if (NvAPI_GPU_GetMemoryInfo(NvGpuDisplayHandleList->Items[0], &memoryInfo) == NVAPI_OK)
+    GpuMemoryLimit = 0;
+    GpuCurrentMemSharedUsage = 0;
+    GpuCurrentMemUsage = 0;
+    GpuPciePowerUsage = 0;
+    GpuPcieThroughputRx = 0;
+    GpuPcieThroughputTx = 0;
+
+    for (ULONG i = 0; i < NvGpuDisplayHandleList->Count; i++)
     {
-        GpuMemoryLimit = memoryInfo.availableDedicatedVideoMemory;
-        GpuCurrentMemSharedUsage = memoryInfo.sharedSystemMemory;
-        GpuCurrentMemUsage = memoryInfo.availableDedicatedVideoMemory - memoryInfo.curAvailableDedicatedVideoMemory;
+        if (NvAPI_GPU_GetMemoryInfo(NvGpuDisplayHandleList->Items[i], &memoryInfo) == NVAPI_OK)
+        {
+            GpuMemoryLimit += memoryInfo.availableDedicatedVideoMemory;
+            GpuCurrentMemSharedUsage += memoryInfo.sharedSystemMemory;
+            GpuCurrentMemUsage += memoryInfo.availableDedicatedVideoMemory - memoryInfo.curAvailableDedicatedVideoMemory;
+        }
+
+        //NvAPI_SYS_GetDisplayIdFromGpuAndOutputId();
+        //NvAPI_SYS_GetPhysicalGpuFromDisplayId();
+
+        //NvAPI_LongString nvKeyPathAnsiString = "";
+        //if (NvAPI_GetDisplayDriverRegistryPath(NvGpuDisplayHandleList->Items[i], nvKeyPathAnsiString) == NVAPI_OK)
+        //{
+        //    dprintf("");
+        //}
     }
+
+    //if (NvAPI_GPU_GetMemoryInfo(NvGpuDisplayHandleList->Items[0], &memoryInfo) == NVAPI_OK)
+    //{
+    //    GpuMemoryLimit = memoryInfo.availableDedicatedVideoMemory;
+    //    GpuCurrentMemSharedUsage = memoryInfo.sharedSystemMemory;
+    //    GpuCurrentMemUsage = memoryInfo.availableDedicatedVideoMemory - memoryInfo.curAvailableDedicatedVideoMemory;
+    //}
 
     if (NvAPI_GPU_GetUsages(NvGpuPhysicalHandleList->Items[0], &usagesInfo) == NVAPI_OK)
     {
@@ -979,6 +1155,24 @@ VOID NvGpuUpdateValues(VOID)
             if (GpuCurrentShaderClock == 0)
                 GpuCurrentShaderClock = (ULONG)(clocksInfo.clocks[30] * 0.001f);
         }
+    }
+
+    if (NvmlDeviceGetPowerUsage && NvmlDeviceGetPowerUsage(NvGpuNvmlHandleList->Items[0], &pciePowerUsage) == NVML_SUCCESS)
+    {
+        GpuPciePowerUsage = pciePowerUsage;// (DOUBLE)pciePowerUsage * 0.001f;
+        //OutputDebugString(PhFormatString(L"PowerUsage: %.2f W\n", (DOUBLE)pciePowerUsage * 0.001f)->Buffer);
+    }
+
+    if (NvmlDeviceGetPcieThroughput && NvmlDeviceGetPcieThroughput(NvGpuNvmlHandleList->Items[0], NVML_PCIE_UTIL_RX_BYTES, &pcieThroughputRx) == NVML_SUCCESS)
+    {
+        GpuPcieThroughputRx = pcieThroughputRx * 1024;
+        //OutputDebugString(PhFormatString(L"ThroughputRx: %s\n", PhFormatSize((ULONG64)pcieThroughputRx * 1024, ULONG_MAX)->Buffer)->Buffer);
+    }
+
+    if (NvmlDeviceGetPcieThroughput && NvmlDeviceGetPcieThroughput(NvGpuNvmlHandleList->Items[0], NVML_PCIE_UTIL_TX_BYTES, &pcieThroughputTx) == NVML_SUCCESS)
+    {
+        GpuPcieThroughputTx = pcieThroughputTx * 1024;
+        //OutputDebugString(PhFormatString(L"ThroughputTx: %s\n", PhFormatSize((ULONG64)pcieThroughputTx * 1024, ULONG_MAX)->Buffer)->Buffer);
     }
 }
 
