@@ -399,7 +399,7 @@ static void DaepInitGfDPIAwareOffset32WoW(_Out_ PULONG_PTR GfDPIAwareOffset32)
 
     PhGetSystemRoot(&systemRoot);
     user32FileName = PhConcatStringRefZ(&systemRoot, L"\\SysWow64\\user32.dll");
-    status = PhLoadMappedImage(user32FileName->Buffer, NULL, TRUE, &mappedImage);
+    status = PhLoadMappedImage(user32FileName->Buffer, NULL, &mappedImage);
     PhDereferenceObject(user32FileName);
     if (!NT_SUCCESS(status))
         return;

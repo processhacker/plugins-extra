@@ -88,8 +88,10 @@ VOID PerfMonLoadList(
     PPH_STRING settingsString;
     PH_STRINGREF remaining;
 
-    settingsString = PhaGetStringSetting(SETTING_NAME_PERFMON_LIST);
-    remaining = settingsString->sr;
+    if (!(settingsString = PhGetStringSetting(SETTING_NAME_PERFMON_LIST)))
+        return;
+
+    remaining = PhGetStringRef(settingsString);
 
     while (remaining.Length != 0)
     {
@@ -108,6 +110,8 @@ VOID PerfMonLoadList(
 
         entry->UserReference = TRUE;
     }
+
+    PhDereferenceObject(settingsString);
 }
 
 VOID PerfMonSaveList(
@@ -130,7 +134,11 @@ VOID PerfMonSaveList(
 
         if (entry->UserReference)
         {
-            PhAppendFormatStringBuilder(&stringBuilder, L"%s,", PhGetStringOrEmpty(entry->Id.PerfCounterPath));
+            PhAppendFormatStringBuilder(
+                &stringBuilder,
+                L"%s,",
+                PhGetStringOrEmpty(entry->Id.PerfCounterPath)
+                );
         }
 
         PhDereferenceObjectDeferDelete(entry);
@@ -141,8 +149,9 @@ VOID PerfMonSaveList(
     if (stringBuilder.String->Length != 0)
         PhRemoveEndStringBuilder(&stringBuilder, 1);
 
-    settingsString = PH_AUTO(PhFinalStringBuilderString(&stringBuilder));
+    settingsString = PhFinalStringBuilderString(&stringBuilder);
     PhSetStringSetting2(SETTING_NAME_PERFMON_LIST, &settingsString->sr);
+    PhDereferenceObject(settingsString);
 }
 
 BOOLEAN PerfMonFindEntry(
@@ -208,7 +217,6 @@ VOID PerfMonShowCounters(
 
     if (PdhBrowseCounters(&browseConfig) != ERROR_SUCCESS)
         return;
-    
     if (PhCountStringZ(counterPathBuffer) == 0)
         return;
 
@@ -216,7 +224,7 @@ VOID PerfMonShowCounters(
     {
         PPH_STRING counterPathString = PhCreateString(counterPath);
 
-        if (PhFindCharInString(counterPathString, 0, '*') != -1) // Check for wildcards
+        if (PhFindCharInString(counterPathString, 0, L'*') != -1) // check for wildcards
         {
             PPH_STRING counterWildCardString;
             ULONG wildCardLength = 0;
@@ -242,7 +250,7 @@ VOID PerfMonShowCounters(
                 PH_STRINGREF part;
                 PH_STRINGREF remaining;
 
-                remaining = counterWildCardString->sr;
+                remaining = PhGetStringRef(counterWildCardString);
 
                 while (remaining.Length != 0)
                 {
@@ -296,9 +304,7 @@ INT_PTR CALLBACK OptionsDlgProc(
 
     if (uMsg == WM_INITDIALOG)
     {
-        context = (PPH_PERFMON_CONTEXT)PhAllocate(sizeof(PH_PERFMON_CONTEXT));
-        memset(context, 0, sizeof(PH_PERFMON_CONTEXT));
-
+        context = PhAllocateZero(sizeof(PH_PERFMON_CONTEXT));
         PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, context);
     }
     else
@@ -332,8 +338,8 @@ INT_PTR CALLBACK OptionsDlgProc(
         break;
     case WM_DESTROY:
         {
-            if (context->OptionsChanged)
-                PerfMonSaveList();
+            //if (context->OptionsChanged)
+            PerfMonSaveList();
 
             PhDeleteLayoutManager(&context->LayoutManager);
 

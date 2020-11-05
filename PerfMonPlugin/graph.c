@@ -33,7 +33,7 @@ PPH_STRING PerfCounterLabelYFunction(
 {
     ULONG64 size;
 
-    size = (ULONG64)(Value * Parameter);
+    size = (ULONG64)((DOUBLE)Value * (DOUBLE)Parameter);
 
     if (size != 0)
     {
@@ -52,7 +52,7 @@ VOID NTAPI ProcessesUpdatedHandler(
 {
     PPH_PERFMON_SYSINFO_CONTEXT context = Context;
 
-    if (context->WindowHandle)
+    if (context && context->WindowHandle)
     {
         PostMessage(context->WindowHandle, MSG_UPDATE, 0, 0);
     }
@@ -253,6 +253,9 @@ BOOLEAN PerfCounterSectionCallback(
         {
             PPH_SYSINFO_CREATE_DIALOG createDialog = (PPH_SYSINFO_CREATE_DIALOG)Parameter1;
 
+            if (!createDialog)
+                break;
+
             createDialog->Instance = PluginInstance->DllBase;
             createDialog->Template = MAKEINTRESOURCE(IDD_PERFMON_DIALOG);
             createDialog->DialogProc = PerfCounterDialogProc;
@@ -262,6 +265,9 @@ BOOLEAN PerfCounterSectionCallback(
     case SysInfoGraphGetDrawInfo:
         {
             PPH_GRAPH_DRAW_INFO drawInfo = (PPH_GRAPH_DRAW_INFO)Parameter1;
+
+            if (!drawInfo)
+                break;
 
             drawInfo->Flags = PH_GRAPH_USE_GRID_X | PH_GRAPH_USE_GRID_Y | PH_GRAPH_LABEL_MAX_Y;
             Section->Parameters->ColorSetupFunction(drawInfo, PhGetIntegerSetting(L"ColorCpuKernel"), 0);
@@ -300,8 +306,12 @@ BOOLEAN PerfCounterSectionCallback(
     case SysInfoGraphGetTooltipText:
         {
             PPH_SYSINFO_GRAPH_GET_TOOLTIP_TEXT getTooltipText = (PPH_SYSINFO_GRAPH_GET_TOOLTIP_TEXT)Parameter1;
+            ULONG64 counterValue;
 
-            ULONG64 counterValue = PhGetItemCircularBuffer_ULONG64(
+            if (!getTooltipText)
+                break;
+
+            counterValue = PhGetItemCircularBuffer_ULONG64(
                 &context->Entry->HistoryBuffer,
                 getTooltipText->Index
                 );
@@ -318,6 +328,9 @@ BOOLEAN PerfCounterSectionCallback(
     case SysInfoGraphDrawPanel:
         {
             PPH_SYSINFO_DRAW_PANEL drawPanel = (PPH_SYSINFO_DRAW_PANEL)Parameter1;
+
+            if (!drawPanel)
+                break;
 
             drawPanel->Title = PhCreateString2(&Section->Name);
             drawPanel->SubTitle = PhFormatUInt64(context->Entry->HistoryDelta.Value, TRUE);
@@ -336,9 +349,7 @@ VOID PerfMonCounterSysInfoInitializing(
     PH_SYSINFO_SECTION section;
     PPH_PERFMON_SYSINFO_CONTEXT context;
 
-    context = (PPH_PERFMON_SYSINFO_CONTEXT)PhAllocateZero(sizeof(PH_PERFMON_SYSINFO_CONTEXT));
-    memset(&section, 0, sizeof(PH_SYSINFO_SECTION));
-
+    context = PhAllocateZero(sizeof(PH_PERFMON_SYSINFO_CONTEXT));
     context->Entry = Entry;
 
     section.Context = context;

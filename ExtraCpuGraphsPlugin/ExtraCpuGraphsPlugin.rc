@@ -8,7 +8,6 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "winres.h"
-
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -32,13 +31,11 @@ END
 
 2 TEXTINCLUDE 
 BEGIN
-    "#include ""winres.h""\r\n"
-    "\0"
+    "#include ""winres.h""\0"
 END
 
 3 TEXTINCLUDE 
 BEGIN
-    "\r\n"
     "\0"
 END
 
@@ -47,34 +44,20 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Menu
-//
-
-IDR_FW_MENU MENU
-BEGIN
-    POPUP "Event"
-    BEGIN
-        MENUITEM "&Copy\aCtrl+C",               ID_EVENT_COPY
-        MENUITEM SEPARATOR
-        MENUITEM "Properties",                  ID_FW_PROPERTIES
-    END
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Dialog
 //
 
-IDD_FWTABLE DIALOGEX 0, 0, 515, 284
+IDD_GPU_DIALOG DIALOGEX 0, 0, 315, 191
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_APPWINDOW
 CAPTION "Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "",IDC_LIST1,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,2,19,511,263
-    PUSHBUTTON      "Inbound",IDC_INBOUND,2,2,65,14,NOT WS_TABSTOP
-    PUSHBUTTON      "Outbound",IDC_OUTBOUND,73,2,64,14,NOT WS_TABSTOP
-    EDITTEXT        IDC_SEARCHBOX,360,2,153,14,ES_AUTOHSCROLL,WS_EX_CLIENTEDGE
+    LTEXT           "Graph layout",IDC_GRAPH_LAYOUT,0,0,315,190,NOT WS_VISIBLE
+    LTEXT           "Context switches:",IDC_GPU_L,73,0,59,8
+    LTEXT           "Interrupts: (IRQ)",IDC_MEMORY_L,73,5,56,8
+    LTEXT           "Deferred procedure calls: (DPC)",IDC_SHARED_L,74,11,103,8
+    LTEXT           "System calls: (Syscall)",IDC_BUS_L,74,18,71,8
 END
 
 
@@ -86,12 +69,8 @@ END
 #ifdef APSTUDIO_INVOKED
 GUIDELINES DESIGNINFO
 BEGIN
-    IDD_FWTABLE, DIALOG
+    IDD_GPU_DIALOG, DIALOG
     BEGIN
-        LEFTMARGIN, 2
-        RIGHTMARGIN, 513
-        TOPMARGIN, 2
-        BOTTOMMARGIN, 282
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -102,7 +81,7 @@ END
 // AFX_DIALOG_LAYOUT
 //
 
-IDD_FWTABLE AFX_DIALOG_LAYOUT
+IDD_GPU_DIALOG AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
@@ -110,15 +89,4 @@ END
 #endif    // English (Australia) resources
 /////////////////////////////////////////////////////////////////////////////
 
-
-
-#ifndef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 3 resource.
-//
-
-
-/////////////////////////////////////////////////////////////////////////////
-#endif    // not APSTUDIO_INVOKED
 

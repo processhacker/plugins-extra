@@ -905,7 +905,7 @@ typedef NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1 NV_DISPLAYCONFIG_SOURCE_MODE_INFO;
 typedef struct _NV_DISPLAYCONFIG_PATH_INFO_V1
 {
     NvU32                                   version;
-    NvU32                                   reserved_sourceId;     	//!< This field is reserved. There is ongoing debate if we need this field.
+    NvU32                                   reserved_sourceId;      //!< This field is reserved. There is ongoing debate if we need this field.
                                                                         //!< Identifies sourceIds used by Windows. If all sourceIds are 0, 
                                                                         //!< these will be computed automatically.
     NvU32                                   targetInfoCount;            //!< Number of elements in targetInfo array
@@ -922,7 +922,7 @@ typedef struct _NV_DISPLAYCONFIG_PATH_INFO_V2
 {
     NvU32                                   version;
     union {
-        NvU32                                   sourceId;            	//!< Identifies sourceId used by Windows CCD. This can be optionally set.
+        NvU32                                   sourceId;               //!< Identifies sourceId used by Windows CCD. This can be optionally set.
         NvU32                                   reserved_sourceId;      //!< Only for compatibility
     };
 
@@ -1254,7 +1254,8 @@ NVAPI_INTERFACE NvAPI_EnumTCCPhysicalGPUs( NvPhysicalGpuHandle nvGPUHandle[NVAPI
 //! \retval NVAPI_NVIDIA_DEVICE_NOT_FOUND  No NVIDIA GPU driving a display was found
 //! \ingroup gpu
 ///////////////////////////////////////////////////////////////////////////////
-NVAPI_INTERFACE NvAPI_EnumLogicalGPUs(NvLogicalGpuHandle nvGPUHandle[NVAPI_MAX_LOGICAL_GPUS], NvU32 *pGpuCount);
+typedef NvAPI_Status (__cdecl* _NvAPI_EnumLogicalGPUs)(NvLogicalGpuHandle nvGPUHandle[NVAPI_MAX_LOGICAL_GPUS], NvU32* pGpuCount);
+_NvAPI_EnumLogicalGPUs NvAPI_EnumLogicalGPUs;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1326,8 +1327,8 @@ NVAPI_INTERFACE NvAPI_GetPhysicalGPUFromUnAttachedDisplay(NvUnAttachedDisplayHan
 //! \retval NVAPI_NVIDIA_DEVICE_NOT_FOUND  No NVIDIA GPU driving a display was found
 //! \ingroup gpu
 ///////////////////////////////////////////////////////////////////////////////
-NVAPI_INTERFACE NvAPI_GetLogicalGPUFromDisplay(NvDisplayHandle hNvDisp, NvLogicalGpuHandle *pLogicalGPU);
-
+typedef NvAPI_Status (__cdecl* _NvAPI_GetLogicalGPUFromDisplay)(NvDisplayHandle hNvDisp, NvLogicalGpuHandle *pLogicalGPU);
+_NvAPI_GetLogicalGPUFromDisplay NvAPI_GetLogicalGPUFromDisplay;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1346,7 +1347,8 @@ NVAPI_INTERFACE NvAPI_GetLogicalGPUFromDisplay(NvDisplayHandle hNvDisp, NvLogica
 //! \retval NVAPI_NVIDIA_DEVICE_NOT_FOUND  No NVIDIA GPU driving a display was found
 //! \ingroup gpu
 ///////////////////////////////////////////////////////////////////////////////
-NVAPI_INTERFACE NvAPI_GetLogicalGPUFromPhysicalGPU(NvPhysicalGpuHandle hPhysicalGPU, NvLogicalGpuHandle *pLogicalGPU);
+typedef NvAPI_Status (__cdecl* _NvAPI_GetLogicalGPUFromPhysicalGPU)(NvPhysicalGpuHandle hPhysicalGPU, NvLogicalGpuHandle* pLogicalGPU);
+_NvAPI_GetLogicalGPUFromPhysicalGPU NvAPI_GetLogicalGPUFromPhysicalGPU;
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1369,8 +1371,9 @@ NVAPI_INTERFACE NvAPI_GetLogicalGPUFromPhysicalGPU(NvPhysicalGpuHandle hPhysical
 //! \retval NVAPI_EXPECTED_LOGICAL_GPU_HANDLE  hLogicalGPU was not a logical GPU handle
 //! \ingroup gpu
 ///////////////////////////////////////////////////////////////////////////////
-NVAPI_INTERFACE NvAPI_GetPhysicalGPUsFromLogicalGPU(NvLogicalGpuHandle hLogicalGPU,NvPhysicalGpuHandle hPhysicalGPU[NVAPI_MAX_PHYSICAL_GPUS], NvU32 *pGpuCount);
-   
+typedef NvAPI_Status (__cdecl* _NvAPI_GetPhysicalGPUsFromLogicalGPU)(NvLogicalGpuHandle hLogicalGPU,NvPhysicalGpuHandle hPhysicalGPU[NVAPI_MAX_PHYSICAL_GPUS], NvU32 *pGpuCount);
+_NvAPI_GetPhysicalGPUsFromLogicalGPU NvAPI_GetPhysicalGPUsFromLogicalGPU;
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // FUNCTION NAME: NvAPI_GPU_GetGpuCoreCount
@@ -2296,7 +2299,7 @@ typedef NV_GPU_CLOCK_FREQUENCIES_V2 NV_GPU_CLOCK_FREQUENCIES;
 //! @{
 #define NV_GPU_CLOCK_FREQUENCIES_VER_1    MAKE_NVAPI_VERSION(NV_GPU_CLOCK_FREQUENCIES_V1,1)
 #define NV_GPU_CLOCK_FREQUENCIES_VER_2    MAKE_NVAPI_VERSION(NV_GPU_CLOCK_FREQUENCIES_V2,2)
-#define NV_GPU_CLOCK_FREQUENCIES_VER	  NV_GPU_CLOCK_FREQUENCIES_VER_2
+#define NV_GPU_CLOCK_FREQUENCIES_VER      NV_GPU_CLOCK_FREQUENCIES_VER_2
 //! @}
  
 ///////////////////////////////////////////////////////////////////////////////
@@ -3828,8 +3831,8 @@ typedef enum _NV_GPU_ILLUMINATION_ATTRIB
 typedef struct _NV_GPU_QUERY_ILLUMINATION_SUPPORT_PARM_V1 {
 
     // IN
-    NvU32   version;						//!< Version of this structure
-    NvPhysicalGpuHandle hPhysicalGpu;		//!< The handle of the GPU that you are checking for the specified attribute.
+    NvU32   version;                        //!< Version of this structure
+    NvPhysicalGpuHandle hPhysicalGpu;       //!< The handle of the GPU that you are checking for the specified attribute.
                                             //!< note that this is the GPU that is managing the attribute.
                                             //!< Only a single GPU can manage an given attribute on a given HW element,
                                             //!< regardless of how many are attatched.
@@ -3890,8 +3893,8 @@ NVAPI_INTERFACE NvAPI_GPU_QueryIlluminationSupport(_Inout_ NV_GPU_QUERY_ILLUMINA
 typedef struct _NV_GPU_GET_ILLUMINATION_PARM_V1 {
 
     // IN
-    NvU32   version;						//!< Version of this structure
-    NvPhysicalGpuHandle hPhysicalGpu;		//!< The handle of the GPU that you are checking for the specified attribute.
+    NvU32   version;                        //!< Version of this structure
+    NvPhysicalGpuHandle hPhysicalGpu;       //!< The handle of the GPU that you are checking for the specified attribute.
                                             //!< Note that this is the GPU that is managing the attribute.
                                             //!< Only a single GPU can manage an given attribute on a given HW element,
                                             //!< regardless of how many are attatched.
@@ -3946,7 +3949,7 @@ NVAPI_INTERFACE NvAPI_GPU_GetIllumination(NV_GPU_GET_ILLUMINATION_PARM *pIllumin
 //!                                  If a value is specified outside this range, NVAPI_INVALID_ARGUMENT will be returned.
 //! 
 //! \return See \ref nvapistatus for the list of possible return values. Return values of special interest are:
-//!             NVAPI_INVALID_ARGUMENT	The specified attibute is not known to the driver, or the specified value is out of range.
+//!             NVAPI_INVALID_ARGUMENT  The specified attibute is not known to the driver, or the specified value is out of range.
 //!             NVAPI_NOT_SUPPORTED     The specified attribute is not supported on the specified GPU.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -3955,8 +3958,8 @@ NVAPI_INTERFACE NvAPI_GPU_GetIllumination(NV_GPU_GET_ILLUMINATION_PARM *pIllumin
 typedef struct _NV_GPU_SET_ILLUMINATION_PARM_V1 {
 
     // IN
-    NvU32   version;						//!< Version of this structure
-    NvPhysicalGpuHandle hPhysicalGpu;		//!< The handle of the GPU that you are checking for the specified attribute.
+    NvU32   version;                        //!< Version of this structure
+    NvPhysicalGpuHandle hPhysicalGpu;       //!< The handle of the GPU that you are checking for the specified attribute.
                                             //!< Note that this is the GPU that is managing the attribute.
                                             //!< Only a single GPU can manage an given attribute on a given HW element,
                                             //!< regardless of how many are attatched.
@@ -5032,13 +5035,13 @@ typedef struct _NV_TIMING_INPUT
 {
     NvU32 version;                       //!< (IN)     structure version
     
-    NvU32 width;						//!< Visible horizontal size
-    NvU32 height;						//!< Visible vertical size 
-    float rr;							//!< Timing refresh rate
+    NvU32 width;                        //!< Visible horizontal size
+    NvU32 height;                       //!< Visible vertical size 
+    float rr;                           //!< Timing refresh rate
         
-    NV_TIMING_FLAG flag;				//!< Flag containing additional info for timing calculation.
+    NV_TIMING_FLAG flag;                //!< Flag containing additional info for timing calculation.
     
-    NV_TIMING_OVERRIDE type;			//!< Timing type(formula) to use for calculating the timing
+    NV_TIMING_OVERRIDE type;            //!< Timing type(formula) to use for calculating the timing
 }NV_TIMING_INPUT;
 
 #define NV_TIMING_INPUT_VER   MAKE_NVAPI_VERSION(NV_TIMING_INPUT,1)
@@ -5054,7 +5057,7 @@ typedef struct _NV_TIMING_INPUT
 //! \since Release: 313  
 //!
 //!
-//! \param [in]   displayId		Display ID of the display.
+//! \param [in]   displayId     Display ID of the display.
 //! \param [in]   timingInput   Inputs used for calculating the timing.
 //! \param [out]  pTiming       Pointer to the NV_TIMING structure. 
 //!
@@ -5267,7 +5270,7 @@ typedef struct
 // FUNCTION NAME:   NvAPI_DISP_EnumCustomDisplay
 //
 //! DESCRIPTION:   This API enumerates the custom timing specified by the enum index. 
-//!				   The client should keep enumerating until it returns NVAPI_END_ENUMERATION.
+//!                The client should keep enumerating until it returns NVAPI_END_ENUMERATION.
 //!
 //! SUPPORTED OS:  Windows XP and higher
 //!
@@ -5331,7 +5334,7 @@ NVAPI_INTERFACE NvAPI_DISP_TryCustomDisplay( __in_ecount(count) NvU32 *pDisplayI
 //!
 //! \param [in]     pDisplayIds    Array of Dispaly IDs on which custom display configuration is to be saved.
 //! \param [in]     count          Total number of the incoming Dispaly IDs. This is for the multi-head support.
-//!	\param [in]     pCustDisp	   Pointer to the NV_CUSTOM_DISPLAY structure
+//! \param [in]     pCustDisp      Pointer to the NV_CUSTOM_DISPLAY structure
 //!
 //! \return        This API can return any of the error codes enumerated in #NvAPI_Status. If there are return error codes with 
 //!                specific meaning for this API, they are listed below.
@@ -5362,7 +5365,7 @@ NVAPI_INTERFACE NvAPI_DISP_DeleteCustomDisplay( __in_ecount(count) NvU32 *pDispl
 //!
 //! \return        This API can return any of the error codes enumerated in #NvAPI_Status. If there are return error codes with 
 //!                specific meaning for this API, they are listed below.
-//! \retval 	   NVAPI_INVALID_DISPLAY_ID:   Custom Timing is not supported on the Display, whose display id is passed
+//! \retval        NVAPI_INVALID_DISPLAY_ID:   Custom Timing is not supported on the Display, whose display id is passed
 //!
 //! \ingroup dispcontrol
 ///////////////////////////////////////////////////////////////////////////////
@@ -6091,17 +6094,17 @@ NVAPI_INTERFACE NvAPI_GSync_EnumSyncDevices(_Out_ NvGSyncDeviceHandle nvGSyncHan
 
 
 // GSync boardId values
-#define NVAPI_GSYNC_BOARD_ID_P358 856		//!< GSync board ID 0x358, see NV_GSYNC_CAPABILITIES
-#define NVAPI_GSYNC_BOARD_ID_P2060 8288		//!< GSync board ID 0x2060, see NV_GSYNC_CAPABILITIES 
+#define NVAPI_GSYNC_BOARD_ID_P358 856       //!< GSync board ID 0x358, see NV_GSYNC_CAPABILITIES
+#define NVAPI_GSYNC_BOARD_ID_P2060 8288     //!< GSync board ID 0x2060, see NV_GSYNC_CAPABILITIES 
 
 
 //! Used in NvAPI_GSync_QueryCapabilities().
 typedef struct _NV_GSYNC_CAPABILITIES
 {
-    NvU32   version;						//!< Version of the structure
-    NvU32   boardId;						//!< Board ID
-    NvU32   revision;						//!< FPGA Revision
-    NvU32   capFlags;						//!< Capabilities of the Sync board. Reserved for future use
+    NvU32   version;                        //!< Version of the structure
+    NvU32   boardId;                        //!< Board ID
+    NvU32   revision;                       //!< FPGA Revision
+    NvU32   capFlags;                       //!< Capabilities of the Sync board. Reserved for future use
 } NV_GSYNC_CAPABILITIES;
 
 
@@ -6229,17 +6232,17 @@ NVAPI_INTERFACE NvAPI_GSync_GetTopology(_In_ NvGSyncDeviceHandle hNvGSyncDevice,
 //!
 //! \since Release: 313
 //!
-//! \param [in]  gsyncDisplayCount-			The number of displays in gsyncDisplays.
-//! \param [in]  pGsyncDisplays-			The caller provides the structure containing all displays that need to be synchronized in the system. 
-//!											The displays that are not part of pGsyncDisplays, will be un-synchronized.
-//! \param [in]  flags-						Reserved for future use.
+//! \param [in]  gsyncDisplayCount-         The number of displays in gsyncDisplays.
+//! \param [in]  pGsyncDisplays-            The caller provides the structure containing all displays that need to be synchronized in the system. 
+//!                                         The displays that are not part of pGsyncDisplays, will be un-synchronized.
+//! \param [in]  flags-                     Reserved for future use.
 //!
 //!
 //! \return  This API can return any of the error codes enumerated in #NvAPI_Status. 
 //!          If there are return error codes with specific meaning for this API, they are listed below.
 //!
-//! \retval ::NVAPI_INVALID_ARGUMENT			If the display topology or count not valid.
-//! \retval ::NVAPI_NVIDIA_DEVICE_NOT_FOUND		The queried Graphics system does not have any Sync Device.
+//! \retval ::NVAPI_INVALID_ARGUMENT            If the display topology or count not valid.
+//! \retval ::NVAPI_NVIDIA_DEVICE_NOT_FOUND     The queried Graphics system does not have any Sync Device.
 //! \retval ::NVAPI_INVALID_SYNC_TOPOLOGY       1.If any mosaic grid is partial.
 //!                                             2.If timing(HVisible/VVisible/refreshRate) applied of any display is different. 
 //!                                             3.If There is a across GPU mosaic grid in system and that is not a part of pGsyncDisplays.
@@ -6360,9 +6363,9 @@ NVAPI_INTERFACE NvAPI_GSync_SetControlParameters(_In_ NvGSyncDeviceHandle hNvGSy
 //! Used in NvAPI_GSync_AdjustSyncDelay()
 typedef enum _NVAPI_GSYNC_DELAY_TYPE
 {
-    NVAPI_GSYNC_DELAY_TYPE_UNKNOWN			= 0,
-    NVAPI_GSYNC_DELAY_TYPE_SYNC_SKEW     	= 1,
-    NVAPI_GSYNC_DELAY_TYPE_STARTUP     		= 2
+    NVAPI_GSYNC_DELAY_TYPE_UNKNOWN          = 0,
+    NVAPI_GSYNC_DELAY_TYPE_SYNC_SKEW        = 1,
+    NVAPI_GSYNC_DELAY_TYPE_STARTUP          = 2
 } NVAPI_GSYNC_DELAY_TYPE;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -6376,10 +6379,10 @@ typedef enum _NVAPI_GSYNC_DELAY_TYPE
 //!
 //! \since Release: 319
 //!
-//! \param [in]  hNvGSyncDevice-   	The caller provides the handle of the Sync device for which to get parameters
-//! \param [in]  delayType-   		Specifies whether the delay is syncSkew or startupDelay. 
-//! \param [inout]  *pGsyncDelay-  	The caller provides NV_GSYNC_DELAY. skew and startDelay will be adjusted and updated to the closest values.
-//! \param [out]  *syncSteps-  		This parameter is optional. It returns the sync delay in unit steps. If 0, it means either the NV_GSYNC_DELAY::numPixels is less than NV_GSYNC_DELAY::minPixels or NV_GSYNC_DELAY::numOfLines exceeds the NV_GSYNC_DELAY::maxLines.
+//! \param [in]  hNvGSyncDevice-    The caller provides the handle of the Sync device for which to get parameters
+//! \param [in]  delayType-         Specifies whether the delay is syncSkew or startupDelay. 
+//! \param [inout]  *pGsyncDelay-   The caller provides NV_GSYNC_DELAY. skew and startDelay will be adjusted and updated to the closest values.
+//! \param [out]  *syncSteps-       This parameter is optional. It returns the sync delay in unit steps. If 0, it means either the NV_GSYNC_DELAY::numPixels is less than NV_GSYNC_DELAY::minPixels or NV_GSYNC_DELAY::numOfLines exceeds the NV_GSYNC_DELAY::maxLines.
 //!
 //! \return  This API can return any of the error codes enumerated in #NvAPI_Status. 
 //!          If there are return error codes with specific meaning for this API, they are listed below.
@@ -7127,7 +7130,7 @@ typedef struct _NVVIOCOMPOSITERANGE
 #define NVVIOCONFIG_RESERVED_SDIOUTPUTENABLE         0x00800000      //!< fields: bEnableSDIOutput
 #define NVVIOCONFIG_STREAMS                 0x01000000      //!< fields: streams
 #define NVVIOCONFIG_ANC_PARITY_COMPUTATION  0x02000000      //!< fields: ancParityComputation
-#define NVVIOCONFIG_ANC_AUDIO_REPEAT		0x04000000      //!< fields: enableAudioBlanking
+#define NVVIOCONFIG_ANC_AUDIO_REPEAT        0x04000000      //!< fields: enableAudioBlanking
  
 
 // Don't forget to update NVVIOCONFIG_VALIDFIELDS in nvapi.spec when NVVIOCONFIG_ALLFIELDS changes.
@@ -7227,7 +7230,7 @@ typedef struct _NVVIOCOMPOSITERANGE
                                         NVVIOCONFIG_DATAFORMAT           | \
                                         NVVIOCONFIG_SYNCSOURCEENABLE     | \
                                         NVVIOCONFIG_FRAMELOCKENABLE      | \
-                                        NVVIOCONFIG_COMPOSITESYNCTYPE	 | \
+                                        NVVIOCONFIG_COMPOSITESYNCTYPE    | \
                                         NVVIOCONFIG_ANC_AUDIO_REPEAT)                                            
                                              
 
@@ -7318,7 +7321,7 @@ typedef struct _NVVIOOUTPUTCONFIG_V3
     NvU32                enableFullColorRange;                 //!< Flag indicating Full Color Range
     NvU32                enableRGBData;                        //!< Indicates data is in RGB format
     NVVIOANCPARITYCOMPUTATION ancParityComputation;            //!< Enable HW ANC parity bit computation (auto/on/off)
-    NvU32				 enableAudioBlanking;				   //!< Enable HANC audio blanking on repeat frames
+    NvU32                enableAudioBlanking;                  //!< Enable HANC audio blanking on repeat frames
 } NVVIOOUTPUTCONFIG_V3;
 
 //! Stream configuration
