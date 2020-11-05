@@ -55,9 +55,9 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "Graph layout",IDC_GRAPH_LAYOUT,0,0,315,190,NOT WS_VISIBLE
     LTEXT           "Context switches:",IDC_GPU_L,73,0,59,8
-    LTEXT           "Interrupts: (IRQ)",IDC_MEMORY_L,73,5,56,8
-    LTEXT           "Deferred procedure calls: (DPC)",IDC_SHARED_L,74,11,103,8
-    LTEXT           "System calls: (Syscall)",IDC_BUS_L,74,18,71,8
+    LTEXT           "Interrupts:",IDC_MEMORY_L,73,5,36,8
+    LTEXT           "Deferred procedure calls:",IDC_SHARED_L,74,11,82,8
+    LTEXT           "System calls:",IDC_BUS_L,74,18,42,8
 END
 
 
