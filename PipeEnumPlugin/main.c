@@ -52,7 +52,7 @@ BOOLEAN NTAPI PhpPipeFilenameDirectoryCallback(
     return TRUE;
 }
 
-VOID EnumeratePipes(VOID)
+VOID EnumerateNamedPipeDirectory(VOID)
 {
     NTSTATUS status;
     HANDLE pipeDirectoryHandle;
@@ -195,7 +195,7 @@ INT_PTR CALLBACK MainWindowDlgProc(
             PhSetExtendedListView(ListViewWndHandle);
             PhLoadListViewColumnsFromSetting(SETTING_NAME_LISTVIEW_COLUMNS, ListViewWndHandle);
 
-            EnumNamedPipeDirectory();
+            EnumerateNamedPipeDirectory();
         }
         break;
     case WM_SIZE:
@@ -215,7 +215,7 @@ INT_PTR CALLBACK MainWindowDlgProc(
                 EndDialog(hwndDlg, IDOK);
                 break;
             case IDRETRY:
-                EnumNamedPipeDirectory();
+                EnumerateNamedPipeDirectory();
                 break;
             }
         }
