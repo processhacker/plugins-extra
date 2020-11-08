@@ -56,6 +56,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PipeEnumPlugin", "PipeEnumP
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExtraCpuGraphsPlugin", "ExtraCpuGraphsPlugin\ExtraCpuGraphsPlugin.vcxproj", "{59785412-27F9-4F0F-96EB-DC4FB13ABA31}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphExplorerPlugin", "GraphExplorerPlugin\GraphExplorerPlugin.vcxproj", "{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -358,6 +360,18 @@ Global
 		{59785412-27F9-4F0F-96EB-DC4FB13ABA31}.Release|Win32.Build.0 = Release|Win32
 		{59785412-27F9-4F0F-96EB-DC4FB13ABA31}.Release|x64.ActiveCfg = Release|x64
 		{59785412-27F9-4F0F-96EB-DC4FB13ABA31}.Release|x64.Build.0 = Release|x64
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Debug|ARM64.Build.0 = Debug|ARM64
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Debug|Win32.Build.0 = Debug|Win32
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Debug|x64.ActiveCfg = Debug|x64
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Debug|x64.Build.0 = Debug|x64
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Release|ARM64.ActiveCfg = Release|ARM64
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Release|ARM64.Build.0 = Release|ARM64
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Release|Win32.ActiveCfg = Release|Win32
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Release|Win32.Build.0 = Release|Win32
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Release|x64.ActiveCfg = Release|x64
+		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
