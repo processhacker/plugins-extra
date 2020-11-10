@@ -473,10 +473,21 @@ NTSTATUS PhDeleteFileObjectId(
 PWSTR ReparseTagToString(
     _In_ ULONG Tag)
 {
+#ifndef IO_REPARSE_TAG_LX_SYMLINK
 #define IO_REPARSE_TAG_LX_SYMLINK (0xA000001DL)
+#endif
+#ifndef IO_REPARSE_TAG_LX_FIFO
 #define IO_REPARSE_TAG_LX_FIFO (0x80000024L)
+#endif
+#ifndef IO_REPARSE_TAG_LX_CHR
 #define IO_REPARSE_TAG_LX_CHR (0x80000025L)
+#endif
+#ifndef IO_REPARSE_TAG_LX_BLK
 #define IO_REPARSE_TAG_LX_BLK (0x80000026L)
+#endif
+#ifndef IO_REPARSE_TAG_DATALESS_CIM
+#define IO_REPARSE_TAG_DATALESS_CIM (0xA0000028L)
+#endif
 
     switch (Tag)
     {
