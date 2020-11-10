@@ -52,6 +52,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MemoryExtPlugin", "MemoryEx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DpiAwarenessExtPlugin", "DpiAwarenessExtPlugin\DpiAwarenessExtPlugin.vcxproj", "{3A20876B-7910-4F74-8B42-D6A8445DEDB9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ReparseEnumPlugin", "ReparseEnumPlugin\ReparseEnumPlugin.vcxproj", "{98EC08BE-A334-4584-A95A-637B0A468E01}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PipeEnumPlugin", "PipeEnumPlugin\PipeEnumPlugin.vcxproj", "{F74AE388-A065-43F4-B828-1CDB1DD9BC07}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExtraCpuGraphsPlugin", "ExtraCpuGraphsPlugin\ExtraCpuGraphsPlugin.vcxproj", "{59785412-27F9-4F0F-96EB-DC4FB13ABA31}"
@@ -336,6 +338,16 @@ Global
 		{3A20876B-7910-4F74-8B42-D6A8445DEDB9}.Release|Win32.Build.0 = Release|Win32
 		{3A20876B-7910-4F74-8B42-D6A8445DEDB9}.Release|x64.ActiveCfg = Release|x64
 		{3A20876B-7910-4F74-8B42-D6A8445DEDB9}.Release|x64.Build.0 = Release|x64
+		{98EC08BE-A334-4584-A95A-637B0A468E01}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{98EC08BE-A334-4584-A95A-637B0A468E01}.Debug|Win32.ActiveCfg = Debug|Win32
+		{98EC08BE-A334-4584-A95A-637B0A468E01}.Debug|Win32.Build.0 = Debug|Win32
+		{98EC08BE-A334-4584-A95A-637B0A468E01}.Debug|x64.ActiveCfg = Debug|x64
+		{98EC08BE-A334-4584-A95A-637B0A468E01}.Debug|x64.Build.0 = Debug|x64
+		{98EC08BE-A334-4584-A95A-637B0A468E01}.Release|ARM64.ActiveCfg = Release|Win32
+		{98EC08BE-A334-4584-A95A-637B0A468E01}.Release|Win32.ActiveCfg = Release|Win32
+		{98EC08BE-A334-4584-A95A-637B0A468E01}.Release|Win32.Build.0 = Release|Win32
+		{98EC08BE-A334-4584-A95A-637B0A468E01}.Release|x64.ActiveCfg = Release|x64
+		{98EC08BE-A334-4584-A95A-637B0A468E01}.Release|x64.Build.0 = Release|x64
 		{F74AE388-A065-43F4-B828-1CDB1DD9BC07}.Debug|ARM64.ActiveCfg = Debug|ARM64
 		{F74AE388-A065-43F4-B828-1CDB1DD9BC07}.Debug|ARM64.Build.0 = Debug|ARM64
 		{F74AE388-A065-43F4-B828-1CDB1DD9BC07}.Debug|Win32.ActiveCfg = Debug|Win32
