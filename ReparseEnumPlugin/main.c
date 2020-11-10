@@ -470,6 +470,99 @@ NTSTATUS PhDeleteFileObjectId(
     return status;
 }
 
+PWSTR ReparseTagToString(
+    _In_ ULONG Tag)
+{
+#define IO_REPARSE_TAG_LX_SYMLINK (0xA000001DL)
+#define IO_REPARSE_TAG_LX_FIFO (0x80000024L)
+#define IO_REPARSE_TAG_LX_CHR (0x80000025L)
+#define IO_REPARSE_TAG_LX_BLK (0x80000026L)
+
+    switch (Tag)
+    {
+    case IO_REPARSE_TAG_MOUNT_POINT:
+        return L"MOUNT_POINT";
+    case IO_REPARSE_TAG_HSM:
+        return L"HSM";
+    case IO_REPARSE_TAG_HSM2:
+        return L"HSM2";
+    case IO_REPARSE_TAG_SIS:
+        return L"SIS";
+    case IO_REPARSE_TAG_WIM:
+        return L"WIM";
+    case IO_REPARSE_TAG_CSV:
+        return L"CSV";
+    case IO_REPARSE_TAG_DFS:
+        return L"DFS";
+    case IO_REPARSE_TAG_SYMLINK:
+        return L"SYMLINK";
+    case IO_REPARSE_TAG_DFSR:
+        return L"DFSR";
+    case IO_REPARSE_TAG_DEDUP:
+        return L"DEDUP";
+    case IO_REPARSE_TAG_NFS:
+        return L"NFS";
+    case IO_REPARSE_TAG_FILE_PLACEHOLDER:
+        return L"FILE_PLACEHOLDER";
+    case IO_REPARSE_TAG_WOF:
+        return L"WOF";
+    case IO_REPARSE_TAG_WCI:
+    case IO_REPARSE_TAG_WCI_1:
+        return L"WCI";
+    case IO_REPARSE_TAG_GLOBAL_REPARSE:
+        return L"GLOBAL_REPARSE";
+    case IO_REPARSE_TAG_CLOUD:
+    case IO_REPARSE_TAG_CLOUD_1:
+    case IO_REPARSE_TAG_CLOUD_2:
+    case IO_REPARSE_TAG_CLOUD_3:
+    case IO_REPARSE_TAG_CLOUD_4:
+    case IO_REPARSE_TAG_CLOUD_5:
+    case IO_REPARSE_TAG_CLOUD_6:
+    case IO_REPARSE_TAG_CLOUD_7:
+    case IO_REPARSE_TAG_CLOUD_8:
+    case IO_REPARSE_TAG_CLOUD_9:
+    case IO_REPARSE_TAG_CLOUD_A:
+    case IO_REPARSE_TAG_CLOUD_B:
+    case IO_REPARSE_TAG_CLOUD_C:
+    case IO_REPARSE_TAG_CLOUD_D:
+    case IO_REPARSE_TAG_CLOUD_E:
+    case IO_REPARSE_TAG_CLOUD_F:
+    case IO_REPARSE_TAG_CLOUD_MASK:
+        return L"CLOUD";
+    case IO_REPARSE_TAG_APPEXECLINK:
+        return L"APPEXECLINK";
+    case IO_REPARSE_TAG_PROJFS:
+        return L"PROJFS";
+    case IO_REPARSE_TAG_STORAGE_SYNC:
+        return L"STORAGE_SYNC";
+    case IO_REPARSE_TAG_WCI_TOMBSTONE:
+        return L"WCI_TOMBSTONE";
+    case IO_REPARSE_TAG_UNHANDLED:
+        return L"UNHANDLED";
+    case IO_REPARSE_TAG_ONEDRIVE:
+        return L"ONEDRIVE";
+    case IO_REPARSE_TAG_PROJFS_TOMBSTONE:
+        return L"PROJFS_TOMBSTONE";
+    case IO_REPARSE_TAG_AF_UNIX:
+        return L"AF_UNIX";
+    case IO_REPARSE_TAG_WCI_LINK:
+    case IO_REPARSE_TAG_WCI_LINK_1:
+        return L"WCI_LINK";
+    case IO_REPARSE_TAG_DATALESS_CIM:
+        return L"DATALESS_CIM";
+    case IO_REPARSE_TAG_LX_SYMLINK:
+        return L"LX_SYMLINK";
+    case IO_REPARSE_TAG_LX_FIFO:
+        return L"LX_FIFO";
+    case IO_REPARSE_TAG_LX_CHR:
+        return L"LX_CHR";
+    case IO_REPARSE_TAG_LX_BLK:
+        return L"LX_BLK";
+    }
+
+    return PhaFormatString(L"UNKNOWN: %lu", Tag)->Buffer;
+}
+
 BOOLEAN NTAPI EnumVolumeReparseCallback(
     _In_ PFILE_REPARSE_POINT_INFORMATION Information,
     _In_ HANDLE RootDirectory,
@@ -539,7 +632,6 @@ BOOLEAN NTAPI EnumVolumeReparseCallback(
         //    reparseLength
         //    )))
         //{
-        //
         //}
         //
         //PhFree(reparseBuffer);
@@ -575,7 +667,7 @@ BOOLEAN NTAPI EnumVolumeReparseCallback(
         PhPrintUInt32(number, ++context->Count);
         index = PhAddListViewItem(context->ListViewHandle, MAXINT, number, entry);
         PhSetListViewSubItem(context->ListViewHandle, index, 1, PhaFormatUInt64(Information->FileReference, FALSE)->Buffer);
-        PhSetListViewSubItem(context->ListViewHandle, index, 2, PhaFormatUInt64(Information->Tag, FALSE)->Buffer);
+        PhSetListViewSubItem(context->ListViewHandle, index, 2, ReparseTagToString(Information->Tag));
         PhSetListViewSubItem(context->ListViewHandle, index, 3, PhGetStringOrEmpty(fileName));
     }
 
