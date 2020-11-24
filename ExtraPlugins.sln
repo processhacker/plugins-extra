@@ -60,6 +60,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExtraCpuGraphsPlugin", "Ext
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphExplorerPlugin", "GraphExplorerPlugin\GraphExplorerPlugin.vcxproj", "{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GrowlNotifications", "GrowlNotifications\GrowlNotifications.vcxproj", "{D7EAD198-8F9B-4696-9104-A36715E6FFCF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -384,6 +386,18 @@ Global
 		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Release|Win32.Build.0 = Release|Win32
 		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Release|x64.ActiveCfg = Release|x64
 		{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}.Release|x64.Build.0 = Release|x64
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Debug|ARM64.Build.0 = Debug|ARM64
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Debug|Win32.Build.0 = Debug|Win32
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Debug|x64.ActiveCfg = Debug|x64
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Debug|x64.Build.0 = Debug|x64
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Release|ARM64.ActiveCfg = Release|ARM64
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Release|ARM64.Build.0 = Release|ARM64
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Release|Win32.ActiveCfg = Release|Win32
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Release|Win32.Build.0 = Release|Win32
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Release|x64.ActiveCfg = Release|x64
+		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
