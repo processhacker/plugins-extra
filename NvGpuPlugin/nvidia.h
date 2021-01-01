@@ -648,6 +648,13 @@ _nvmlInit NvmlInit;
 typedef nvmlReturn_t (WINAPIV* _nvmlInit_v2)(VOID);
 _nvmlInit_v2 NvmlInit_v2;
 
+#define NVML_INIT_FLAG_NO_GPUS 1   //!< Don't fail nvmlInit() when no GPUs are found
+#define NVML_INIT_FLAG_NO_ATTACH 2   //!< Don't attach GPUs
+
+typedef nvmlReturn_t (WINAPIV* _nvmlInitWithFlags)(_In_ UINT32 Flags);
+_nvmlInitWithFlags nvmlInitWithFlags;
+
+
 typedef nvmlReturn_t (WINAPIV* _nvmlShutdown)(VOID);
 _nvmlShutdown NvmlShutdown;
 

@@ -301,6 +301,7 @@ BOOLEAN InitializeNvApi(
     {
         NvmlInit = PhGetProcedureAddress(NvmlLibrary, "nvmlInit", 0);
         NvmlInit_v2 = PhGetProcedureAddress(NvmlLibrary, "nvmlInit_v2", 0);
+        nvmlInitWithFlags = PhGetProcedureAddress(NvmlLibrary, "nvmlInitWithFlags", 0);
         NvmlShutdown = PhGetProcedureAddress(NvmlLibrary, "nvmlShutdown", 0);
         NvmlErrorString = PhGetProcedureAddress(NvmlLibrary, "nvmlErrorString", 0);
         NvmlDeviceGetHandleByIndex_v2 = PhGetProcedureAddress(NvmlLibrary, "nvmlDeviceGetHandleByIndex_v2", 0);
@@ -310,7 +311,10 @@ BOOLEAN InitializeNvApi(
         NvmlDeviceGetPcieThroughput = PhGetProcedureAddress(NvmlLibrary, "nvmlDeviceGetPcieThroughput", 0);
         NvmlDeviceGetTotalEnergyConsumption = PhGetProcedureAddress(NvmlLibrary, "nvmlDeviceGetTotalEnergyConsumption", 0);
 
-        NvmlInit_v2();
+        if (NvmlInit_v2() == NVML_ERROR_UNINITIALIZED)
+        {
+            nvmlInitWithFlags(0);
+        }
     }
 
     if (NvAPI_Initialize() == NVAPI_OK)

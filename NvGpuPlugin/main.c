@@ -75,7 +75,7 @@ VOID NTAPI SystemInformationInitializingCallback(
 {
     PPH_PLUGIN_SYSINFO_POINTERS pluginEntry = (PPH_PLUGIN_SYSINFO_POINTERS)Parameter;
 
-    if (NvApiInitialized)
+    if (NvApiInitialized && pluginEntry)
     {
         NvGpuSysInfoInitializing(pluginEntry);
     }
