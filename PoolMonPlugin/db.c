@@ -141,7 +141,7 @@ VOID LoadPoolTagDatabase(
             &fileHandle,
             poolTagFilePath->Buffer,
             FILE_GENERIC_READ,
-            0,
+            FILE_ATTRIBUTE_NORMAL,
             FILE_SHARE_READ | FILE_SHARE_DELETE,
             FILE_OPEN,
             FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
