@@ -29,22 +29,28 @@ ULONG Kphp2GetKernelRevisionNumber(
     VOID
     )
 {
-    ULONG result;
+    ULONG result = 0;
     PPH_STRING kernelFileName;
     PVOID versionInfo;
-    VS_FIXEDFILEINFO *rootBlock;
-    ULONG rootBlockLength;
 
-    result = 0;
-    kernelFileName = PhGetKernelFileName();
-    PhMoveReference(&kernelFileName, PhGetFileName(kernelFileName));
-    versionInfo = PhGetFileVersionInfo(kernelFileName->Buffer);
-    PhDereferenceObject(kernelFileName);
+    if (kernelFileName = PhGetKernelFileName())
+    {
+        PhMoveReference(&kernelFileName, PhGetFileName(kernelFileName));
 
-    if (versionInfo && VerQueryValue(versionInfo, L"\\", &rootBlock, &rootBlockLength) && rootBlockLength != 0)
-        result = rootBlock->dwFileVersionLS & 0xffff;
+        if (versionInfo = PhGetFileVersionInfo(kernelFileName->Buffer))
+        {
+            VS_FIXEDFILEINFO* rootBlock;
 
-    PhFree(versionInfo);
+            if (rootBlock = PhGetFileVersionFixedInfo(versionInfo))
+            {
+                result = LOWORD(rootBlock->dwFileVersionLS);
+            }
+
+            PhFree(versionInfo);
+        }
+
+        PhDereferenceObject(kernelFileName);
+    }
 
     return result;
 }
@@ -53,12 +59,24 @@ NTSTATUS Kph2InitializeDynamicPackage(
     _Out_ PKPH_DYN_PACKAGE Package
     )
 {
-    ULONG majorVersion, minorVersion, servicePack, buildNumber;
+    RTL_OSVERSIONINFOEXW versionInfo;
+    ULONG majorVersion;
+    ULONG minorVersion;
+    ULONG servicePack;
+    ULONG buildNumber;
 
-    majorVersion = PhOsVersion.dwMajorVersion;
-    minorVersion = PhOsVersion.dwMinorVersion;
-    servicePack = PhOsVersion.wServicePackMajor;
-    buildNumber = PhOsVersion.dwBuildNumber;
+    memset(&versionInfo, 0, sizeof(RTL_OSVERSIONINFOEXW));
+    versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
+
+    if (!NT_SUCCESS(RtlGetVersion(&versionInfo)))
+    {
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    majorVersion = versionInfo.dwMajorVersion;
+    minorVersion = versionInfo.dwMinorVersion;
+    servicePack = versionInfo.wServicePackMajor;
+    buildNumber = versionInfo.dwBuildNumber;
 
     memset(&Package->StructData, -1, sizeof(KPH_DYN_STRUCT_DATA));
 
