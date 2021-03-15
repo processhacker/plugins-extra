@@ -37,7 +37,7 @@ BOOLEAN WaitChainRegisterCallbacks(
     PCOGETCALLSTATE coGetCallStateCallback = NULL;
     PCOGETACTIVATIONSTATE coGetActivationStateCallback = NULL;
 
-    if (!(Context->Ole32ModuleHandle = LoadLibrary(L"ole32.dll")))
+    if (!(Context->Ole32ModuleHandle = PhLoadLibrarySafe(L"ole32.dll")))
         return FALSE;
 
     if (!(coGetCallStateCallback = PhGetProcedureAddress(Context->Ole32ModuleHandle, "CoGetCallState", 0)))
