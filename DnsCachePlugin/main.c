@@ -784,7 +784,7 @@ static VOID InitDnsApi(
     VOID
     )
 {
-    if (DnsApiHandle = LoadLibrary(L"dnsapi.dll"))
+    if (DnsApiHandle = PhLoadLibrarySafe(L"dnsapi.dll"))
     {
         DnsGetCacheDataTable_I = PhGetProcedureAddress(DnsApiHandle, "DnsGetCacheDataTable", 0);
         DnsFlushResolverCache_I = PhGetProcedureAddress(DnsApiHandle, "DnsFlushResolverCache", 0);

@@ -231,7 +231,7 @@ VOID NTAPI LoadCallback(
 
     sbieDllPath = PhaGetStringSetting(SETTING_NAME_SBIE_DLL_PATH);
     sbieDllPath = PH_AUTO(PhExpandEnvironmentStrings(&sbieDllPath->sr));
-    module = LoadLibrary(sbieDllPath->Buffer);
+    module = PhLoadLibrarySafe(sbieDllPath->Buffer);
 
     if (module)
     {
@@ -549,7 +549,7 @@ VOID NTAPI ReloadSandboxieLibrary(
 
     if (PhGetDllHandle(sbieDllPath->Buffer))
         return;
-    if (!(module = LoadLibrary(sbieDllPath->Buffer)))
+    if (!(module = PhLoadLibrarySafe(sbieDllPath->Buffer)))
         return;
 
     PhAcquireQueuedLockExclusive(&BoxedProcessesLock);
