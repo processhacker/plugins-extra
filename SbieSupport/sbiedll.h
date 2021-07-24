@@ -4,7 +4,7 @@
 #define PLUGIN_NAME L"ProcessHacker.SbieSupport"
 #define SETTING_NAME_SBIE_DLL_PATH (PLUGIN_NAME L".SbieDllPath")
 
-typedef LONG (__stdcall *P_SbieApi_QueryBoxPath)(
+/*typedef LONG (__stdcall *P_SbieApi_QueryBoxPath)(
     const WCHAR *box_name,      // pointer to WCHAR [34]
     WCHAR *file_path,
     WCHAR *key_path,
@@ -37,6 +37,6 @@ typedef BOOLEAN (__stdcall *P_SbieDll_KillAll)(
 #define SbieApi_EnumBoxes_Name "_SbieApi_EnumBoxes@8"
 #define SbieApi_EnumProcessEx_Name "_SbieApi_EnumProcessEx@16"
 #define SbieDll_KillAll_Name "_SbieDll_KillAll@8"
-#endif
+#endif*/
 
 #endif
