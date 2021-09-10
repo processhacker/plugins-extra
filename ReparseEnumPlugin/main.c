@@ -1001,7 +1001,7 @@ PPH_LIST FindVolumeFilesWithSecurityId(
 
     status = PhCreateFile(
         &volumeHandle,
-        PhGetString(VolumeDeviceName),
+        VolumeDeviceName,
         FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, // magic value
         FILE_ATTRIBUTE_NORMAL,
         FILE_SHARE_READ | FILE_SHARE_WRITE,
