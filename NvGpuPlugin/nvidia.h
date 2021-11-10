@@ -371,6 +371,28 @@ typedef struct _NV_VOLTAGE_DOMAINS
 typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetVoltageDomainsStatus)(_In_ NvPhysicalGpuHandle hPhysicalGPU, _Inout_ NV_VOLTAGE_DOMAINS* pVoltageDomainsStatus);
 _NvAPI_GPU_GetVoltageDomainsStatus NvAPI_GPU_GetVoltageDomainsStatus;
 
+//internal enum \ue098
+//{
+//    \ue000,
+//    \ue001
+//}
+
+typedef struct
+{
+    NvU32 version;
+    NvU32 flags;
+    BYTE unknown[32];
+    NvU32 mvolt;
+    BYTE unknown1[32];
+} NVAPI_RAIL_STATUS;
+
+#define NV_RAIL_STATUS_INFO_VER  MAKE_NVAPI_VERSION(NVAPI_RAIL_STATUS, 1)
+
+// rev
+typedef NvAPI_Status (__cdecl* _NvAPI_GPU_GetCurrentVoltage)(_In_ NvPhysicalGpuHandle hPhysicalGPU, NVAPI_RAIL_STATUS* pClientRailsStatus);
+_NvAPI_GPU_GetCurrentVoltage NvAPI_GetCurrentVoltage;
+
+
 
 
 // rev - NvAPI_GPU_GetVoltages
@@ -691,6 +713,46 @@ _nvmlDeviceGetTemperature NvmlDeviceGetTemperature;
 // Retrieves the intended operating speed of the device's fan.
 typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetFanSpeed)(_In_ NvmlDeviceHandle DeviceHandle, _Out_ PULONG Temperature);
 _nvmlDeviceGetFanSpeed NvmlDeviceGetFanSpeed;
+
+typedef enum nvmlSamplingType_enum
+{
+    NVML_TOTAL_POWER_SAMPLES = 0, //!< To represent total power drawn by GPU
+    NVML_GPU_UTILIZATION_SAMPLES = 1, //!< To represent percent of time during which one or more kernels was executing on the GPU
+    NVML_MEMORY_UTILIZATION_SAMPLES = 2, //!< To represent percent of time during which global (device) memory was being read or written
+    NVML_ENC_UTILIZATION_SAMPLES = 3, //!< To represent percent of time during which NVENC remains busy
+    NVML_DEC_UTILIZATION_SAMPLES = 4, //!< To represent percent of time during which NVDEC remains busy
+    NVML_PROCESSOR_CLK_SAMPLES = 5, //!< To represent processor clock samples
+    NVML_MEMORY_CLK_SAMPLES = 6, //!< To represent memory clock samples
+    NVML_SAMPLINGTYPE_COUNT
+} nvmlSamplingType_t;
+
+typedef enum nvmlValueType_enum
+{
+    NVML_VALUE_TYPE_DOUBLE = 0,
+    NVML_VALUE_TYPE_UNSIGNED_INT = 1,
+    NVML_VALUE_TYPE_UNSIGNED_LONG = 2,
+    NVML_VALUE_TYPE_UNSIGNED_LONG_LONG = 3,
+    NVML_VALUE_TYPE_SIGNED_LONG_LONG = 4,
+    NVML_VALUE_TYPE_COUNT
+} nvmlValueType_t;
+
+typedef union nvmlValue_st
+{
+    double dVal;                    //!< If the value is double
+    unsigned int uiVal;             //!< If the value is unsigned int
+    unsigned long ulVal;            //!< If the value is unsigned long
+    unsigned long long ullVal;      //!< If the value is unsigned long long
+    signed long long sllVal;        //!< If the value is signed long long
+} nvmlValue_t;
+
+typedef struct nvmlSample_st
+{
+    unsigned long long timeStamp;   //!< CPU Timestamp in microseconds
+    nvmlValue_t sampleValue;        //!< Sample Value
+} nvmlSample_t;
+
+typedef nvmlReturn_t(WINAPIV* _nvmlDeviceGetSamples)(_In_ NvmlDeviceHandle device, _In_ nvmlSamplingType_t type, unsigned long long lastSeenTimeStamp, nvmlValueType_t* sampleValType, unsigned int* sampleCount, nvmlSample_t* samples);
+_nvmlDeviceGetSamples NvmlDeviceGetSamples;
 
 // Retrieves the current PCIe link width
 typedef nvmlReturn_t (WINAPIV* _nvmlDeviceGetCurrPcieLinkGeneration)(_In_ NvmlDeviceHandle DeviceHandle, _Out_ PULONG Generation);

@@ -204,10 +204,10 @@ BOOLEAN InitializeNvApi(
     NvGpuNvmlHandleList = PhCreateList(1);
 
 #ifdef _M_IX86
-    if (!(NvApiLibrary = PhLoadLibrarySafe(L"nvapi.dll")))
+    if (!(NvApiLibrary = PhLoadLibrary(L"nvapi.dll")))
         return FALSE;
 #else
-    if (!(NvApiLibrary = PhLoadLibrarySafe(L"nvapi64.dll")))
+    if (!(NvApiLibrary = PhLoadLibrary(L"nvapi64.dll")))
         return FALSE;
 #endif
 
@@ -297,7 +297,7 @@ BOOLEAN InitializeNvApi(
     //NvAPI_GetDisplayDriverCompileType = NvAPI_QueryInterface(0x988AEA78);
     //NvAPI_GetDisplayDriverSecurityLevel = NvAPI_QueryInterface(0x9D772BBA);
 
-    if (NvmlLibrary = PhLoadLibrarySafe(L"nvml.dll"))
+    if (NvmlLibrary = PhLoadLibrary(L"nvml.dll"))
     {
         NvmlInit = PhGetProcedureAddress(NvmlLibrary, "nvmlInit", 0);
         NvmlInit_v2 = PhGetProcedureAddress(NvmlLibrary, "nvmlInit_v2", 0);

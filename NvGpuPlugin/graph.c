@@ -599,10 +599,10 @@ VOID NvGpuUpdatePanel(
     }
 
     //PhSetDialogItemText(Context->GpuPanel, IDC_TEMP_VALUE, PhaFormatString(L"%s\u00b0C", PhaFormatUInt64(GpuCurrentBoardTemp, TRUE)->Buffer)->Buffer);
-    PhSetDialogItemText(Context->GpuPanel, IDC_VOLTAGE, PhaFormatString(L"%lu mV", GpuCurrentVoltage)->Buffer);
+    PhSetDialogItemText(Context->GpuPanel, IDC_VOLTAGE, PhaFormatString(L"%.2f mV", (FLOAT)GpuCurrentVoltage)->Buffer);
     PhSetDialogItemText(Context->GpuPanel, IDC_TX, PhaFormatString(L"%s/s", PhaFormatSize(GpuPcieThroughputTx, ULONG_MAX)->Buffer)->Buffer);
     PhSetDialogItemText(Context->GpuPanel, IDC_RX, PhaFormatString(L"%s/s", PhaFormatSize(GpuPcieThroughputRx, ULONG_MAX)->Buffer)->Buffer);
-    PhSetDialogItemText(Context->GpuPanel, IDC_POWER, PhaFormatString(L"%.2f mW\n", (DOUBLE)GpuPciePowerUsage * 0.001f)->Buffer);
+    PhSetDialogItemText(Context->GpuPanel, IDC_POWER, PhaFormatString(L"%.2f W\n", (FLOAT)GpuPciePowerUsage * 0.001)->Buffer);
 }
 
 INT_PTR CALLBACK NvGpuDialogProc(
