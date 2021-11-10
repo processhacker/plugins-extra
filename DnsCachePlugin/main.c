@@ -740,6 +740,11 @@ VOID UpdateNetworkItem(
             if (!Extension->DnsCacheValid && Extension->AddressValid)
             {
                 Extension->DnsCacheValid = SearchRootQuery(NetworkItem->RemoteAddressString, &Extension->DnsCacheQueryRoot);
+
+                if (Extension->DnsCacheValid)
+                {
+                    NetworkItem->JustResolved = TRUE;
+                }
             }
         }
         break;
@@ -784,7 +789,7 @@ static VOID InitDnsApi(
     VOID
     )
 {
-    if (DnsApiHandle = PhLoadLibrarySafe(L"dnsapi.dll"))
+    if (DnsApiHandle = PhLoadLibrary(L"dnsapi.dll"))
     {
         DnsGetCacheDataTable_I = PhGetProcedureAddress(DnsApiHandle, "DnsGetCacheDataTable", 0);
         DnsFlushResolverCache_I = PhGetProcedureAddress(DnsApiHandle, "DnsFlushResolverCache", 0);
