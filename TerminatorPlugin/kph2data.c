@@ -231,12 +231,24 @@ NTSTATUS Kph2InitializeDynamicPackage(
     _Out_ PKPH_DYN_PACKAGE Package
     )
 {
-    ULONG majorVersion, minorVersion, servicePack, buildNumber;
+    RTL_OSVERSIONINFOEXW versionInfo;
+    ULONG majorVersion;
+    ULONG minorVersion;
+    ULONG servicePack;
+    ULONG buildNumber;
 
-    majorVersion = PhOsVersion.dwMajorVersion;
-    minorVersion = PhOsVersion.dwMinorVersion;
-    servicePack = PhOsVersion.wServicePackMajor;
-    buildNumber = PhOsVersion.dwBuildNumber;
+    memset(&versionInfo, 0, sizeof(RTL_OSVERSIONINFOEXW));
+    versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
+
+    if (!NT_SUCCESS(RtlGetVersion(&versionInfo)))
+    {
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    majorVersion = versionInfo.dwMajorVersion;
+    minorVersion = versionInfo.dwMinorVersion;
+    servicePack = versionInfo.wServicePackMajor;
+    buildNumber = versionInfo.dwBuildNumber;
 
     memset(&Package->StructData, -1, sizeof(KPH_DYN_STRUCT_DATA));
 
