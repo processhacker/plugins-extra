@@ -777,7 +777,7 @@ BOOLEAN NTAPI EnumVolumeReparseCallback(
 
         PhPrintUInt32(number, ++context->Count);
         index = PhAddListViewItem(context->ListViewHandle, MAXINT, number, entry);
-        PhSetListViewSubItem(context->ListViewHandle, index, 1, PhaFormatString(L"%I64u (0x%I64x)", Information->FileReference, Information->FileReference, FALSE)->Buffer);
+        PhSetListViewSubItem(context->ListViewHandle, index, 1, PhaFormatString(L"%I64u (0x%I64x)", Information->FileReference, Information->FileReference)->Buffer);
         PhSetListViewSubItem(context->ListViewHandle, index, 2, ReparseTagToString(Information->Tag));
         PhSetListViewSubItem(context->ListViewHandle, index, 3, PhGetStringOrEmpty(fileName));
     }
@@ -867,7 +867,7 @@ BOOLEAN NTAPI EnumVolumeObjectIdCallback(
 
         PhPrintUInt32(number, ++context->Count);
         index = PhAddListViewItem(context->ListViewHandle, MAXINT, number, entry);
-        PhSetListViewSubItem(context->ListViewHandle, index, 1, PhaFormatString(L"%I64u (0x%I64x)", Information->FileReference, Information->FileReference, FALSE)->Buffer);
+        PhSetListViewSubItem(context->ListViewHandle, index, 1, PhaFormatString(L"%I64u (0x%I64x)", Information->FileReference, Information->FileReference)->Buffer);
 
         {
             PPH_STRING string;
@@ -1001,7 +1001,7 @@ PPH_LIST FindVolumeFilesWithSecurityId(
 
     status = PhCreateFile(
         &volumeHandle,
-        PhGetString(VolumeDeviceName),
+        VolumeDeviceName,
         FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, // magic value
         FILE_ATTRIBUTE_NORMAL,
         FILE_SHARE_READ | FILE_SHARE_WRITE,
