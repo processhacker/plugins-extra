@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.202
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31808.319
 MinimumVisualStudioVersion = 15.0.26228.4
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D7078584-1144-4143-8DE8-D6741F6FD685}"
 	ProjectSection(SolutionItems) = preProject
@@ -61,6 +61,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GraphExplorerPlugin", "GraphExplorerPlugin\GraphExplorerPlugin.vcxproj", "{90B08550-B999-4FDD-B6CF-EB3667DBB6D4}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GrowlNotifications", "GrowlNotifications\GrowlNotifications.vcxproj", "{D7EAD198-8F9B-4696-9104-A36715E6FFCF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VectorHandlerListPlugin", "VectorHandlerListPlugin\VectorHandlerListPlugin.vcxproj", "{8B0C286F-D43E-4A12-B85C-D30A458FE37A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -398,6 +400,18 @@ Global
 		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Release|Win32.Build.0 = Release|Win32
 		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Release|x64.ActiveCfg = Release|x64
 		{D7EAD198-8F9B-4696-9104-A36715E6FFCF}.Release|x64.Build.0 = Release|x64
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Debug|ARM64.Build.0 = Debug|ARM64
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Debug|Win32.Build.0 = Debug|Win32
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Debug|x64.ActiveCfg = Debug|x64
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Debug|x64.Build.0 = Debug|x64
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Release|ARM64.ActiveCfg = Release|ARM64
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Release|ARM64.Build.0 = Release|ARM64
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Release|Win32.ActiveCfg = Release|Win32
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Release|Win32.Build.0 = Release|Win32
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Release|x64.ActiveCfg = Release|x64
+		{8B0C286F-D43E-4A12-B85C-D30A458FE37A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

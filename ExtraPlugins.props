@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
     <!-- General -->
-    <PropertyGroup>
+    <PropertyGroup Label="Globals">
         <OutDir>$(SolutionDir)..\bin\$(Configuration)$(PlatformArchitecture)\plugins\</OutDir>
         <IntDir>$(ProjectDir)obj\$(Configuration)$(PlatformArchitecture)\</IntDir>
         <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
@@ -12,10 +12,7 @@
         <LinkIncremental Condition="'$(Configuration)'=='Release'">false</LinkIncremental>
         <WholeProgramOptimization Condition="'$(Configuration)'=='Debug'">false</WholeProgramOptimization>
         <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">true</WholeProgramOptimization>
-    </PropertyGroup>
-
-    <!-- Debugging -->
-    <PropertyGroup>
+        <!-- Debugging -->
         <LocalDebuggerCommand>$(SolutionDir)..\bin\$(Configuration)$(PlatformArchitecture)\ProcessHacker.exe</LocalDebuggerCommand>
         <LocalDebuggerWorkingDirectory>$(SolutionDir)..\bin\$(Configuration)$(PlatformArchitecture)\</LocalDebuggerWorkingDirectory>
         <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
@@ -25,20 +22,23 @@
     <ItemDefinitionGroup>
         <ClCompile>
             <AdditionalIncludeDirectories>../../sdk/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-            <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
             <TreatWarningAsError>true</TreatWarningAsError>
             <WarningLevel>Level3</WarningLevel>
-            <LanguageStandard>stdcpplatest</LanguageStandard>
-            <LanguageStandard_C>stdc17</LanguageStandard_C>
+            <SDLCheck>true</SDLCheck>
             <MinimalRebuild>false</MinimalRebuild>
             <MultiProcessorCompilation>true</MultiProcessorCompilation>
-            <SDLCheck>false</SDLCheck>
+            <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+            <LanguageStandard>stdcpplatest</LanguageStandard>
+            <LanguageStandard_C>stdc17</LanguageStandard_C>
             <StringPooling>true</StringPooling>
+            <ControlFlowGuard>Guard</ControlFlowGuard>
+            <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
         </ClCompile>
         <Link>
-            <AdditionalDependencies>ProcessHacker.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+            <AdditionalDependencies>ProcessHacker.lib;ntdll.lib;noenv.obj;noarg.obj;%(AdditionalDependencies)</AdditionalDependencies>
             <GenerateDebugInformation>true</GenerateDebugInformation>
             <SubSystem>Windows</SubSystem>
+            <AdditionalOptions>/BREPRO /DEPENDENTLOADFLAG:0x800 /PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
         </Link>
         <BuildLog>
             <Path>$(IntDir)$(MSBuildProjectName).log</Path>
@@ -52,14 +52,13 @@
             <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
             <FunctionLevelLinking>false</FunctionLevelLinking>
             <IntrinsicFunctions>false</IntrinsicFunctions>
-            <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
         </ClCompile>
     </ItemDefinitionGroup>
 
     <!-- Release Builds -->
     <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
         <ClCompile>
-            <Optimization>MaxSpeed</Optimization> <!-- <Optimization>Full</Optimization> -->
+            <Optimization>Full</Optimization>
             <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
             <FunctionLevelLinking>true</FunctionLevelLinking>
             <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -133,14 +132,25 @@
     <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
         <ClCompile>
             <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <SpectreMitigation>Spectre</SpectreMitigation>
+            <IntelJCCErratum>true</IntelJCCErratum>
         </ClCompile>
+        <Link>
+            <CETCompat>true</CETCompat>
+        </Link>
     </ItemDefinitionGroup>
 
     <!-- Release|x64 Builds -->
     <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
         <ClCompile>
             <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+            <SpectreMitigation>Spectre</SpectreMitigation>
+            <IntelJCCErratum>true</IntelJCCErratum>
+            <GuardEHContMetadata>true</GuardEHContMetadata>
         </ClCompile>
+        <Link>
+            <CETCompat>true</CETCompat>
+        </Link>
     </ItemDefinitionGroup>
 
     <!-- Release|ARM64 Builds -->
