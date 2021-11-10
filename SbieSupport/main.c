@@ -2,6 +2,7 @@
  * Process Hacker Sandboxie Support -
  *   main program
  *
+ * Copyright (C) 2021 David Xanatos, xanasoft.com
  * Copyright (C) 2010-2011 wj32
  * Copyright (C) 2018 dmex
  *
@@ -26,6 +27,235 @@
 #include <windowsx.h>
 #include "resource.h"
 #include "sbiedll.h"
+
+#define SBIE_DEVICE_NAME		L"\\Device\\SandboxieDriverApi"
+#define SBIE_SBIEDRV_CTLCODE	CTL_CODE(FILE_DEVICE_UNKNOWN, 0x801, METHOD_NEITHER, FILE_ANY_ACCESS)
+
+#define API_NUM_ARGS            8
+
+#define API_QUERY_BOX_PATH      0x12340008
+#define API_ENUM_PROCESSES      0x1234000B
+#define API_QUERY_CONF          0x1234000F
+#define API_IS_BOX_ENABLED      0x1234002D
+
+#define CONF_GET_NO_GLOBAL      0x40000000L
+#define CONF_GET_NO_EXPAND      0x20000000L
+#define CONF_GET_NO_TEMPLS      0x10000000L
+
+
+ //---------------------------------------------------------------------------
+ // SbieApi_Ioctl
+ //---------------------------------------------------------------------------
+
+
+NTSTATUS SbieApi_Ioctl(ULONG64* parms)
+{
+    NTSTATUS status;
+    IO_STATUS_BLOCK IoStatusBlock;
+
+    UNICODE_STRING uni;
+    RtlInitUnicodeString(&uni, SBIE_DEVICE_NAME);
+
+    OBJECT_ATTRIBUTES objattrs;
+    InitializeObjectAttributes(&objattrs, &uni, OBJ_CASE_INSENSITIVE, NULL, NULL);
+
+    HANDLE SbieApiHandle = INVALID_HANDLE_VALUE;
+    status = NtOpenFile(&SbieApiHandle, FILE_GENERIC_READ, &objattrs, &IoStatusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0);
+    if (!NT_SUCCESS(status))
+        return status;
+
+    status = NtDeviceIoControlFile(SbieApiHandle, NULL, NULL, NULL, &IoStatusBlock, SBIE_SBIEDRV_CTLCODE, parms, sizeof(ULONG64) * API_NUM_ARGS, NULL, 0);
+
+    NtClose(SbieApiHandle);
+
+    return status;
+}
+
+
+ //---------------------------------------------------------------------------
+ // SbieApi_QueryConf
+ //---------------------------------------------------------------------------
+
+
+LONG SbieApi_QueryConf(
+    const WCHAR* section_name,      // WCHAR [66]
+    const WCHAR* setting_name,      // WCHAR [66]
+    ULONG setting_index,
+    WCHAR* out_buffer,
+    ULONG buffer_len)
+{
+    NTSTATUS status;
+    __declspec(align(8)) UNICODE_STRING64 Output;
+    __declspec(align(8)) ULONG64 parms[API_NUM_ARGS];
+    WCHAR x_section[66];
+    WCHAR x_setting[66];
+
+    memset(x_section, 0, sizeof(x_section));
+    memset(x_setting, 0, sizeof(x_setting));
+    if (section_name)
+        wcsncpy(x_section, section_name, 64);
+    if (setting_name)
+        wcsncpy(x_setting, setting_name, 64);
+
+    Output.Length = 0;
+    Output.MaximumLength = (USHORT)buffer_len;
+    Output.Buffer = (ULONG64)(ULONG_PTR)out_buffer;
+
+    memset(parms, 0, sizeof(parms));
+    parms[0] = API_QUERY_CONF;
+    parms[1] = (ULONG64)(ULONG_PTR)x_section;
+    parms[2] = (ULONG64)(ULONG_PTR)x_setting;
+    parms[3] = (ULONG64)(ULONG_PTR)&setting_index;
+    parms[4] = (ULONG64)(ULONG_PTR)&Output;
+    status = SbieApi_Ioctl(parms);
+
+    if (!NT_SUCCESS(status)) {
+        if (buffer_len > sizeof(WCHAR))
+            out_buffer[0] = L'\0';
+    }
+
+    return status;
+}
+
+//---------------------------------------------------------------------------
+// SbieApi_IsBoxEnabled
+//---------------------------------------------------------------------------
+
+
+LONG SbieApi_IsBoxEnabled(
+    const WCHAR* box_name)          // WCHAR [34]
+{
+    NTSTATUS status;
+    __declspec(align(8)) ULONG64 parms[API_NUM_ARGS];
+
+    memset(parms, 0, sizeof(parms));
+    parms[0] = API_IS_BOX_ENABLED;
+    parms[1] = (ULONG64)(ULONG_PTR)box_name;
+
+    status = SbieApi_Ioctl(parms);
+
+    return status;
+}
+
+
+//---------------------------------------------------------------------------
+// SbieApi_EnumBoxes
+//---------------------------------------------------------------------------
+
+
+LONG SbieApi_EnumBoxes(
+    LONG index,                     // initialize to -1
+    WCHAR* box_name)                // WCHAR [34]
+{
+    LONG rc;
+    while (1) {
+        ++index;
+        rc = SbieApi_QueryConf(NULL, NULL, index | CONF_GET_NO_EXPAND, box_name, sizeof(WCHAR) * 34);
+        if (rc == STATUS_BUFFER_TOO_SMALL)
+            continue;
+        if (!box_name[0])
+            return -1;
+        if ((SbieApi_IsBoxEnabled(box_name) == STATUS_SUCCESS))
+            return index;
+    }
+}
+
+
+//---------------------------------------------------------------------------
+// SbieApi_EnumProcessEx
+//---------------------------------------------------------------------------
+
+
+LONG SbieApi_EnumProcessEx(
+    const WCHAR* box_name,          // WCHAR [34]
+    BOOLEAN all_sessions,
+    ULONG which_session,            // -1 for current session
+    ULONG* boxed_pids,              // ULONG [512]
+    ULONG* boxed_count)
+{
+    NTSTATUS status;
+    __declspec(align(8)) ULONG64 parms[API_NUM_ARGS];
+
+    memset(parms, 0, sizeof(parms));
+    parms[0] = API_ENUM_PROCESSES;
+    parms[1] = (ULONG64)(ULONG_PTR)boxed_pids;
+    parms[2] = (ULONG64)(ULONG_PTR)box_name;
+    parms[3] = (ULONG64)(ULONG_PTR)all_sessions;
+    parms[4] = (ULONG64)(LONG_PTR)which_session;
+    parms[5] = (ULONG64)(LONG_PTR)boxed_count;
+    status = SbieApi_Ioctl(parms);
+
+    return status;
+}
+
+
+//---------------------------------------------------------------------------
+// SbieApi_QueryBoxPath
+//---------------------------------------------------------------------------
+
+
+LONG SbieApi_QueryBoxPath(
+    const WCHAR* box_name,              // WCHAR [34]
+    WCHAR* out_file_path,
+    WCHAR* out_key_path,
+    WCHAR* out_ipc_path,
+    ULONG* inout_file_path_len,
+    ULONG* inout_key_path_len,
+    ULONG* inout_ipc_path_len)
+{
+    NTSTATUS status;
+    __declspec(align(8)) UNICODE_STRING64 FilePath;
+    __declspec(align(8)) UNICODE_STRING64 KeyPath;
+    __declspec(align(8)) UNICODE_STRING64 IpcPath;
+    __declspec(align(8)) ULONG64 parms[API_NUM_ARGS];
+
+    memset(parms, 0, sizeof(parms));
+    parms[0] = API_QUERY_BOX_PATH;
+
+    parms[1] = (ULONG64)(ULONG_PTR)box_name;
+
+    if (out_file_path) {
+        FilePath.Length = 0;
+        FilePath.MaximumLength = (USHORT)*inout_file_path_len;
+        FilePath.Buffer = (ULONG64)(ULONG_PTR)out_file_path;
+        parms[2] = (ULONG64)(ULONG_PTR)&FilePath;
+    }
+
+    if (out_key_path) {
+        KeyPath.Length = 0;
+        KeyPath.MaximumLength = (USHORT)*inout_key_path_len;
+        KeyPath.Buffer = (ULONG64)(ULONG_PTR)out_key_path;
+        parms[3] = (ULONG64)(ULONG_PTR)&KeyPath;
+    }
+
+    if (out_ipc_path) {
+        IpcPath.Length = 0;
+        IpcPath.MaximumLength = (USHORT)*inout_ipc_path_len;
+        IpcPath.Buffer = (ULONG64)(ULONG_PTR)out_ipc_path;
+        parms[4] = (ULONG64)(ULONG_PTR)&IpcPath;
+    }
+
+    parms[5] = (ULONG64)(ULONG_PTR)inout_file_path_len;
+    parms[6] = (ULONG64)(ULONG_PTR)inout_key_path_len;
+    parms[7] = (ULONG64)(ULONG_PTR)inout_ipc_path_len;
+
+    status = SbieApi_Ioctl(parms);
+
+    if (!NT_SUCCESS(status)) {
+        if (out_file_path)
+            *out_file_path = L'\0';
+        if (out_key_path)
+            *out_key_path = L'\0';
+        if (out_ipc_path)
+            *out_ipc_path = L'\0';
+    }
+
+    return status;
+}
+
+
+
+
 
 #define PhCsColorSandboxed RGB(0x33, 0x33, 0x00)
 #define PhCsColorSandboxedSuspended RGB(0x45, 0x45, 0x37)
@@ -106,10 +336,10 @@ PH_CALLBACK_REGISTRATION ProcessesUpdatedCallbackRegistration;
 PH_CALLBACK_REGISTRATION GetProcessHighlightingColorCallbackRegistration;
 PH_CALLBACK_REGISTRATION GetProcessTooltipTextCallbackRegistration;
 
-P_SbieApi_QueryBoxPath SbieApi_QueryBoxPath = NULL;
-P_SbieApi_EnumBoxes SbieApi_EnumBoxes = NULL;
-P_SbieApi_EnumProcessEx SbieApi_EnumProcessEx = NULL;
-P_SbieDll_KillAll SbieDll_KillAll = NULL;
+//P_SbieApi_QueryBoxPath SbieApi_QueryBoxPath = NULL;
+//P_SbieApi_EnumBoxes SbieApi_EnumBoxes = NULL;
+//P_SbieApi_EnumProcessEx SbieApi_EnumProcessEx = NULL;
+//P_SbieDll_KillAll SbieDll_KillAll = NULL;
 
 PPH_HASHTABLE BoxedProcessesHashtable = NULL;
 PH_QUEUED_LOCK BoxedProcessesLock = PH_QUEUED_LOCK_INIT;
@@ -217,8 +447,8 @@ VOID NTAPI LoadCallback(
     _In_opt_ PVOID Context
     )
 {
-    PPH_STRING sbieDllPath;
-    PVOID module;
+    //PPH_STRING sbieDllPath;
+    //PVOID module;
     HANDLE timerQueueHandle;
     HANDLE timerHandle;
 
@@ -229,17 +459,17 @@ VOID NTAPI LoadCallback(
         32
         );
 
-    sbieDllPath = PhaGetStringSetting(SETTING_NAME_SBIE_DLL_PATH);
-    sbieDllPath = PH_AUTO(PhExpandEnvironmentStrings(&sbieDllPath->sr));
-    module = LoadLibrary(sbieDllPath->Buffer);
-
-    if (module)
-    {
-        SbieApi_QueryBoxPath = PhGetProcedureAddress(module, SbieApi_QueryBoxPath_Name, 0);
-        SbieApi_EnumBoxes = PhGetProcedureAddress(module, SbieApi_EnumBoxes_Name, 0);
-        SbieApi_EnumProcessEx = PhGetProcedureAddress(module, SbieApi_EnumProcessEx_Name, 0);
-        SbieDll_KillAll = PhGetProcedureAddress(module, SbieDll_KillAll_Name, 0);
-    }
+    //sbieDllPath = PhaGetStringSetting(SETTING_NAME_SBIE_DLL_PATH);
+    //sbieDllPath = PH_AUTO(PhExpandEnvironmentStrings(&sbieDllPath->sr));
+    //module = PhLoadLibrarySafe(sbieDllPath->Buffer);
+    //
+    //if (module)
+    //{
+    //    SbieApi_QueryBoxPath = PhGetProcedureAddress(module, SbieApi_QueryBoxPath_Name, 0);
+    //    SbieApi_EnumBoxes = PhGetProcedureAddress(module, SbieApi_EnumBoxes_Name, 0);
+    //    SbieApi_EnumProcessEx = PhGetProcedureAddress(module, SbieApi_EnumProcessEx_Name, 0);
+    //    SbieDll_KillAll = PhGetProcedureAddress(module, SbieDll_KillAll_Name, 0);
+    //}
 
     if (NT_SUCCESS(RtlCreateTimerQueue(&timerQueueHandle)))
     {
@@ -346,8 +576,8 @@ VOID NTAPI MainMenuInitializingCallback(
 {
     PPH_PLUGIN_MENU_INFORMATION menuInfo = Parameter;
 
-    if (!SbieDll_KillAll)
-        return;
+    //if (!SbieDll_KillAll)
+    //    return;
     if (menuInfo->u.MainMenu.SubMenuIndex != PH_MENU_ITEM_LOCATION_TOOLS)
         return;
 
@@ -447,10 +677,11 @@ VOID NTAPI RefreshSandboxieInfo(
     LONG index;
     WCHAR boxName[34];
     ULONG pids[512];
+    ULONG count;
     PBOX_INFO boxInfo;
 
-    if (!SbieApi_QueryBoxPath || !SbieApi_EnumBoxes || !SbieApi_EnumProcessEx)
-        return;
+    //if (!SbieApi_QueryBoxPath || !SbieApi_EnumBoxes || !SbieApi_EnumProcessEx)
+    //    return;
 
     PhAcquireQueuedLockExclusive(&BoxedProcessesLock);
 
@@ -462,13 +693,12 @@ VOID NTAPI RefreshSandboxieInfo(
 
     while ((index = SbieApi_EnumBoxes(index, boxName)) != -1)
     {
-        if (SbieApi_EnumProcessEx(boxName, TRUE, 0, pids) == 0)
+        count = sizeof(pids) / sizeof(pids[0]);
+        if (SbieApi_EnumProcessEx(boxName, TRUE, 0, pids, &count) == 0)
         {
-            ULONG count;
             PULONG pid;
 
-            count = pids[0];
-            pid = &pids[1];
+            pid = &pids[0];
 
             while (count != 0)
             {
@@ -537,30 +767,30 @@ VOID NTAPI RefreshSandboxieInfo(
     PhReleaseQueuedLockExclusive(&BoxedProcessesLock);
 }
 
-VOID NTAPI ReloadSandboxieLibrary(
-    VOID
-    )
-{
-    PPH_STRING sbieDllPath;
-    PVOID module;
-
-    sbieDllPath = PhaGetStringSetting(SETTING_NAME_SBIE_DLL_PATH);
-    sbieDllPath = PH_AUTO(PhExpandEnvironmentStrings(&sbieDllPath->sr));
-
-    if (PhGetDllHandle(sbieDllPath->Buffer))
-        return;
-    if (!(module = LoadLibrary(sbieDllPath->Buffer)))
-        return;
-
-    PhAcquireQueuedLockExclusive(&BoxedProcessesLock);
-
-    SbieApi_QueryBoxPath = PhGetProcedureAddress(module, SbieApi_QueryBoxPath_Name, 0);
-    SbieApi_EnumBoxes = PhGetProcedureAddress(module, SbieApi_EnumBoxes_Name, 0);
-    SbieApi_EnumProcessEx = PhGetProcedureAddress(module, SbieApi_EnumProcessEx_Name, 0);
-    SbieDll_KillAll = PhGetProcedureAddress(module, SbieDll_KillAll_Name, 0);
-
-    PhReleaseQueuedLockExclusive(&BoxedProcessesLock);
-}
+//VOID NTAPI ReloadSandboxieLibrary(
+//    VOID
+//    )
+//{
+//    PPH_STRING sbieDllPath;
+//    PVOID module;
+//
+//    sbieDllPath = PhaGetStringSetting(SETTING_NAME_SBIE_DLL_PATH);
+//    sbieDllPath = PH_AUTO(PhExpandEnvironmentStrings(&sbieDllPath->sr));
+//
+//    if (PhGetDllHandle(sbieDllPath->Buffer))
+//        return;
+//    if (!(module = PhLoadLibrarySafe(sbieDllPath->Buffer)))
+//        return;
+//
+//    PhAcquireQueuedLockExclusive(&BoxedProcessesLock);
+//
+//    SbieApi_QueryBoxPath = PhGetProcedureAddress(module, SbieApi_QueryBoxPath_Name, 0);
+//    SbieApi_EnumBoxes = PhGetProcedureAddress(module, SbieApi_EnumBoxes_Name, 0);
+//    SbieApi_EnumProcessEx = PhGetProcedureAddress(module, SbieApi_EnumProcessEx_Name, 0);
+//    SbieDll_KillAll = PhGetProcedureAddress(module, SbieDll_KillAll_Name, 0);
+//
+//    PhReleaseQueuedLockExclusive(&BoxedProcessesLock);
+//}
 
 INT_PTR CALLBACK OptionsDlgProc(
     _In_ HWND hwndDlg,
@@ -586,7 +816,7 @@ INT_PTR CALLBACK OptionsDlgProc(
         {
             PhSetStringSetting2(SETTING_NAME_SBIE_DLL_PATH, &PhaGetDlgItemText(hwndDlg, IDC_SBIEDLLPATH)->sr);
 
-            ReloadSandboxieLibrary();
+            //ReloadSandboxieLibrary();
 
             PhDeleteLayoutManager(&LayoutManager);
         }
