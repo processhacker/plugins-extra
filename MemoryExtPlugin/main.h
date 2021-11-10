@@ -39,16 +39,16 @@
 
 extern PPH_PLUGIN PluginInstance;
 
-typedef struct _ROT_WINDOW_CONTEXT
+typedef struct _MEMEXT_WINDOW_CONTEXT
 {
     ULONG ListViewCount;
     HWND WindowHandle;
     HWND ListViewHandle;
     HWND SearchboxHandle;
     PH_LAYOUT_MANAGER LayoutManager;
-    PPH_LIST LogMessageList;
-    PH_QUEUED_LOCK LogMessageListLock;// = PH_QUEUED_LOCK_INIT;
-} ROT_WINDOW_CONTEXT, *PROT_WINDOW_CONTEXT;
+    PPH_LIST List;
+    PH_QUEUED_LOCK ListLock;
+} MEMEXT_WINDOW_CONTEXT, *PMEMEXT_WINDOW_CONTEXT;
 
 typedef struct _PAGE_ENTRY
 {

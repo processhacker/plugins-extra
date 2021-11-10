@@ -47,13 +47,13 @@ typedef struct _PF_MEMORY_RANGE_INFO_V2
 
 typedef PF_MEMORY_RANGE_INFO_V2 PF_MEMORY_RANGE_INFO, *PPF_MEMORY_RANGE_INFO;
 
-typedef struct _PF_FILE 
+typedef struct _PF_FILE
 {
     ULONG FileKey;
     PPH_STRING FileName;
 } PF_FILE, *PPF_FILE;
 
-typedef struct _PF_PROCESS 
+typedef struct _PF_PROCESS
 {
     ULONG_PTR ProcessKey;
     PPH_STRING ProcessName;
@@ -62,11 +62,11 @@ typedef struct _PF_PROCESS
     ULONG SessionId;
     HANDLE ProcessHandle;
     PFS_PRIVATE_PAGE_SOURCE dads;
-    PPH_LIST ProcessPfnList; 
+    PPH_LIST ProcessPfnList;
 } PF_PROCESS, *PPF_PROCESS;
 
 // NL Log Entry Types
-typedef enum _PFNL_ENTRY_TYPE 
+typedef enum _PFNL_ENTRY_TYPE
 {
     PfNLInfoTypeFile,
     PfNLInfoTypePfBacked,
@@ -76,7 +76,7 @@ typedef enum _PFNL_ENTRY_TYPE
 } PFNL_ENTRY_TYPE;
 
 // Header for NL Log Entry
-typedef struct _PFNL_ENTRY_HEADER 
+typedef struct _PFNL_ENTRY_HEADER
 {
     PFNL_ENTRY_TYPE Type : 3;
     ULONG Size : 28;
@@ -85,10 +85,10 @@ typedef struct _PFNL_ENTRY_HEADER
 } PFNL_ENTRY_HEADER, *PPFNL_ENTRY_HEADER;
 
 // File Information NL Log Entry
-typedef struct _PFNL_FILE_INFO 
+typedef struct _PFNL_FILE_INFO
 {
     ULONG_PTR Key;
-    ULONG VolumeKey; 
+    ULONG VolumeKey;
     ULONG unknown;
     ULONG VolumeSequenceNumber;
     ULONG Metafile : 1;
@@ -105,7 +105,7 @@ typedef struct _PFNL_FILE_INFO
 } PFNL_FILE_INFO, *PPFNL_FILE_INFO;
 
 // Pagefile Backed Information NL Log Entry
-typedef struct _PFNL_PFBACKED_INFO 
+typedef struct _PFNL_PFBACKED_INFO
 {
     ULONG Key;
     PVOID ProtoPteStart;
@@ -115,7 +115,7 @@ typedef struct _PFNL_PFBACKED_INFO
 } PFNL_PFBACKED_INFO, *PPFNL_PFBACKED_INFO;
 
 // Volume Information NL Log Entry
-typedef struct _PFNL_VOLUME_INFO 
+typedef struct _PFNL_VOLUME_INFO
 {
     LARGE_INTEGER CreationTime;
     ULONG Key;
@@ -128,17 +128,17 @@ typedef struct _PFNL_VOLUME_INFO
 } PFNL_VOLUME_INFO, *PPFNL_VOLUME_INFO;
 
 // Delete Information NL Log Entry
-typedef struct _PFNL_DELETE_ENTRY_INFO 
+typedef struct _PFNL_DELETE_ENTRY_INFO
 {
-    union 
+    union
     {
-        struct 
+        struct
         {
             ULONG Type : 2;
             ULONG FileDeleted : 1;
             ULONG Spare : 28;
         };
-        struct 
+        struct
         {
             ULONG Reserved : 2;
             ULONG DeleteFlags : 29;
@@ -163,7 +163,7 @@ typedef struct _PFNL_LOG_ENTRY
 } PFNL_LOG_ENTRY, *PPFNL_LOG_ENTRY;
 
 // Input Structure for IOCTL_PFFI_ENUMERATE
-typedef struct _PFFI_ENUMERATE_INFO 
+typedef struct _PFFI_ENUMERATE_INFO
 {
     ULONG Version;
     ULONG LogForETW : 1;
@@ -173,7 +173,7 @@ typedef struct _PFFI_ENUMERATE_INFO
 } PFFI_ENUMERATE_INFO, *PPFFI_ENUMERATE_INFO;
 
 // Output Structure for IOCTL_PFFI_ENUMERATE
-typedef struct _PFFI_UNKNOWN 
+typedef struct _PFFI_UNKNOWN
 {
     USHORT SuperfetchVersion;
     USHORT FileinfoVersion;
@@ -260,7 +260,7 @@ PWSTR UseList[] =
     L"Unknown"
 };
 
-typedef struct _PHYSICAL_MEMORY_RUN 
+typedef struct _PHYSICAL_MEMORY_RUN
 {
     SIZE_T BasePage;
     SIZE_T PageCount;
@@ -296,13 +296,15 @@ NTSTATUS PfiQueryMemoryRanges(VOID)
     ULONG resultLength = 0;
 
     // Memory Ranges API was added in RTM, this is Version 1
+    memset(&rangeInfo, 0, sizeof(PF_MEMORY_RANGE_INFO));
     rangeInfo.Version = 2;
 
+    memset(&info, 0, sizeof(SUPERFETCH_INFORMATION));
     info.Version = SUPERFETCH_INFORMATION_VERSION;
     info.Magic = SUPERFETCH_INFORMATION_MAGIC;
-    info.Data = &rangeInfo;
-    info.Length = sizeof(PF_MEMORY_RANGE_INFO);
-    info.InfoClass = SuperfetchMemoryRangesQuery;
+    info.SuperfetchInformation = &rangeInfo;
+    info.SuperfetchInformationLength = sizeof(PF_MEMORY_RANGE_INFO);
+    info.SuperfetchInformationClass = SuperfetchMemoryRangesQuery;
 
     status = NtQuerySystemInformation(
         SystemSuperfetchInformation,
@@ -313,16 +315,15 @@ NTSTATUS PfiQueryMemoryRanges(VOID)
 
     if (status == STATUS_BUFFER_TOO_SMALL)
     {
-        MemoryRanges = PhAllocate(resultLength);
-        memset(MemoryRanges, 0, resultLength);
-
+        MemoryRanges = PhAllocateZero(resultLength);
         MemoryRanges->Version = 2;
 
+        memset(&info, 0, sizeof(SUPERFETCH_INFORMATION));
         info.Version = SUPERFETCH_INFORMATION_VERSION;
         info.Magic = SUPERFETCH_INFORMATION_MAGIC;
-        info.Data = MemoryRanges;
-        info.Length = resultLength;
-        info.InfoClass = SuperfetchMemoryRangesQuery;
+        info.SuperfetchInformation = MemoryRanges;
+        info.SuperfetchInformationLength = resultLength;
+        info.SuperfetchInformationClass = SuperfetchMemoryRangesQuery;
 
         status = NtQuerySystemInformation(
             SystemSuperfetchInformation,
@@ -349,7 +350,6 @@ NTSTATUS PfiInitializePfnDatabase(VOID)
     PMMPFN_IDENTITY Pfn1;
     ULONG PfnCount, i, k;
     ULONG PfnOffset = 0;
-    PPF_PFN_PRIO_REQUEST PfnDbStart;
     PPF_PHYSICAL_MEMORY_RANGE Node;
     SYSTEM_BASIC_INFORMATION basicInfo;
 
@@ -362,24 +362,23 @@ NTSTATUS PfiInitializePfnDatabase(VOID)
 
     // Calculate maximum amount of memory required
     PfnCount = basicInfo.HighestPhysicalPageNumber + 1;
-    
+
     // Build the PFN List Information Request
     MmPfnDatabaseSize = FIELD_OFFSET(PF_PFN_PRIO_REQUEST, PageData) + PfnCount * sizeof(MMPFN_IDENTITY);
-    PfnDbStart = MmPfnDatabase = PhAllocate(MmPfnDatabaseSize);
-    memset(MmPfnDatabase, 0, MmPfnDatabaseSize);
-
+    MmPfnDatabase = PhAllocateZero(MmPfnDatabaseSize);
     MmPfnDatabase->Version = 1;
     MmPfnDatabase->RequestFlags = 1;
 
+    memset(&info, 0, sizeof(SUPERFETCH_INFORMATION));
     info.Version = SUPERFETCH_INFORMATION_VERSION;
     info.Magic = SUPERFETCH_INFORMATION_MAGIC;
-    info.Data = MmPfnDatabase;
-    info.Length = MmPfnDatabaseSize;
-    info.InfoClass = SuperfetchPfnQuery;
+    info.SuperfetchInformation = MmPfnDatabase;
+    info.SuperfetchInformationLength = MmPfnDatabaseSize;
+    info.SuperfetchInformationClass = SuperfetchPfnQuery;
 
 #if 1
     // Initial request, assume all bits valid
-    for (ULONG i = 0; i < PfnCount; i++) 
+    for (ULONG i = 0; i < PfnCount; i++)
     {
         // Get the PFN and write the physical page number
         Pfn1 = MI_GET_PFN(i);
@@ -398,7 +397,7 @@ NTSTATUS PfiInitializePfnDatabase(VOID)
     {
         // Print information on the range
         Node = &MemoryRanges->Ranges[i];
-        
+
         for (ULONG_PTR j = Node->BasePfn; j < (Node->BasePfn + Node->PageCount); j++)
         {
             // Get the PFN and write the physical page number
@@ -452,14 +451,16 @@ NTSTATUS PfiQueryPrivateSources()
     PF_PRIVSOURCE_QUERY_REQUEST PrivateSourcesQuery = { 0 };
     PPF_PRIVSOURCE_QUERY_REQUEST request = NULL;
     ULONG resultLength = 0;
+    ULONG attempts = 0;
 
     PrivateSourcesQuery.Version = 8; // 3
 
+    memset(&info, 0, sizeof(SUPERFETCH_INFORMATION));
     info.Version = SUPERFETCH_INFORMATION_VERSION;
     info.Magic = SUPERFETCH_INFORMATION_MAGIC;
-    info.Data = &PrivateSourcesQuery;
-    info.Length = sizeof(PF_PRIVSOURCE_QUERY_REQUEST);
-    info.InfoClass = SuperfetchPrivSourceQuery;
+    info.SuperfetchInformation = &PrivateSourcesQuery;
+    info.SuperfetchInformationLength = sizeof(PF_PRIVSOURCE_QUERY_REQUEST);
+    info.SuperfetchInformationClass = SuperfetchPrivSourceQuery;
 
     status = NtQuerySystemInformation(
         SystemSuperfetchInformation,
@@ -468,18 +469,17 @@ NTSTATUS PfiQueryPrivateSources()
         &resultLength
         );
 
-    if (status == STATUS_BUFFER_TOO_SMALL)
+    while (status == STATUS_BUFFER_TOO_SMALL && attempts < 10)
     {
-        request = PhAllocate(resultLength);
-        memset(request, 0, resultLength);
-
+        request = PhAllocateZero(resultLength);
         request->Version = 8;
 
+        memset(&info, 0, sizeof(SUPERFETCH_INFORMATION));
         info.Version = SUPERFETCH_INFORMATION_VERSION;
         info.Magic = SUPERFETCH_INFORMATION_MAGIC;
-        info.Data = request;
-        info.Length = resultLength;
-        info.InfoClass = SuperfetchPrivSourceQuery;
+        info.SuperfetchInformation = request;
+        info.SuperfetchInformationLength = resultLength;
+        info.SuperfetchInformationClass = SuperfetchPrivSourceQuery;
 
         status = NtQuerySystemInformation(
             SystemSuperfetchInformation,
@@ -487,46 +487,40 @@ NTSTATUS PfiQueryPrivateSources()
             sizeof(SUPERFETCH_INFORMATION),
             &resultLength
             );
+
+        attempts++;
     }
 
     if (!NT_SUCCESS(status))
         return status;
+    if (!request)
+        return STATUS_UNSUCCESSFUL;
 
     for (ULONG i = 0; i < request->InfoCount; i++)
     {
         PPF_PROCESS process;
+        PPH_STRING processFileName;
 
         if (request->InfoArray[i].DbInfo.Type != PfsPrivateSourceProcess)
             continue;
 
         if (!(process = PfiFindProcess((ULONG_PTR)request->InfoArray[i].EProcess)))
         {
-            process = PhAllocate(sizeof(PF_PROCESS) + request->InfoArray[i].WsPrivatePages * sizeof(ULONG));
-            memset(process, 0, sizeof(PF_PROCESS) + request->InfoArray[i].WsPrivatePages * sizeof(ULONG));
-
+            process = PhAllocateZero(sizeof(PF_PROCESS) + request->InfoArray[i].WsPrivatePages * sizeof(ULONG));
             process->ProcessKey = (ULONG_PTR)request->InfoArray[i].EProcess;
             process->PrivatePages = (ULONG)request->InfoArray[i].WsPrivatePages;
             process->ProcessId = UlongToHandle(request->InfoArray[i].DbInfo.ProcessId);
             process->SessionId = request->InfoArray[i].SessionID;
-            //process->ProcessPfnList = PhCreateList(1);
+            process->ProcessPfnList = PhCreateList(1);
 
             PhAddItemList(ProcessKeyList, process);
-            PhAddItemSimpleHashtable(ProcessKeyHashtable, (PVOID)request->InfoArray[i].EProcess, process);
+#ifdef _WIN64
+            PhAddItemSimpleHashtable(ProcessKeyHashtable, (PVOID)(process->ProcessKey | 0xFFFF000000000000), process);
+#else
+            PhAddItemSimpleHashtable(ProcessKeyHashtable, (PVOID)(process->ProcessKey | 0xFFFFFFFF00000000), process);
+#endif
 
-            PPH_STRING processFileName = NULL;
-
-            status = PhOpenProcess(
-                &process->ProcessHandle,
-                PROCESS_ALL_ACCESS,
-                process->ProcessId
-                );
-
-            PhGetProcessImageFileNameByProcessId(process->ProcessId, &processFileName);
-
-            // check ImageName
-            //strncpy(process->ProcessName, request->InfoArray[i].ImageName, 16);
-
-            if (processFileName)
+            if (NT_SUCCESS(PhGetProcessImageFileNameByProcessId(process->ProcessId, &processFileName)))
             {
                 PhMoveReference(&process->ProcessName, PhGetFileName(processFileName));
             }
@@ -534,6 +528,8 @@ NTSTATUS PfiQueryPrivateSources()
             {
                 PhMoveReference(&process->ProcessName, PhConvertUtf8ToUtf16(request->InfoArray[i].ImageName));
             }
+
+            PhOpenProcess(&process->ProcessHandle, MAXIMUM_ALLOWED, process->ProcessId);
         }
     }
 
@@ -543,11 +539,11 @@ NTSTATUS PfiQueryPrivateSources()
 }
 
 NTSTATUS PfSvFICommand(
-    HANDLE DeviceHandle, 
-    ULONG IoCtl, 
-    PVOID a3, 
-    int a4, 
-    PVOID a5, 
+    HANDLE DeviceHandle,
+    ULONG IoCtl,
+    PVOID a3,
+    int a4,
+    PVOID a5,
     PULONG ResultLength)
 {
     NTSTATUS status;
@@ -565,7 +561,7 @@ NTSTATUS PfSvFICommand(
         a5,
         *ResultLength
         );
-    
+
     *ResultLength = (ULONG)isb.Information;
 
     return status;
@@ -610,31 +606,48 @@ NTSTATUS PfiQueryFileInfo(VOID)
     request.ETWLoggerId = 1;
     request.LogForETW = TRUE;
     request.LogForSuperfetch = TRUE;
-    request.Version = 13;// 12 == win10_14393?
+    request.Version = 15;// 12 == win10_14393?
 
     RtlInitUnicodeString(&fileInfoUs, L"\\Device\\FileInfo");
     InitializeObjectAttributes(&oa, &fileInfoUs, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     if (!NT_SUCCESS(status = NtOpenFile(
         &PfiFileInfoHandle,
-        FILE_GENERIC_READ,
+        FILE_READ_ATTRIBUTES | SYNCHRONIZE,
         &oa,
         &isb,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        FILE_NON_DIRECTORY_FILE
+        FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
         )))
     {
         return status;
     }
 
-    if (!NT_SUCCESS(status = PfSvFICommand(
+    //= PfSvFICommand(
+    //    PfiFileInfoHandle,
+    //    0x22000F,
+    //    &request,
+    //    sizeof(PFFI_ENUMERATE_INFO),
+    //    OutputBuffer,
+    //    &OutputLength
+    //)
+
+    status = NtDeviceIoControlFile(
         PfiFileInfoHandle,
+        0,
+        0,
+        0,
+        &isb,
         0x22000F,
         &request,
         sizeof(PFFI_ENUMERATE_INFO),
         OutputBuffer,
-        &OutputLength
-        )))
+        OutputLength
+        );
+
+    //OutputLength = (ULONG)isb.Information;
+
+    if (!NT_SUCCESS(status))
     {
         NtClose(PfiFileInfoHandle);
         return status;
@@ -657,7 +670,7 @@ NTSTATUS PfiQueryFileInfo(VOID)
             {
                 file->FileName = PhCreateString(LogEntry->VolumeInfo.VolumePath);
                 file->FileKey = LogEntry->VolumeInfo.Key;
-                
+
                 PhAddItemSimpleHashtable(VolumeKeyHashtable, UlongToPtr(file->FileKey), file);
                 //PhAddItemList(VolumeKeyList, file);
             }
@@ -688,7 +701,7 @@ NTSTATUS PfiQueryFileInfo(VOID)
                 //    &fileHandle,
                 //    PhGetString(file->FileName),
                 //    FILE_GENERIC_READ,
-                //    0,
+                //    FILE_ATTRIBUTE_NORMAL,
                 //    FILE_SHARE_READ | FILE_SHARE_DELETE,
                 //    FILE_OPEN,
                 //    FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
@@ -713,7 +726,7 @@ NTSTATUS PfiQueryFileInfo(VOID)
                 //        FileNameInformation
                 //        )))
                 //    {
-                        PhMoveReference(&file->FileName, PhGetFileName(file->FileName));
+                PhMoveReference(&file->FileName, PhGetFileName(file->FileName));
                 //    }
                 //}
                 //PhFree(nameInfo);
@@ -736,8 +749,8 @@ NTSTATUS PfiQueryFileInfo(VOID)
         }
 
         LogEntry = PTR_ADD_OFFSET(LogEntry, LogEntry->Header.Size);
-        
-        if (LogEntry >= (PPFNL_LOG_ENTRY)PTR_ADD_OFFSET(OutputBuffer, LogHeader->BufferSize))
+
+        if ((ULONG_PTR)LogEntry >= (ULONG_PTR)PTR_ADD_OFFSET(OutputBuffer, LogHeader->BufferSize))
             break;
     }
 
@@ -755,11 +768,12 @@ NTSTATUS PfiQueryPfnDatabase(VOID)
     ULONG resultLength = 0;
 
     // Build the Superfetch Query
+    memset(&superfetchInfo, 0, sizeof(SUPERFETCH_INFORMATION));
     superfetchInfo.Version = SUPERFETCH_INFORMATION_VERSION;
     superfetchInfo.Magic = SUPERFETCH_INFORMATION_MAGIC;
-    superfetchInfo.Data = MmPfnDatabase;
-    superfetchInfo.Length = MmPfnDatabaseSize;
-    superfetchInfo.InfoClass = SuperfetchPfnQuery;
+    superfetchInfo.SuperfetchInformation = MmPfnDatabase;
+    superfetchInfo.SuperfetchInformationLength = MmPfnDatabaseSize;
+    superfetchInfo.SuperfetchInformationClass = SuperfetchPfnQuery;
 
     // Query the PFN Database
     status = NtQuerySystemInformation(
@@ -795,7 +809,7 @@ NTSTATUS PfiQueryPfnDatabase(VOID)
             // Get the process structure
             PPF_PROCESS Process;
 
-TryAgain:
+        TryAgain:
             Process = PfiFindProcess((ULONG_PTR)Pfn1->u1.e4.UniqueProcessKey);
 
             if (Process)
@@ -821,8 +835,8 @@ TryAgain:
             else
             {
                 // The private sources changed during a query -- reload private sources
-               PfiQueryPrivateSources();
-               goto TryAgain;
+                PfiQueryPrivateSources();
+                goto TryAgain;
             }
         }
     }
@@ -997,7 +1011,7 @@ VOID NTAPI DbgLoggedEventCallback(
     _In_opt_ PVOID Context
     )
 {
-    PROT_WINDOW_CONTEXT context = (PROT_WINDOW_CONTEXT)Context;
+    PMEMEXT_WINDOW_CONTEXT context = (PMEMEXT_WINDOW_CONTEXT)Context;
 
     if (context && context->WindowHandle)
     {
@@ -1006,10 +1020,10 @@ VOID NTAPI DbgLoggedEventCallback(
 }
 
 VOID DbgUpdateLogList(
-    _Inout_ PROT_WINDOW_CONTEXT Context
+    _Inout_ PMEMEXT_WINDOW_CONTEXT Context
     )
 {
-    Context->ListViewCount = Context->LogMessageList->Count;
+    Context->ListViewCount = Context->List->Count;
     ListView_SetItemCountEx(Context->ListViewHandle, Context->ListViewCount, LVSICF_NOSCROLL);
 
     //if (Context->ListViewCount >= 2 && Button_GetCheck(Context->AutoScrollHandle) == BST_CHECKED)
@@ -1022,13 +1036,13 @@ VOID DbgUpdateLogList(
 }
 
 NTSTATUS EnumeratePageTable(
-    _In_ PROT_WINDOW_CONTEXT Context
+    _In_ PMEMEXT_WINDOW_CONTEXT Context
     )
 {
     NTSTATUS status;
     BOOLEAN old;
 
-    ProcessKeyList = PhCreateList(0x100);   
+    ProcessKeyList = PhCreateList(0x100);
     FileKeyList = PhCreateList(0x1000);
     VolumeKeyList = PhCreateList(0x20);
     ProcessKeyHashtable = PhCreateSimpleHashtable(0x100);
@@ -1067,7 +1081,7 @@ NTSTATUS EnumeratePageTable(
             //    continue;
             //if (page == NonPagedPoolPage)
             //    continue;
-            
+
             entry = PhAllocate(sizeof(PAGE_ENTRY));
             memset(entry, 0, sizeof(PAGE_ENTRY));
 
@@ -1105,13 +1119,13 @@ NTSTATUS EnumeratePageTable(
                 }
             }
 
-            PhAcquireQueuedLockExclusive(&Context->LogMessageListLock);
-            PhAddItemList(Context->LogMessageList, entry);
-            PhReleaseQueuedLockExclusive(&Context->LogMessageListLock);
+            PhAcquireQueuedLockExclusive(&Context->ListLock);
+            PhAddItemList(Context->List, entry);
+            PhReleaseQueuedLockExclusive(&Context->ListLock);
 
-            PhInvokeCallback(&DbgLoggedCallback, entry);  
-   
-            if (Context->LogMessageList->Count % 5000 == 0)
+            PhInvokeCallback(&DbgLoggedCallback, entry);
+
+            if (Context->List->Count % 5000 == 0)
             {
                 DbgUpdateLogList(Context);
             }
@@ -1139,12 +1153,11 @@ INT_PTR CALLBACK RotViewDlgProc(
     _In_ LPARAM lParam
     )
 {
-    PROT_WINDOW_CONTEXT context;
+    PMEMEXT_WINDOW_CONTEXT context;
 
     if (uMsg == WM_INITDIALOG)
     {
-        context = (PROT_WINDOW_CONTEXT)PhCreateAlloc(sizeof(ROT_WINDOW_CONTEXT));
-        memset(context, 0, sizeof(ROT_WINDOW_CONTEXT));
+        context = (PMEMEXT_WINDOW_CONTEXT)PhAllocateZero(sizeof(MEMEXT_WINDOW_CONTEXT));
 
         PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, context);
     }
@@ -1157,13 +1170,13 @@ INT_PTR CALLBACK RotViewDlgProc(
             PhSaveWindowPlacementToSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
             PhDeleteLayoutManager(&context->LayoutManager);
             PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
-            
+
             //PhDereferenceObject(MmPfnDatabase);      
 
-            PhAcquireQueuedLockExclusive(&context->LogMessageListLock);
-            for (ULONG i = 0; i < context->LogMessageList->Count; i++)
+            PhAcquireQueuedLockExclusive(&context->ListLock);
+            for (ULONG i = 0; i < context->List->Count; i++)
             {
-                PPAGE_ENTRY entry = context->LogMessageList->Items[i];
+                PPAGE_ENTRY entry = context->List->Items[i];
 
                 if (entry->ProcessName)
                     PhDereferenceObject(entry->ProcessName);
@@ -1199,7 +1212,7 @@ INT_PTR CALLBACK RotViewDlgProc(
                 PhFree(MmPfnDatabase);
             if (MemoryRanges && !IsLocalMemoryRange)
                 PhFree(MemoryRanges);
-            PhReleaseQueuedLockExclusive(&context->LogMessageListLock);
+            PhReleaseQueuedLockExclusive(&context->ListLock);
 
             PhDereferenceObject(context);
 
@@ -1217,7 +1230,7 @@ INT_PTR CALLBACK RotViewDlgProc(
             context->WindowHandle = hwndDlg;
             context->ListViewHandle = GetDlgItem(hwndDlg, IDC_LIST1);
             context->SearchboxHandle = GetDlgItem(hwndDlg, IDC_SEARCH);
-            context->LogMessageList = PhCreateList(0x1000 * 0x1000);
+            context->List = PhCreateList(0x1000 * 0x1000);
 
             PhCreateSearchControl(hwndDlg, context->SearchboxHandle, L"Search (Ctrl+K)");
 
@@ -1237,14 +1250,14 @@ INT_PTR CALLBACK RotViewDlgProc(
             PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDC_REFRESH), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_LEFT);
             PhAddLayoutItem(&context->LayoutManager, GetDlgItem(hwndDlg, IDCANCEL), NULL, PH_ANCHOR_BOTTOM | PH_ANCHOR_RIGHT);
             PhLoadWindowPlacementFromSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
-            
+
             DbgUpdateLogList(context);
 
             PhReferenceObject(context);
 
             PhCreateThread2(EnumeratePageTable, context);
         }
-        break;    
+        break;
     case MEM_LOG_UPDATED:
         DbgUpdateLogList(context);
         break;
@@ -1310,9 +1323,9 @@ INT_PTR CALLBACK RotViewDlgProc(
                     NMLVDISPINFO* dispInfo = (NMLVDISPINFO*)hdr;
                     PPAGE_ENTRY entry;
 
-                    PhAcquireQueuedLockShared(&context->LogMessageListLock);
+                    PhAcquireQueuedLockShared(&context->ListLock);
 
-                    entry = context->LogMessageList->Items[dispInfo->item.iItem];
+                    entry = context->List->Items[dispInfo->item.iItem];
 
                     //if (dispInfo->item.mask & LVIF_IMAGE)
                     //{
@@ -1363,7 +1376,7 @@ INT_PTR CALLBACK RotViewDlgProc(
                         }
                     }
                     else if (dispInfo->item.iSubItem == 3)
-                    {    
+                    {
                         if (dispInfo->item.mask & LVIF_TEXT)
                         {
                             wcsncpy_s(
@@ -1413,7 +1426,7 @@ INT_PTR CALLBACK RotViewDlgProc(
                             );
                     }
 
-                    PhReleaseQueuedLockShared(&context->LogMessageListLock);
+                    PhReleaseQueuedLockShared(&context->ListLock);
                 }
                 break;
             }
