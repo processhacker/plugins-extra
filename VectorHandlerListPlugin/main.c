@@ -99,18 +99,25 @@ NTSTATUS EnumerateVectorHandlerList(
 
         if (entry = PhFindLoaderEntry(NULL, NULL, &dllname))
         {
-            if (PhLoadModuleSymbolProvider(
-                symbolProvider,
-                entry->FullDllName.Buffer,
-                (ULONG64)entry->DllBase,
-                entry->SizeOfImage
-                ))
+            PPH_STRING fileName;
+
+            if (NT_SUCCESS(PhGetProcessMappedFileName(NtCurrentProcess(), entry->DllBase, &fileName)))
             {
-                if (PhGetSymbolFromName(symbolProvider, L"LdrpVectorHandlerList", &symbolInfo))
+                if (PhLoadModuleSymbolProvider(
+                    symbolProvider,
+                    fileName,
+                    (ULONG64)entry->DllBase,
+                    entry->SizeOfImage
+                    ))
                 {
-                    //if (symbolInfo.Size == sizeof(RTL_VECTORED_HANDLER_LIST))
-                    ldrpVectorHandlerList = (PVOID)symbolInfo.Address;
+                    if (PhGetSymbolFromName(symbolProvider, L"LdrpVectorHandlerList", &symbolInfo))
+                    {
+                        //if (symbolInfo.Size == sizeof(RTL_VECTORED_HANDLER_LIST))
+                        ldrpVectorHandlerList = (PVOID)symbolInfo.Address;
+                    }
                 }
+
+                PhDereferenceObject(fileName);
             }
         }
 
@@ -399,6 +406,12 @@ INT_PTR CALLBACK MainWindowDlgProc(
             }
         }
         break;
+    case WM_CTLCOLORBTN:
+        return HANDLE_WM_CTLCOLORBTN(hwndDlg, wParam, lParam, PhWindowThemeControlColor);
+    case WM_CTLCOLORDLG:
+        return HANDLE_WM_CTLCOLORDLG(hwndDlg, wParam, lParam, PhWindowThemeControlColor);
+    case WM_CTLCOLORSTATIC:
+        return HANDLE_WM_CTLCOLORSTATIC(hwndDlg, wParam, lParam, PhWindowThemeControlColor);
     }
 
     return FALSE;
@@ -503,46 +516,3 @@ LOGICAL DllMain(
 
     return TRUE;
 }
-
-
-// LdrpDetourExist
-
-//PPH_SYMBOL_PROVIDER symbolProvider;
-//PH_SYMBOL_INFORMATION symbolInfo;
-//PVOID ldrpVectorHandlerList = NULL;
-//
-//if (symbolProvider = PhCreateSymbolProvider(NULL))
-//{
-//    static PH_STRINGREF dllname = PH_STRINGREF_INIT(L"ntdll.dll");
-//    PLDR_DATA_TABLE_ENTRY entry;
-//
-//    PhLoadSymbolProviderOptions(symbolProvider);
-//
-//    if (entry = PhFindLoaderEntry(NULL, NULL, &dllname))
-//    {
-//        if (PhLoadModuleSymbolProvider(
-//            symbolProvider,
-//            entry->FullDllName.Buffer,
-//            (ULONG64)entry->DllBase,
-//            entry->SizeOfImage
-//            ))
-//        {
-//            if (PhGetSymbolFromName(symbolProvider, L"LdrpDetourExist", &symbolInfo))
-//            {
-//                ldrpVectorHandlerList = (PVOID)symbolInfo.Address;
-//            }
-//        }
-//    }
-//
-//    PhDereferenceObject(symbolProvider);
-//}
-//
-//status = NtReadVirtualMemory(
-//    processHandle,
-//    ldrpVectorHandlerList,
-//    &codePage,
-//    sizeof(BOOLEAN),
-//    NULL
-//);
-//
-//PhDereferenceObject(ntdllFileName);

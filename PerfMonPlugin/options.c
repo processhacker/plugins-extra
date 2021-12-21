@@ -102,7 +102,7 @@ VOID PerfMonLoadList(
         if (remaining.Length == 0)
             break;
 
-        PhSplitStringRefAtChar(&remaining, ',', &part, &remaining);
+        PhSplitStringRefAtChar(&remaining, L',', &part, &remaining);
 
         InitializePerfCounterId(&id, PhCreateString2(&part));
         entry = CreatePerfCounterEntry(&id);

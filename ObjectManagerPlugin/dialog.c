@@ -453,30 +453,12 @@ INT_PTR CALLBACK WinObjDlgProc(
 
     if (uMsg == WM_INITDIALOG)
     {
-        context = PhAllocate(sizeof(OBJ_CONTEXT));
-        memset(context, 0, sizeof(OBJ_CONTEXT));
-
+        context = PhAllocateZero(sizeof(OBJ_CONTEXT));
         PhSetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT, context);
     }
     else
     {
         context = PhGetWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
-
-        if (uMsg == WM_DESTROY)
-        {
-            if (context->TreeImageList)
-                ImageList_Destroy(context->TreeImageList);
-
-            if (context->ListImageList)
-                ImageList_Destroy(context->ListImageList);
-
-            PhSaveWindowPlacementToSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
-            PhSaveListViewColumnsToSetting(SETTING_NAME_COLUMNS, context->ListViewHandle);
-            PhDeleteLayoutManager(&context->LayoutManager);
-            PhUnregisterDialog(hwndDlg); 
-            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
-            PhFree(context);
-        }
     }
 
     if (!context)
@@ -525,6 +507,22 @@ INT_PTR CALLBACK WinObjDlgProc(
                 );
 
             SendMessage(hwndDlg, WM_NEXTDLGCTL, (WPARAM)context->TreeViewHandle, TRUE);
+        }
+        break;
+    case WM_DESTROY:
+        {
+            if (context->TreeImageList)
+                ImageList_Destroy(context->TreeImageList);
+
+            if (context->ListImageList)
+                ImageList_Destroy(context->ListImageList);
+
+            PhSaveWindowPlacementToSetting(SETTING_NAME_WINDOW_POSITION, SETTING_NAME_WINDOW_SIZE, hwndDlg);
+            PhSaveListViewColumnsToSetting(SETTING_NAME_COLUMNS, context->ListViewHandle);
+            PhDeleteLayoutManager(&context->LayoutManager);
+            PhUnregisterDialog(hwndDlg);
+            PhRemoveWindowContext(hwndDlg, PH_WINDOW_CONTEXT_DEFAULT);
+            PhFree(context);
         }
         break;
     case WM_SIZE:

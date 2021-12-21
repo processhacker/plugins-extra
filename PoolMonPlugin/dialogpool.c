@@ -208,6 +208,8 @@ INT_PTR CALLBACK PoolMonDlgProc(
     {
     case WM_INITDIALOG:
         {
+            PhSetApplicationWindowIcon(hwndDlg);
+
             context->ParentWindowHandle = hwndDlg;
             context->TreeNewHandle = GetDlgItem(hwndDlg, IDC_POOLTREE);
             context->SearchboxHandle = GetDlgItem(hwndDlg, IDC_SEARCH);

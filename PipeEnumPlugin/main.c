@@ -76,11 +76,11 @@ VOID EnumerateNamedPipeDirectory(VOID)
 
     status = NtOpenFile(
         &pipeDirectoryHandle,
-        GENERIC_READ | SYNCHRONIZE,
+        FILE_LIST_DIRECTORY | SYNCHRONIZE,
         &objectAttributes,
         &isb,
         FILE_SHARE_READ | FILE_SHARE_WRITE,
-        FILE_SYNCHRONOUS_IO_NONALERT
+        FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
         );
 
     if (!NT_SUCCESS(status))
@@ -108,11 +108,11 @@ VOID EnumerateNamedPipeDirectory(VOID)
 
         status = NtOpenFile(
             &pipeHandle,
-            GENERIC_READ | SYNCHRONIZE,
+            FILE_READ_ATTRIBUTES | SYNCHRONIZE,
             &objectAttributes,
             &isb,
             FILE_SHARE_READ | FILE_SHARE_WRITE,
-            FILE_SYNCHRONOUS_IO_NONALERT
+            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT
             );
 
         PhPrintUInt32(value, ++count);
@@ -121,9 +121,24 @@ VOID EnumerateNamedPipeDirectory(VOID)
 
         if (NT_SUCCESS(status))
         {
-            if (NT_SUCCESS(PhGetNamedPipeServerProcessId(pipeHandle, &processID)))
+            FILE_PIPE_LOCAL_INFORMATION pipeInfo;
+
+            if (NT_SUCCESS(NtQueryInformationFile(pipeHandle, &isb, &pipeInfo, sizeof(FILE_PIPE_LOCAL_INFORMATION), FilePipeLocalInformation)))
             {
-                PhSetListViewSubItem(ListViewWndHandle, lvItemIndex, 2, PhaFormatUInt64(HandleToUlong(processID), FALSE)->Buffer);
+                if (pipeInfo.NamedPipeEnd == FILE_PIPE_CLIENT_END)
+                {
+                    if (NT_SUCCESS(PhGetNamedPipeServerProcessId(pipeHandle, &processID)))
+                    {
+                        PhSetListViewSubItem(ListViewWndHandle, lvItemIndex, 2, PhaFormatUInt64(HandleToUlong(processID), FALSE)->Buffer);
+                    }
+                }
+                else //if (pipeInfo.NamedPipeEnd == FILE_PIPE_SERVER_END)
+                {
+                    if (NT_SUCCESS(PhGetNamedPipeClientProcessId(pipeHandle, &processID)))
+                    {
+                        PhSetListViewSubItem(ListViewWndHandle, lvItemIndex, 2, PhaFormatUInt64(HandleToUlong(processID), FALSE)->Buffer);
+                    }
+                }
             }
 
             NtClose(pipeHandle);
